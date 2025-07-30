@@ -7,7 +7,7 @@ const MainLayout = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
       <main className="flex-grow p-4">
-        <Outlet /> {/* ตรงนี้จะเปลี่ยนไปตามหน้า */}
+        <Outlet />
       </main>
     </div>
   );

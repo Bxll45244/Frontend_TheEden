@@ -27,14 +27,14 @@ const Dashboard = () => {
         <div className="divider text-lg font-semibold text-gray-800">รถกอล์ฟ</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {cartStatus.map((status, idx) => (
-            <StatusCard key={idx} image="/cart.jpg" {...status} />
+            <StatusCard key={idx} image="/images/starter/cart.jpg" {...status} />
           ))}
         </div>
 
         <div className="divider text-lg font-semibold text-gray-800 mt-6">กระเป๋าไม้กอล์ฟ</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {bagStatus.map((status, idx) => (
-            <StatusCard key={idx} image="/bag.jpg" {...status} />
+            <StatusCard key={idx} image="/images/starter/bag.jpg" {...status} />
           ))}
         </div>
       </div>

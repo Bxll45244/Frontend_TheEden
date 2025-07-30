@@ -92,59 +92,60 @@ const ReportPage = () => {
   };
 
   const renderPopup = () => {
-    if (confirmData) {
-      return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[60%] max-w-xs">
-            <FontAwesomeIcon
-              icon={faExclamation}
-              style={{ color: "#FFD43B", fontSize: "48px" }}
-              className="mb-4"
-            />
-            <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleConfirm}
-                className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-              >
-                ตกลง
-              </button>
-              <button
-                onClick={() => setConfirmData(null)}
-                className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
-              >
-                ยกเลิก
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    if (popup) {
-      return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
-            <FontAwesomeIcon
-              icon={faCircleCheck}
-              className="text-green-500 mx-auto"
-              style={{ fontSize: "48px" }}
-            />
-            <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
-            <h3 className="text-base font-normal text-gray-800">
-              {`${popup.title} สำเร็จ`}
-            </h3>
+  if (confirmData) {
+    return (
+      <div className="fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[60%] max-w-xs">
+          <FontAwesomeIcon
+            icon={faExclamation}
+            style={{ color: "#FFD43B", fontSize: "48px" }}
+            className="mb-4"
+          />
+          <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
+          <div className="flex justify-center gap-4">
             <button
-              onClick={handleSuccessClose}
-              className="mt-4 bg-gray-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors"
+              onClick={handleConfirm}
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
             >
               ตกลง
             </button>
+            <button
+              onClick={() => setConfirmData(null)}
+              className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+            >
+              ยกเลิก
+            </button>
           </div>
         </div>
-      );
-    }
-    return null;
-  };
+      </div>
+    );
+  }
+  if (popup) {
+    return (
+      <div className="fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
+          <FontAwesomeIcon
+            icon={faCircleCheck}
+            className="text-green-500 mx-auto"
+            style={{ fontSize: "48px" }}
+          />
+          <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
+          <h3 className="text-base font-normal text-gray-800">
+            {`${popup.title} สำเร็จ`}
+          </h3>
+          <button
+            onClick={handleSuccessClose}
+            className="mt-4 bg-gray-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors"
+          >
+            ตกลง
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 
   // Card component (แยกภายใน หรือจะย้ายไฟล์ก็ได้)
   const Card = ({ color, title, showName, showIssue }) => {
