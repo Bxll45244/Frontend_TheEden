@@ -264,7 +264,7 @@ function Step3({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
     );
 }
 
-// --- Step 4: สรุปและยืนยันการจอง ---
+
 function Step4({ bookingData, calculateTotalPrice, handlePrevStep, handleSubmitBooking, isLoading }) {
     // เปลี่ยนชื่อตัวแปรจาก timeslot เป็น timeSlot
     const { courseType, date, timeSlot, players, groupName, caddy, golfCartQty, golfBagQty } = bookingData;

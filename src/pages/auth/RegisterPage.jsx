@@ -1,24 +1,21 @@
+// src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
-import { Link } from "react-router-dom";
-import { register } from "../../service/authService"; 
+import { Link, useNavigate } from "react-router-dom";
+import { register as apiRegister } from "../../service/authService"; // Rename to avoid conflict if needed
 
-/**
- * RegisterPage Component:
- * หน้าสำหรับลงทะเบียนผู้ใช้งาน
- * โค้ดนี้ถูกปรับให้สอดคล้องกับ userSchema ของ Backend
- */
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    name: "", // เพิ่ม field 'name' ตาม userSchema
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user", // เปลี่ยนค่าเริ่มต้นเป็น 'user' ตาม default ใน Schema
+    role: "user",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,9 +37,8 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // เรียกใช้ฟังก์ชัน register ที่นำเข้าจาก authService
-      const result = await register({
-        name: formData.name, // ส่ง name ไปด้วย
+      const result = await apiRegister({ // Call register function from authService
+        name: formData.name,
         email: formData.email,
         password: formData.password,
         role: formData.role,
@@ -50,8 +46,10 @@ export default function RegisterPage() {
 
       if (result.success) {
         setSuccess(result.message || "ลงทะเบียนสำเร็จ!");
-        // สามารถเพิ่มการ redirect ไปหน้า login หรือหน้าหลักได้ที่นี่
-        // ตัวอย่าง: navigate('/login'); // หากใช้ useNavigate hook
+        // Redirect to login page after successful registration
+        setTimeout(() => {
+          navigate('/login'); 
+        }, 1500); 
       } else {
         setError(result.message || "ลงทะเบียนไม่สำเร็จ");
       }
@@ -76,7 +74,6 @@ export default function RegisterPage() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
-            {/* เพิ่ม input สำหรับ 'name' ตาม userSchema ที่กำหนดให้ required */}
             <div>
               <label htmlFor="name" className="sr-only">
                 ชื่อ
@@ -86,14 +83,13 @@ export default function RegisterPage() {
                 name="name"
                 type="text"
                 autoComplete="name"
-                required // กำหนดให้เป็น required ตาม Schema
+                required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
                 placeholder="ชื่อ"
                 value={formData.name}
                 onChange={handleChange}
               />
             </div>
-            {/* Input สำหรับ Email */}
             <div>
               <label htmlFor="email-address" className="sr-only">
                 ที่อยู่อีเมล
@@ -110,7 +106,6 @@ export default function RegisterPage() {
                 onChange={handleChange}
               />
             </div>
-            {/* Input สำหรับ Password */}
             <div>
               <label htmlFor="password" className="sr-only">
                 รหัสผ่าน
@@ -127,7 +122,6 @@ export default function RegisterPage() {
                 onChange={handleChange}
               />
             </div>
-            {/* Input สำหรับ Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="sr-only">
                 ยืนยันรหัสผ่าน
@@ -146,7 +140,6 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Dropdown สำหรับ Role */}
           <div>
             <label htmlFor="role" className="sr-only">
               บทบาท
@@ -159,7 +152,6 @@ export default function RegisterPage() {
               value={formData.role}
               onChange={handleChange}
             >
-              {/* ปรับ option values ให้ตรงกับ enum ใน userSchema: 'admin', 'user', 'caddy', 'starter' */}
               <option value="user">ผู้ใช้งานทั่วไป</option>
               <option value="admin">ผู้ดูแล</option>
               <option value="caddy">แคดดี้</option>
@@ -167,7 +159,6 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          {/* แสดงข้อความ Error และ Success */}
           {error && (
             <div className="text-red-600 text-sm text-center">{error}</div>
           )}
@@ -175,7 +166,6 @@ export default function RegisterPage() {
             <div className="text-green-600 text-sm text-center">{success}</div>
           )}
 
-          {/* ปุ่ม Submit */}
           <div>
             <button
               type="submit"
@@ -196,6 +186,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-
-

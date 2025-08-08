@@ -1,19 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./index.css"; 
+import "./index.css";
 
-
-import App from "./App"; // Import the top-level App component
-import AppRouter from "./routes/AppRouter"; // Import your central router
-import { AuthProvider } from './contexts/AuthContext';
+import App from "./App";
+import AppRouter from "./routes/AppRouter";
+import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter } from 'react-router-dom';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {/* App wraps AppRouter, allowing App to provide global context/layout */}
-    <App>
+    <BrowserRouter>
       <AuthProvider>
-      <AppRouter />
+        <App>
+          <AppRouter />
+        </App>
       </AuthProvider>
-    </App>
+    </BrowserRouter>
   </React.StrictMode>
 );

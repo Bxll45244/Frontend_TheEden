@@ -1,31 +1,24 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
-// Layouts
-import UserMobileLayout from '../layouts/UserMobileLayout';
-
-// Page Components
 import GolferHomePage from '../pages/golfer/GolferHomePage';
-import RegisterPage from '../pages/auth/RegisterPage';
 import LoginPage from '../pages/auth/LoginPage';
-import GolferBookingPage from '../pages/golfer/GolferBookingPage';
+import RegisterPage from '../pages/auth/RegisterPage';  
+import ProfilePage from '../pages/golfer/ProfilePage'; 
 
-function AppRouter() {
+import UserMobileLayout from '../layouts/Layout';
+
+export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
+
+      <Route element={<UserMobileLayout />}>
+        <Route path="/" element={<GolferHomePage />} /> 
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} /> 
+      </Route>
 
-        {/* Golfer Routes: เส้นทางสำหรับผู้ใช้งาน Golfer */}
-        <Route path="/" element={<UserMobileLayout />}> {/* <--- Parent path ยังคงเป็น "/" */}
-          <Route index element={<GolferHomePage />} /> {/* จะแสดงที่ "/" */}
-          <Route path="booking" element={<GolferBookingPage />} /> {/* <--- จะแสดงที่ "/booking" */}
-        </Route>
-
-      </Routes>
-    </BrowserRouter>
+    <Route path="/login" element={<LoginPage />} />
+    </Routes>
   );
 }
-
-export default AppRouter;

@@ -1,13 +1,10 @@
+// src/pages/LoginPage.jsx
 import React, { useState } from "react";
-import { HiOutlineDotsHorizontal } from "react-icons/hi"; // สำหรับไอคอนโหลดดิ้ง
-import { Link, useNavigate } from "react-router-dom"; // Link สำหรับนำทาง, useNavigate สำหรับ redirect
-import { login } from "../../service/authService"; // นำเข้าฟังก์ชัน 'login' แบบ named export
+import { HiOutlineDotsHorizontal } from "react-icons/hi";
+import { Link, useNavigate } from "react-router-dom";
+import { login as apiLogin } from "../../service/authService"; // Rename to avoid conflict with authLogin
+import { useAuth } from "../../context/useAuth"; // Import useAuth hook
 
-/**
- * LoginPage Component:
- * หน้าสำหรับเข้าสู่ระบบผู้ใช้งาน
- * โค้ดนี้ถูกออกแบบให้เข้ากับสไตล์ของ RegisterPage และเชื่อมต่อกับ Backend ผ่าน authService
- */
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -16,7 +13,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const navigate = useNavigate(); // Hook สำหรับการเปลี่ยนเส้นทาง
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth(); // Get login function from AuthContext
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,23 +28,20 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-
     setLoading(true);
+
     try {
-      // เรียกใช้ฟังก์ชัน login ที่นำเข้าจาก authService
-      const result = await login({
-        email: formData.email,
-        password: formData.password,
-      });
+      const result = await apiLogin(formData); // Call login function from authService
 
       if (result.success) {
         setSuccess(result.message || "เข้าสู่ระบบสำเร็จ!");
-        // หากเข้าสู่ระบบสำเร็จ สามารถ redirect ไปยังหน้าหลัก หรือ Dashboard ได้
-        // ตัวอย่าง: navigate('/dashboard'); หรือ navigate('/');
-        // ในตัวอย่างนี้จะ redirect ไปหน้าหลัก (/) หลังจากเข้าสู่ระบบสำเร็จ
+        authLogin(result.user); // Update user state in AuthContext
+        console.log("User logged in:", result.user);
+        
+        // Redirect to home or dashboard after successful login
         setTimeout(() => {
-          navigate('/');
-        }, 1500); // หน่วงเวลา 1.5 วินาที ก่อน redirect
+          navigate('/'); 
+        }, 1500); 
       } else {
         setError(result.message || "เข้าสู่ระบบไม่สำเร็จ");
       }
@@ -71,7 +66,6 @@ export default function LoginPage() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
-            {/* Input สำหรับ Email */}
             <div>
               <label htmlFor="email-address" className="sr-only">
                 ที่อยู่อีเมล
@@ -88,7 +82,6 @@ export default function LoginPage() {
                 onChange={handleChange}
               />
             </div>
-            {/* Input สำหรับ Password */}
             <div>
               <label htmlFor="password" className="sr-only">
                 รหัสผ่าน

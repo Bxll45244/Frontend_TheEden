@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa'; // ไอคอนสำหรับตาเปิด/ปิด และเครื่องหมายถูก
 
-/**
- * UnifiedRegisterForm Component:
- * แสดงฟอร์มสำหรับให้ผู้ใช้กรอกข้อมูลเพื่อลงทะเบียน
- * Component นี้จะจัดการ State ของฟอร์มภายในตัวเอง
- * และเรียก `onSubmit` callback prop เมื่อฟอร์มถูก Submit
- *
- * @param {function} onSubmit - Callback function ที่จะถูกเรียกเมื่อฟอร์มถูกส่ง
- * @param {boolean} loading - สถานะ loading เพื่อปิดใช้งานปุ่ม submit
- * @param {string|null} error - ข้อความ error ที่จะแสดงในฟอร์ม
- * @param {string|null} successMessage - ข้อความสำเร็จที่จะแสดงในฟอร์ม
- */
+
 export default function UnifiedRegisterForm({ onSubmit, loading, error, successMessage }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

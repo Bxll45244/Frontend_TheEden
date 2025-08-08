@@ -1,137 +1,144 @@
-// Import API_BASE_URL from environment variables
+import axios from 'axios';
+
+// Load BASE URL from .env (VITE_API_BASE_URL=http://localhost:5000/api)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-/**
- * ฟังก์ชันสำหรับลงทะเบียนผู้ใช้งานใหม่
- * @param {object} userData - ข้อมูลผู้ใช้สำหรับลงทะเบียน (name, email, password, role)
- * @returns {Promise<object>} - ผลลัพธ์ของการลงทะเบียน (success, message, user)
- */
+// create an axios instance with default settings
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true, 
+  headers: {
+    'Content-Type': 'application/json', 
+  },
+});
+
+// Register (Sign up a new user)
 export const register = async (userData) => {
-    try {
-        
-        const response = await fetch(`${API_BASE_URL}/user/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            return { success: true, message: data.message || 'Registration successful!', user: data.user };
-        } else {
-            return { success: false, message: data.error || data.message || 'Registration failed' };
-        }
-    } catch (error) {
-        console.error('Error during registration:', error);
-        return { success: false, message: 'Network error or server is down' };
-    }
+  try {
+    const res = await api.post('/user/register', userData); 
+    return { 
+      success: true, 
+      message: res.data.message || 'ลงทะเบียนสำเร็จ', 
+      user: res.data.user 
+    };
+  } catch (err) {
+    console.error("Registration error:", err.response ? err.response.data : err.message);
+    return { 
+      success: false, 
+      message: err.response?.data?.message || "ลงทะเบียนไม่สำเร็จ" 
+    };
+  }
 };
 
-
-
-/**
- * ฟังก์ชันสำหรับเข้าสู่ระบบผู้ใช้งาน
- * @param {object} credentials - ข้อมูลการเข้าสู่ระบบ (email, password)
- * @returns {Promise<object>} - ผลลัพธ์ของการเข้าสู่ระบบ (success, message, user, token, etc.)
- */
+// Login (Backend will set JWT token as httpOnly cookie)
 export const login = async (credentials) => {
-    try {
-        // สร้าง URL สำหรับ Login endpoint: http://localhost:5000/user/login
-        const response = await fetch(`${API_BASE_URL}/user/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // หาก Backend คาดหวัง Authorization header สำหรับบางกรณี หรือไม่ก็ไม่ใส่ก็ได้
-            },
-            body: JSON.stringify(credentials), // ส่ง email และ password ในรูปแบบ JSON
-        });
-
-        const data = await response.json(); // แปลง response เป็น JSON
-
-        if (response.ok) {
-            // การเข้าสู่ระบบสำเร็จ
-            // ตรวจสอบว่า Backend ส่งข้อมูลผู้ใช้หรือ token กลับมาหรือไม่
-            // สมมติว่า Backend ส่ง token มาใน data.token หรือข้อมูล user ใน data.user
-            // คุณอาจต้องการเก็บ token ไว้ใน localStorage หรือ context API ในภายหลัง
-            return {
-                success: true,
-                message: data.message || 'Login successful!',
-                user: data.user, // หรือ data.data.user แล้วแต่โครงสร้าง response ของ Backend
-                token: data.token // หรือ data.data.token
-                // เพิ่มข้อมูลอื่นๆ ที่ Backend ส่งกลับมาเมื่อ Login สำเร็จ
-            };
-        } else {
-            // การเข้าสู่ระบบไม่สำเร็จ (เช่น รหัสผ่านผิด, ไม่พบผู้ใช้)
-            return {
-                success: false,
-                message: data.error || data.message || 'Login failed'
-            };
-        }
-    } catch (error) {
-        console.error('Error during login:', error);
-        return { success: false, message: 'Network error or server is down' };
-    }
+  try {
+    const res = await api.post('/user/login', credentials); 
+    return {
+      success: true,
+      message: res.data.message || 'เข้าสู่ระบบสำเร็จ',
+      user: res.data  // Get user data directly from response
+    };
+  } catch (err) {
+    console.error("Login error:", err.response ? err.response.data : err.message);
+    return { 
+      success: false, 
+      message: err.response?.data?.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    };
+  }
 };
 
-/**
- * ฟังก์ชันสำหรับดึงข้อมูลโปรไฟล์ผู้ใช้งาน
- * @returns {Promise<object>} - ผลลัพธ์ (success, user, message)
- */
+// Logout (Backend will delete JWT cookie)
+export const logout = async () => {
+  try {
+    const res = await api.post('/user/logout'); 
+    return { 
+      success: true, 
+      message: res.data.message || 'ออกจากระบบเรียบร้อยแล้ว' 
+    };
+  } catch (err) {
+    console.error("Logout error:", err.response?.data || err.message);
+    return { 
+      success: false, 
+      message: err.response?.data?.message || "ออกจากระบบไม่สำเร็จ" 
+    };
+  }
+};
+
+// userController.js (backend)
+
+// export const getUserProfile = async (req, res) => {
+//   const user = await User.findById(req.user.id);
+
+//   if (user) {
+//     res.json({
+//        _id: user.id, 
+//        name: user.name, 
+//        email: user.email, 
+//        role: user.role,
+//      });
+//   } else {
+//     res.status(404).json({ message: "User not found" });
+//   }
+// };
+
+// Get Current User Profile (Use JWT cookie for authentication)
 export const getUserProfile = async () => {
-    try {
-        // Endpoint สำหรับดึงโปรไฟล์ผู้ใช้ (ตาม Swagger UI ที่เคยให้มาคือ GET /user/profile)
-        const response = await fetch(`${API_BASE_URL}/user/profile`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                // หาก Backend ต้องการ Authorization Header (เช่น JWT Token)
-                // 'Authorization': `Bearer ${localStorage.getItem('userToken')}`, // ถ้าใช้ localStorage
-            },
-            credentials: 'include', // *** สำคัญมากถ้าใช้ HTTP-Only Cookies ***
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            return { success: true, user: data.user || data }; // Backend อาจส่ง user ตรงๆ หรือใน data.user
-        } else {
-            // หากไม่สำเร็จ อาจเป็นเพราะ Token หมดอายุ, ไม่มีการ Login
-            return { success: false, message: data.message || 'Failed to fetch user profile' };
-        }
-    } catch (error) {
-        console.error('Error fetching user profile:', error);
-        return { success: false, message: 'Network error or server is down' };
+  try {
+    const res = await api.get('/user/profile'); 
+    return { 
+      success: true, 
+      user: res.data,  //Get user object from backend
+    }; 
+  } catch (err) {
+    // Don't show error log if you haven't logged in yet
+    if (err.response?.status === 401) {
+      return {
+        success: false,
+        message: "ยังไม่ได้เข้าสู่ระบบ หรือ กรุณาเข้าสู่ระบบอีกครั้ง"
+      };
     }
+
+    console.error("Profile fetch error:", err.response?.data || err.message);
+
+    return { 
+      success: false, 
+      message:
+        err.response?.data?.message === 'User not found'
+          ? 'ไม่พบข้อมูลผู้ใช้งานในระบบ กรุณาลองเข้าสู่ระบบใหม่'
+          : err.response?.data?.message || "เกิดข้อผิดพลาดขณะโหลดโปรไฟล์"
+    };
+  }
 };
 
-/**
- * ฟังก์ชันสำหรับ Logout ผู้ใช้งาน
- * @returns {Promise<object>} - ผลลัพธ์ (success, message)
- */
-export const logoutUser = async () => {
-    try {
-        // Endpoint สำหรับ Logout (ตาม Swagger UI ที่เคยให้มาคือ POST /user/logout)
-        const response = await fetch(`${API_BASE_URL}/user/logout`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // *** สำคัญมากถ้าใช้ HTTP-Only Cookies ***
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            return { success: true, message: data.message || 'Logged out successfully!' };
-        } else {
-            return { success: false, message: data.message || 'Logout failed' };
-        }
-    } catch (error) {
-        console.error('Error during logout:', error);
-        return { success: false, message: 'Network error or server is down' };
-    }
+// Get All Users (Need to be logged in and have admin rights)
+export const getAllUsers = async () => {
+  try {
+    const res = await api.get('/user/all');
+    return { 
+      success: true, 
+      users: res.data // Get a list of all users from the backend
+    };
+  } catch (err) {
+    console.error('Error fetching all users:', err.response?.data || err.message);
+    return { 
+      success: false, 
+      message: err.response?.data?.message || 'ไม่สามารถดึงรายชื่อผู้ใช้ได้' };
+  }
 };
 
+// Update Caddy Status 
+export const updateCaddyStatus = async (id, newStatus) => {
+  try {
+    const res = await api.put(`/user/caddy/${id}/status/${newStatus}`); 
+    return { 
+      success: true, 
+      message: res.data.message, 
+      caddy: res.data.caddy };
+  } catch (err) {
+    console.error('Error updating caddy status:', err.response?.data || err.message);
+    return { 
+      success: false, 
+      message: err.response?.data?.message || 'อัปเดตสถานะแคดดี้ไม่สำเร็จ' };
+  }
+};
