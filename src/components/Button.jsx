@@ -2,22 +2,26 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 export function Button({
-  to,             
-  onClick,       
-  children,       
-  variant = "primary", 
+  to,
+  onClick,
+  children,
+  variant = "primary",
   className = "",
-  ...rest         
+  ...rest
 }) {
+
+  // Main button layout
   const baseStyle = `
-    font-bold py-2 px-6 rounded-full shadow-lg
-    transition duration-300 ease-in-out text-sm sm:text-base
+    btn btn-soft
   `;
 
   const variants = {
-    primary: `bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-800`,
-    secondary: `bg-white text-gray-800 border-2 border-white hover:bg-gray-200`,
-    danger: `bg-red-600 text-white border-2 border-red-600 hover:bg-red-700`,
+    primary: ``,
+    secondary: `bg-transparent border-2 border-white text-white 
+                  hover:bg-white hover:text-gray-800
+                  px-8 py-4 text-lg`,
+    danger: ``,
+
   };
 
   const allClass = `${baseStyle} ${variants[variant]} ${className}`.trim();

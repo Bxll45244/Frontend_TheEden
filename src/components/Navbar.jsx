@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { CircleUser } from "lucide-react";
+import { Button } from "../components/Button";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext); 
@@ -9,7 +10,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
         {/* Logo */}
         <Link to="/">
@@ -22,18 +23,15 @@ export default function Navbar() {
 
         {/* Navigation */}
         <div className="hidden md:flex items-center space-x-6 relative">
-          <Link
-            to="/"
-            className="text-gray-800 hover:text-green-600 font-medium text-lg transition"
-          >
-            หน้าหลัก
-          </Link>
-          <Link
+
+          {/* register button */}
+          <Button
             to="/register"
-            className="text-gray-800 hover:text-green-600 font-medium text-lg transition"
+            variant="primary"
+            className="text-lg"
           >
-            ลงทะเบียน
-          </Link>
+            Join Us
+          </Button>
 
           {user && (
             <div className="relative">
