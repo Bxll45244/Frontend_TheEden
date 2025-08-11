@@ -1,9 +1,19 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Button } from "../components/Button";
+import { useNavigate } from "react-router-dom";
 
 export default function HeroSection() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleBookingClick = () => {
+    if (user) {
+      navigate("/booking");
+    } else {
+      navigate("/register");
+    }
+  };
 
   return (
     <section
@@ -21,7 +31,7 @@ export default function HeroSection() {
         </p>
 
         <div className="mt-7">
-          <Button to="/booking" variant="secondary">
+          <Button onClick={handleBookingClick} variant="secondary">
             Book Now
           </Button>
         </div>
@@ -36,7 +46,7 @@ export default function HeroSection() {
 
       {/* new container*/}
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-20 flex flex-col justify-start h-full text-white items-start">
-        {/* ... เนื้อหาของคุณ (h1, p, Button) ... */}
+        
       </div>
     </section>
   );
