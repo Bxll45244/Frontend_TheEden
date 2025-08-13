@@ -50,7 +50,7 @@ export const Header = ({ currentDate }) => {
       {/* โลโก้และชื่อสนาม */}
       <div className="absolute left-1/2 top-[50%] transform -translate-x-1/2 translate-y-[-40%] text-center">
         <img
-          src={isCaddy ? "/images/caddy/logo.jpg" : "/images/starter/logo.jpg"}
+          src={isCaddy ? "/images/caddy/eden-Logo.png" : "/images/starter/eden-Logo.png"}
           alt="Logo"
           className="h-20 w-auto mx-auto mb-1"
         />

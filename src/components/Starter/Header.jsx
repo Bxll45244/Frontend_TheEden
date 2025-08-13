@@ -39,7 +39,7 @@ const Header = () => {
       {/* โลโก้และชื่อสนามอยู่ตรงกลาง */}
       <div className="absolute left-1/2 top-[50%] transform -translate-x-1/2 translate-y-[-40%] text-center">
         <img
-          src="/images/starter/logo.jpg"
+          src="/images/starter/eden-Logo.png"
           alt="Logo"
           className="h-20 w-auto mx-auto mb-1"
         />

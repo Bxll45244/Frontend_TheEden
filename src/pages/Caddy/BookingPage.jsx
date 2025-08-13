@@ -88,7 +88,7 @@ const BookingPage = () => {
       </div>
 
       <div className="text-center space-y-2">
-        <img src="/images/caddy/logo.jpg" alt="logo" className="mx-auto h-24" />
+        <img src="/images/caddy/eden-Logo.png" alt="logo" className="mx-auto h-24" />
         <h1 className="text-black text-xl font-bold uppercase">
           The Eden Golf Club
         </h1>
