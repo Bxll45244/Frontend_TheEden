@@ -6,8 +6,8 @@ const Header = () => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ให้ถือว่า path "/" และ "/status" คือสถานะ (กรณีมี /status อยู่ใน routing)
-  const isStatusPage = location.pathname === "/" || location.pathname === "/status";
+  // เปลี่ยนตรงนี้
+  const isStatusPage = location.pathname === "/status";
   const isReportPage = location.pathname === "/report";
 
   return (
@@ -15,7 +15,7 @@ const Header = () => {
       {/* ปุ่มสำหรับจอใหญ่ */}
       <div className="hidden sm:flex space-x-3 ml-auto">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/status")}
           className={`px-3 py-1.5 rounded-full font-semibold border transition ${
             isStatusPage
               ? "bg-gray-700 text-white border-gray-700"
@@ -76,7 +76,7 @@ const Header = () => {
         <div className="absolute top-full right-4 mt-2 bg-white border rounded-lg shadow-lg p-3 w-40 sm:hidden z-40">
           <button
             onClick={() => {
-              navigate("/");
+              navigate("/status");
               setMenuOpen(false);
             }}
             className={`w-full text-left px-3 py-2 rounded mb-2 font-semibold border transition text-sm ${

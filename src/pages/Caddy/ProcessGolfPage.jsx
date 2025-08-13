@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/Caddy/Header";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 
 const ProcessGolfPage = () => {
   const [step, setStep] = useState(1);
@@ -10,23 +10,20 @@ const ProcessGolfPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // เช็คและดึงค่าจาก location.state หรือ localStorage เป็น fallback
+  // รับค่าจาก state หรือ localStorage
   const { selectedDate: stateDate, selectedTime: stateTime } = location.state || {};
+  const [selectedDate, setSelectedDate] = useState(
+    stateDate || localStorage.getItem("selectedDate") || "8 ก.พ ปี 2568"
+  );
+  const [selectedTime, setSelectedTime] = useState(
+    stateTime || localStorage.getItem("selectedTime") || "06.00"
+  );
 
-  const [selectedDate, setSelectedDate] = useState(stateDate || localStorage.getItem("selectedDate") || "8 ก.พ ปี 2568");
-  const [selectedTime, setSelectedTime] = useState(stateTime || localStorage.getItem("selectedTime") || "06.00");
-
-  // บันทึกค่าลง localStorage เผื่อ reload หน้า
+  // เก็บค่าลง localStorage
   useEffect(() => {
     if (stateDate) localStorage.setItem("selectedDate", stateDate);
     if (stateTime) localStorage.setItem("selectedTime", stateTime);
   }, [stateDate, stateTime]);
-
-  // Debug log เช็คค่า
-  useEffect(() => {
-    console.log("location.state:", location.state);
-    console.log("selectedDate:", selectedDate, "selectedTime:", selectedTime);
-  }, [location.state, selectedDate, selectedTime]);
 
   const stepTexts = [
     "เริ่มออกรอบกอล์ฟ",
@@ -40,30 +37,15 @@ const ProcessGolfPage = () => {
     } else {
       navigate("/caddy", {
         state: {
-          completedSchedule: {
-            date: selectedDate,
-            time: selectedTime,
-          },
+          completedSchedule: { date: selectedDate, time: selectedTime },
         },
       });
     }
   };
 
-  const handleCancelClick = () => {
-    setShowCancelConfirm(true);
-  };
-
-  const handleConfirmCancel = () => {
-    setShowCancelConfirm(false);
-    navigate("/caddy");
-  };
-
-  const handleCloseCancel = () => {
-    setShowCancelConfirm(false);
-  };
-
   return (
-    <div className="min-h-screen bg-white flex flex-col px-4 py-4 relative">
+    <div className="min-h-screen bg-white flex flex-col px-4 py-6 relative">
+      {/* Header */}
       <Header />
 
       {/* Step Progress */}
@@ -71,22 +53,21 @@ const ProcessGolfPage = () => {
         <div className="flex items-center gap-4">
           {[1, 2, 3].map((i) => (
             <React.Fragment key={i}>
-              <div className="text-green-600">
-                {step > i ? (
-                  <FontAwesomeIcon icon={faCheckCircle} className="w-6 h-6" />
-                ) : (
-                  <FontAwesomeIcon
-                    icon={faCircle}
-                    className={`w-6 h-6 ${
-                      step === i ? "text-green-600" : "text-gray-400"
-                    }`}
-                  />
-                )}
+              <div
+                className={`w-9 h-9 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  step > i
+                    ? "bg-green-500 border-green-500 text-white"
+                    : step === i
+                    ? "bg-green-100 border-green-500 text-green-700"
+                    : "bg-gray-100 border-gray-300 text-gray-400"
+                }`}
+              >
+                {step > i ? <FontAwesomeIcon icon={faCheckCircle} /> : i}
               </div>
               {i < 3 && (
                 <div
-                  className={`w-8 h-1 ${
-                    step > i ? "bg-green-600" : "bg-gray-300"
+                  className={`w-10 h-[2px] transition-all duration-300 ${
+                    step > i ? "bg-green-500" : "bg-gray-300"
                   }`}
                 ></div>
               )}
@@ -95,12 +76,12 @@ const ProcessGolfPage = () => {
         </div>
       </div>
 
-      {/* กล่องแสดงสถานะ */}
-      <div className="mt-8 flex justify-center">
-        <div className="bg-[#324441] text-white rounded-2xl w-full max-w-sm py-6 px-4 text-center">
-          <p className="text-base font-semibold">{stepTexts[step - 1]}</p>
+      {/* Status Card */}
+      <div className="mt-10 flex justify-center">
+        <div className="bg-gradient-to-br from-green-700 to-green-800 text-white rounded-3xl w-full max-w-sm py-8 px-6 text-center shadow-lg">
+          <p className="text-lg font-semibold">{stepTexts[step - 1]}</p>
           <button
-            className="mt-4 bg-white text-[#324441] font-medium text-sm px-6 py-2 rounded-full hover:bg-gray-100"
+            className="mt-6 bg-white text-green-800 font-medium text-sm px-8 py-2 rounded-full shadow-md hover:bg-green-50 transition"
             onClick={handleNextStep}
           >
             ยืนยัน
@@ -108,30 +89,33 @@ const ProcessGolfPage = () => {
         </div>
       </div>
 
-      {/* ปุ่มยกเลิกลอยล่างขวา */}
+      {/* Floating Cancel Button */}
       <div className="fixed bottom-4 right-4 z-40">
         <button
-          onClick={handleCancelClick}
-          className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 shadow-md"
+          onClick={() => setShowCancelConfirm(true)}
+          className="bg-orange-500 text-white px-5 py-2 rounded-full shadow-md hover:bg-orange-600 transition"
         >
           ยกเลิก
         </button>
       </div>
 
-      {/* Popup ยืนยันยกเลิก */}
+      {/* Cancel Confirmation Popup */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[80%] max-w-xs">
             <p className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</p>
             <div className="flex justify-center gap-4">
               <button
-                onClick={handleConfirmCancel}
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  navigate("/caddy");
+                }}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
               >
                 ตกลง
               </button>
               <button
-                onClick={handleCloseCancel}
+                onClick={() => setShowCancelConfirm(false)}
                 className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded"
               >
                 ยกเลิก

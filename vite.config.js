@@ -8,4 +8,8 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  server: {
+    // กำหนดให้เซิร์ฟเวอร์รันบนพอร์ต 5173
+    port: 5173, 
+  }
 })

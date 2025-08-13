@@ -1,21 +1,62 @@
-import React from "react";
-import StatusCard from "../../components/Starter/StatusCard";
+import React, { useState, useEffect } from "react";
+import axios from 'axios';
+import StatusCard from "../../components/Caddy/StatusCard";
 
 const Dashboard = () => {
-  const cartStatus = [
-    { count: 60, label: "รถกอล์ฟว่าง", color: "success" },
-    { count: 32, label: "กำลังใช้งาน", color: "info" },
-    { count: 4, label: "เปลี่ยนแบต", color: "purple" },
-    { count: 10, label: "รถสำรอง", color: "warning" },
-    { count: 0, label: "รถเสีย", color: "error" },
-  ];
+  const [assetStatus, setAssetStatus] = useState({
+    golfCart: {},
+    golfBag: {}
+  });
 
-  const bagStatus = [
-    { count: 45, label: "กระเป๋าว่าง", color: "success" },
-    { count: 5, label: "กำลังใช้งาน", color: "info" },
-    { count: 5, label: "กระเป๋าสำรอง", color: "warning" },
-    { count: 0, label: "กระเป๋าเสีย", color: "error" },
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAssetStatus = async () => {
+      try {
+        // *** แก้ไข URL ตรงนี้ให้ตรงกับ backend ของคุณ ***
+        // ต้องเป็น /api/assets/status/overall เพื่อให้ตรงกับ server.js และ assetRoutes.js
+        const response = await axios.get('http://localhost:5000/api/assets/status/overall');
+        const { golfCart, golfBag } = response.data;
+
+        const formattedCartStatus = [
+          { count: golfCart.available || 0, label: "รถกอล์ฟว่าง", color: "success" },
+          { count: golfCart.inUse || 0, label: "กำลังใช้งาน", color: "info" },
+          { count: golfCart.booked || 0, label: "จองแล้ว", color: "primary" },
+          { count: golfCart.clean || 0, label: "เปลี่ยนแบต", color: "purple" },
+          { count: golfCart.spare || 0, label: "รถสำรอง", color: "warning" },
+          { count: golfCart.broken || 0, label: "รถเสีย", color: "error" },
+        ];
+
+        const formattedBagStatus = [
+          { count: golfBag.available || 0, label: "กระเป๋าว่าง", color: "success" },
+          { count: golfBag.inUse || 0, label: "กำลังใช้งาน", color: "info" },
+          { count: golfBag.booked || 0, label: "จองแล้ว", color: "primary" },
+          { count: golfBag.spare || 0, label: "กระเป๋าสำรอง", color: "warning" },
+          { count: golfBag.broken || 0, label: "กระเป๋าเสีย", color: "error" },
+        ];
+        
+        setAssetStatus({
+          golfCart: formattedCartStatus,
+          golfBag: formattedBagStatus
+        });
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error fetching asset status:", err);
+        setError("ไม่สามารถดึงข้อมูลสถานะได้");
+        setIsLoading(false);
+      }
+    };
+
+    fetchAssetStatus();
+  }, []);
+
+  if (isLoading) {
+    return <div className="text-center mt-10">กำลังโหลดข้อมูล...</div>;
+  }
+  if (error) {
+    return <div className="text-center mt-10 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white px-4 sm:px-8 py-6">
@@ -26,14 +67,14 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto border rounded-xl shadow-md p-6 sm:p-8 mt-6">
         <div className="divider text-lg font-semibold text-gray-800">รถกอล์ฟ</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {cartStatus.map((status, idx) => (
+          {assetStatus.golfCart.map((status, idx) => (
             <StatusCard key={idx} image="/images/starter/cart.jpg" {...status} />
           ))}
         </div>
 
         <div className="divider text-lg font-semibold text-gray-800 mt-6">กระเป๋าไม้กอล์ฟ</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {bagStatus.map((status, idx) => (
+          {assetStatus.golfBag.map((status, idx) => (
             <StatusCard key={idx} image="/images/starter/bag.jpg" {...status} />
           ))}
         </div>
