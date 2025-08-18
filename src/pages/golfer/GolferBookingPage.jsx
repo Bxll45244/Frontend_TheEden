@@ -1,49 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { createBooking } from '../../service/bookingService'; // ฟังก์ชันสร้างการจอง
-import { useNavigate } from 'react-router-dom'; // สำหรับเปลี่ยนหน้า
+import axios from 'axios'; // เพิ่มการ import axios เพื่อใช้เรียก API
+import { useNavigate } from 'react-router-dom';
+import LoadingAnimation from '../../components/animations/LoadingAnimation';
 
 // Helper function to format date to 'YYYY-MM-DD'
 const formatDate = (date) => {
-    // Ensure date is a valid Date object before formatting
     const d = date instanceof Date ? date : new Date(date);
     const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
 
+
+
+const API_BASE_URL = "http://localhost:5000/api";
+
+
 // --- Step 1: เลือกประเภทคอร์สและวันที่/เวลา ---
 function Step1({ bookingData, handleChange, handleNextStep }) {
-    // เปลี่ยนชื่อตัวแปรจาก timeslot เป็น timeSlot
-    const { courseType, date, timeSlot } = bookingData; 
-
-    // Mock data for available timeSlots - replace with actual API call if needed
+    const { courseType, date, timeSlot } = bookingData;
     const availableTimeSlots = [
         "06:00", "06:15", "06:30", "06:45", "07:00", "07:15", "07:30", "07:45",
         "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "09:45",
         "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45",
         "12:00",
-        // ... add more as needed
     ];
-    const reservedTimeSlots = ["07:00", "08:15", "09:00", "10:15", "11:00"]; // Mock reserved
+    const reservedTimeSlots = ["07:00", "08:15", "09:00", "10:15", "11:00"];
 
-    // Calculate price based on courseType (example, you'll need actual logic from backend or config)
-    const dailyPrice = courseType === '18' ? 2200 : 1500; // Example prices
-    const holidayPrice = courseType === '18' ? 4000 : 2500; // Example prices
+    const dailyPrice = courseType === '18' ? 2200 : 1500;
+    const holidayPrice = courseType === '18' ? 4000 : 2500;
 
     const handleDateChange = (e) => {
         const selectedDate = e.target.value;
         handleChange({ target: { name: 'date', value: selectedDate } });
-        // In a real app, you'd fetch available timeSlots for this date
     };
 
-    // ใช้ timeSlot แทน timeslot
-    const isNextDisabled = !date || !timeSlot || !courseType; 
+    const isNextDisabled = !date || !timeSlot || !courseType;
 
     return (
         <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
             <h2 className="text-xl font-semibold mb-4 text-center">Step 1: เลือกเวลาและประเภทคอร์ส</h2>
-            
+
             <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2">วันที่จอง:</label>
                 <input
@@ -79,10 +77,8 @@ function Step1({ bookingData, handleChange, handleNextStep }) {
                     <button
                         key={time}
                         type="button"
-                        // ใช้ timeSlot แทน timeslot
                         className={`px-3 py-1 text-sm rounded-full ${reservedTimeSlots.includes(time) ? 'bg-red-500 text-white cursor-not-allowed' : (timeSlot === time ? 'bg-green-700 text-white' : 'bg-green-600 text-white hover:bg-green-700')}`}
-                        // ใช้ name: 'timeSlot' แทน name: 'timeslot'
-                        onClick={() => !reservedTimeSlots.includes(time) && handleChange({ target: { name: 'timeSlot', value: time } })} 
+                        onClick={() => !reservedTimeSlots.includes(time) && handleChange({ target: { name: 'timeSlot', value: time } })}
                         disabled={reservedTimeSlots.includes(time)}
                     >
                         {time}
@@ -112,19 +108,20 @@ function Step1({ bookingData, handleChange, handleNextStep }) {
 // --- Step 2: จำนวนผู้เล่นและชื่อกลุ่ม ---
 function Step2({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
     const { players, groupName } = bookingData;
-    const isNextDisabled = players < 1 || !groupName.trim(); // Group name required
+    const isNextDisabled = players < 1 || players > 4 || !groupName.trim();
 
     return (
         <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
             <h2 className="text-xl font-semibold mb-4 text-center">Step 2: จำนวนผู้เล่นและชื่อกลุ่ม</h2>
-            
+
             <div className="mb-4 text-center">
-                <label className="block text-gray-700 text-sm font-bold mb-2">จำนวนผู้เล่น:</label>
+                <label className="block text-gray-700 text-sm font-bold mb-2">จำนวนผู้เล่น (สูงสุด 4 คน):</label>
                 <div className="flex items-center justify-center space-x-2">
                     <button
                         type="button"
                         className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-lg"
                         onClick={() => handleChange({ target: { name: 'players', value: Math.max(1, players - 1) } })}
+                        disabled={players <= 1}
                     >
                         -
                     </button>
@@ -133,6 +130,7 @@ function Step2({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
                         type="button"
                         className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-lg"
                         onClick={() => handleChange({ target: { name: 'players', value: players + 1 } })}
+                        disabled={players >= 4}
                     >
                         +
                     </button>
@@ -173,20 +171,55 @@ function Step2({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
 
 // --- Step 3: รถกอล์ฟ, ถุงกอล์ฟ, แคดดี้ ---
 function Step3({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
-    const { golfCartQty, golfBagQty, caddy } = bookingData;
-    // For caddy, it's an array of strings, so input needs special handling
-    const handleCaddyChange = (e) => {
-        const value = e.target.value;
-        // Ensure caddy is always an array, even if empty or single item
-        handleChange({ target: { name: 'caddy', value: value.split(',').map(item => item.trim()).filter(item => item !== '') } });
+    const { golfCartQty, golfBagQty, caddy, caddySelectionEnabled } = bookingData;
+    const [caddySearchTerm, setCaddySearchTerm] = useState('');
+    const [availableCaddies, setAvailableCaddies] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // แก้ไข: ใช้ useEffect เพื่อดึงข้อมูลแคดดี้จาก API จริง
+    useEffect(() => {
+        const getCaddies = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                // ต้องมี API endpoint ที่ดึงแคดดี้ที่ว่างจาก MongoDB
+                // สมมติว่า endpoint คือ /api/caddies/available
+                const response = await axios.get(`${API_BASE_URL}/caddies/available`);
+                setAvailableCaddies(response.data);
+            } catch (err) {
+                console.error("Failed to fetch caddies:", err);
+                setError('ไม่สามารถดึงข้อมูลแคดดี้ได้ กรุณาลองใหม่อีกครั้ง');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (caddySelectionEnabled) {
+            getCaddies();
+        }
+    }, [caddySelectionEnabled]);
+
+    const filteredCaddies = availableCaddies.filter(caddyOption =>
+        caddyOption.name.toLowerCase().includes(caddySearchTerm.toLowerCase())
+    );
+
+    const handleCaddySelection = (caddyId) => {
+        let updatedCaddies = [...caddy];
+        if (updatedCaddies.includes(caddyId)) {
+            updatedCaddies = updatedCaddies.filter(id => id !== caddyId);
+        } else {
+            updatedCaddies.push(caddyId);
+        }
+        handleChange({ target: { name: 'caddy', value: updatedCaddies } });
     };
 
-    const isNextDisabled = false; // No strict validation for this step based on images
+    const isNextDisabled = false;
 
     return (
         <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
             <h2 className="text-xl font-semibold mb-4 text-center">Step 3: บริการเสริม</h2>
-            
+
             <div className="mb-4 text-center">
                 <label className="block text-gray-700 text-sm font-bold mb-2">จำนวนกระเป๋าไม้กอล์ฟ:</label>
                 <div className="flex items-center justify-center space-x-2">
@@ -231,18 +264,64 @@ function Step3({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
                 <p className="text-xs text-gray-500 mt-1">*ค่าบริการรถกอล์ฟ/คัน 500 บาท</p>
             </div>
 
-            <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">ID แคดดี้ (คั่นด้วยคอมมา):</label>
-                <input
-                    type="text"
-                    name="caddy"
-                    // แสดงค่า caddy เป็น String ที่คั่นด้วยคอมม่าเพื่อการแก้ไข
-                    value={Array.isArray(caddy) ? caddy.join(', ') : ''} 
-                    onChange={handleCaddyChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    placeholder="เช่น caddy01, caddy02"
-                />
-                <p className="text-xs text-gray-500 mt-1">*ค่าบริการแคดดี้/ท่าน 400 บาท</p>
+            <div className="mb-4 border-t pt-4">
+                <div className="flex items-center mb-4">
+                    <input
+                        type="checkbox"
+                        id="caddy-selection-toggle"
+                        checked={caddySelectionEnabled}
+                        onChange={() => handleChange({ target: { name: 'caddySelectionEnabled', value: !caddySelectionEnabled } })}
+                        className="mr-2 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="caddy-selection-toggle" className="text-gray-800 font-bold text-sm">
+                        ต้องการเลือกแคดดี้
+                    </label>
+                </div>
+
+                {caddySelectionEnabled && (
+                    <div className="space-y-4">
+                        <input
+                            type="text"
+                            placeholder="ค้นหาชื่อแคดดี้..."
+                            value={caddySearchTerm}
+                            onChange={(e) => setCaddySearchTerm(e.target.value)}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        />
+                        {isLoading ? (
+                            <LoadingAnimation />
+                        ) : error ? (
+                            <p className="col-span-2 text-center text-red-500">{error}</p>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                {filteredCaddies.length > 0 ? (
+                                    filteredCaddies.map(caddyOption => (
+                                        <div
+                                            key={caddyOption._id} // ใช้ _id จาก MongoDB
+                                            className={`flex flex-col items-center p-2 rounded-lg cursor-pointer transition-colors duration-200
+                                                ${caddy.includes(caddyOption._id) ? 'bg-green-100 border-2 border-green-500' : 'bg-gray-100 border-2 border-transparent hover:bg-gray-200'}`}
+                                            onClick={() => handleCaddySelection(caddyOption._id)}
+                                        >
+                                            <div className="relative w-20 h-20 rounded-full overflow-hidden mb-2">
+                                                <img src={caddyOption.profilePic} alt={caddyOption.name} className="w-full h-full object-cover" />
+                                                {caddy.includes(caddyOption._id) && (
+                                                    <div className="absolute inset-0 bg-green-500 bg-opacity-70 flex items-center justify-center">
+                                                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-sm font-semibold text-center">{caddyOption.name}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="col-span-2 text-center text-gray-500">ไม่พบแคดดี้ที่ค้นหา</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+                <p className="text-xs text-gray-500 mt-2">*ค่าบริการแคดดี้/ท่าน 400 บาท</p>
             </div>
 
             <div className="flex justify-between mt-6">
@@ -264,9 +343,8 @@ function Step3({ bookingData, handleChange, handlePrevStep, handleNextStep }) {
     );
 }
 
-
+// --- Step 4: สรุปและยืนยัน ---
 function Step4({ bookingData, calculateTotalPrice, handlePrevStep, handleSubmitBooking, isLoading }) {
-    // เปลี่ยนชื่อตัวแปรจาก timeslot เป็น timeSlot
     const { courseType, date, timeSlot, players, groupName, caddy, golfCartQty, golfBagQty } = bookingData;
     const totalPrice = calculateTotalPrice();
 
@@ -276,7 +354,7 @@ function Step4({ bookingData, calculateTotalPrice, handlePrevStep, handleSubmitB
             <div className="text-gray-700 space-y-2 mb-6">
                 <p><strong>ประเภทคอร์ส:</strong> {courseType} หลุม</p>
                 <p><strong>วันที่:</strong> {date}</p>
-                <p><strong>เวลา:</strong> {timeSlot}</p> {/* ใช้ timeSlot */}
+                <p><strong>เวลา:</strong> {timeSlot}</p>
                 <p><strong>จำนวนผู้เล่น:</strong> {players} คน</p>
                 <p><strong>ชื่อกลุ่ม:</strong> {groupName || '-'}</p>
                 <p><strong>แคดดี้ ID:</strong> {caddy && caddy.length > 0 ? caddy.join(', ') : '-'}</p>
@@ -292,7 +370,7 @@ function Step4({ bookingData, calculateTotalPrice, handlePrevStep, handleSubmitB
                 <button
                     onClick={handlePrevStep}
                     className="bg-gray-600 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-700"
-                    disabled={isLoading} // ป้องกันการกดซ้ำขณะโหลด
+                    disabled={isLoading}
                 >
                     ย้อนกลับ
                 </button>
@@ -312,7 +390,7 @@ function Step4({ bookingData, calculateTotalPrice, handlePrevStep, handleSubmitB
 function Step5({ bookingResult, navigateToHome, errorMessage }) {
     return (
         <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto text-center">
-            {bookingResult?.success ? ( // ใช้ Optional Chaining (?) เพื่อป้องกัน error ถ้า bookingResult เป็น null
+            {bookingResult?.success ? (
                 <>
                     <h2 className="text-xl font-semibold mb-4 text-green-600">จองสำเร็จ!</h2>
                     <p className="mb-2">{bookingResult.message}</p>
@@ -321,9 +399,8 @@ function Step5({ bookingResult, navigateToHome, errorMessage }) {
                             <p><strong>Booking ID:</strong> {bookingResult.booking._id}</p>
                             <p><strong>Course Type:</strong> {bookingResult.booking.courseType}</p>
                             <p><strong>Date:</strong> {bookingResult.booking.date}</p>
-                            <p><strong>TimeSlot:</strong> {bookingResult.booking.timeSlot}</p> {/* ใช้ timeSlot */}
+                            <p><strong>TimeSlot:</strong> {bookingResult.booking.timeSlot}</p>
                             <p><strong>Total Price:</strong> {bookingResult.booking.totalPrice?.toLocaleString()} บาท</p>
-                            {/* แสดงข้อมูลอื่นๆ ที่ Backend ส่งกลับมา */}
                         </div>
                     )}
                     <img src="/booking-success.gif" alt="Booking Success" className="mx-auto my-4 w-32 h-32" />
@@ -331,7 +408,7 @@ function Step5({ bookingResult, navigateToHome, errorMessage }) {
             ) : (
                 <>
                     <h2 className="text-xl font-semibold mb-4 text-red-600">จองไม่สำเร็จ!</h2>
-                    <p className="mb-2">{errorMessage || bookingResult?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด'}</p> {/* แสดง errorMessage ด้วย */}
+                    <p className="mb-2">{errorMessage || bookingResult?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด'}</p>
                 </>
             )}
             <button
@@ -349,24 +426,23 @@ export default function GolferBookingPage() {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
     const [bookingData, setBookingData] = useState({
-        courseType: '18', // Default to 18 holes
-        date: formatDate(new Date()), // Default to today's date, formatted
-        timeSlot: '', // *** เปลี่ยนเป็น timeSlot (S ใหญ่) ให้ตรงกับ Backend ***
+        courseType: '18',
+        date: formatDate(new Date()),
+        timeSlot: '',
         players: 1,
         groupName: '',
-        caddy: [], // Array of strings
-        totalPrice: 0, // Will be calculated
+        caddy: [],
+        caddySelectionEnabled: false,
+        totalPrice: 0,
         golfCartQty: 0,
         golfBagQty: 0,
     });
-    const [bookingResult, setBookingResult] = useState(null); // สำหรับเก็บผลลัพธ์การจอง
-    const [isLoading, setIsLoading] = useState(false); // สถานะ Loading
-    const [errorMessage, setErrorMessage] = useState(''); // สำหรับแสดงข้อความ Error
+    const [bookingResult, setBookingResult] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
-    // *** เพิ่ม useEffect นี้เข้ามาใน GolferBookingPage หลัก ***
     useEffect(() => {
         const calculatedTotal = calculateTotalPrice();
-        // อัปเดต totalPrice เฉพาะเมื่อค่าเปลี่ยนไป เพื่อป้องกัน re-render วนลูป
         if (bookingData.totalPrice !== calculatedTotal) {
             setBookingData(prevData => ({
                 ...prevData,
@@ -374,86 +450,97 @@ export default function GolferBookingPage() {
             }));
         }
     }, [bookingData.courseType, bookingData.date, bookingData.players,
-        bookingData.golfCartQty, bookingData.golfBagQty, bookingData.caddy, bookingData.totalPrice]); // เพิ่ม dependencies ที่ทำให้ total price เปลี่ยนแปลง
+        bookingData.golfCartQty, bookingData.golfBagQty, bookingData.caddy, bookingData.totalPrice]);
 
-    // Function to handle changes in form inputs
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setBookingData(prevData => ({
-            ...prevData,
-            [name]: name === 'players' || name === 'golfCartQty' || name === 'golfBagQty' ? parseInt(value) : value
-        }));
+        setBookingData(prevData => {
+            let newValue = value;
+            if (name === 'players' || name === 'golfCartQty' || name === 'golfBagQty') {
+                newValue = parseInt(value);
+                if (name === 'players') {
+                    newValue = Math.min(Math.max(1, newValue), 4);
+                }
+            } else if (name === 'caddySelectionEnabled') {
+                newValue = value;
+            }
+            return {
+                ...prevData,
+                [name]: newValue
+            };
+        });
     };
 
-    // Calculate total price based on booking data
     const calculateTotalPrice = () => {
         const { courseType, date, players, golfCartQty, golfBagQty, caddy } = bookingData;
         let pricePerPlayer = 0;
-
-        // Example: Determine if it's a weekend/holiday (you'll need more robust logic)
-        // ตรวจสอบให้แน่ใจว่า date ไม่ว่าง ก่อนสร้าง Date object
-        const selectedDate = date ? new Date(date) : null; 
-        const dayOfWeek = selectedDate ? selectedDate.getDay() : -1; // 0 = Sunday, 6 = Saturday
+        const selectedDate = date ? new Date(date) : null;
+        const dayOfWeek = selectedDate ? selectedDate.getDay() : -1;
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
         if (courseType === '18') {
-            pricePerPlayer = isWeekend ? 4000 : 2200; 
+            pricePerPlayer = isWeekend ? 4000 : 2200;
         } else if (courseType === '9') {
-            pricePerPlayer = isWeekend ? 2500 : 1500; 
+            pricePerPlayer = isWeekend ? 2500 : 1500;
         }
 
         let total = (pricePerPlayer * players);
-        total += (golfCartQty * 500); // 500 baht per golf cart
-        total += (golfBagQty * 300);  // 300 baht per golf bag
-        total += (caddy.length * 400); // 400 baht per caddy
+        total += (golfCartQty * 500);
+        total += (golfBagQty * 300);
+        total += (caddy.length * 400);
 
         return total;
     };
 
-
-    // Navigation functions for steps
     const handleNextStep = () => {
-        setErrorMessage(''); // Clear previous error messages
+        setErrorMessage('');
         setCurrentStep(prev => prev + 1);
     };
     const handlePrevStep = () => {
-        setErrorMessage(''); // Clear previous error messages
+        setErrorMessage('');
         setCurrentStep(prev => prev - 1);
     };
     const navigateToHome = () => navigate('/');
 
-    // Handle final booking submission
+
     const handleSubmitBooking = async () => {
-        setIsLoading(true); // ตั้งค่า loading เป็น true
-        setErrorMessage(''); // ล้างข้อความ Error เก่า
+        setIsLoading(true);
+        setErrorMessage('');
         try {
-            // Recalculate total price one last time before sending
-            const finalTotalPrice = calculateTotalPrice(); 
+            const finalTotalPrice = calculateTotalPrice();
             const bookingPayload = {
                 ...bookingData,
-                totalPrice: finalTotalPrice, // Ensure final calculated price is included
-                date: formatDate(bookingData.date) // Make sure date is formatted correctly
+                totalPrice: finalTotalPrice,
+                date: formatDate(bookingData.date),
+                // สมมติว่ามี golferId หรือข้อมูลผู้จองจาก state/context
             };
 
-            console.log("Submitting booking:", bookingPayload); // Debugging: ดูข้อมูลที่จะส่ง
-
-            const result = await createBooking(bookingPayload);
-            setBookingResult(result);
-            if (!result.success) {
-                setErrorMessage(result.message); // ตั้งค่า error message ถ้าไม่สำเร็จ
-            }
-            setCurrentStep(5); // Move to final result step
+            const token = localStorage.getItem('token'); // สมมติว่ามีการเก็บ token ใน localStorage
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+            
+            // เรียก API เพื่อสร้างการจอง
+            const response = await axios.post(`${API_BASE_URL}/bookings`, bookingPayload, config);
+            setBookingResult({ success: true, message: response.data.message, booking: response.data.booking });
+            setCurrentStep(5);
         } catch (error) {
             console.error('Error submitting booking:', error);
             setBookingResult({ success: false, message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
-            setErrorMessage('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            setErrorMessage(error.response?.data?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด');
             setCurrentStep(5);
         } finally {
-            setIsLoading(false); // ตั้งค่า loading เป็น false เสมอ
+            setIsLoading(false);
         }
     };
 
-    // Render current step
+    if (isLoading) {
+        return <LoadingAnimation />;
+    }
+
     switch (currentStep) {
         case 1:
             return <Step1 bookingData={bookingData} handleChange={handleChange} handleNextStep={handleNextStep} />;
@@ -462,10 +549,8 @@ export default function GolferBookingPage() {
         case 3:
             return <Step3 bookingData={bookingData} handleChange={handleChange} handlePrevStep={handlePrevStep} handleNextStep={handleNextStep} />;
         case 4:
-            // ส่ง isLoading ไปที่ Step4 เพื่อ disabled ปุ่ม
             return <Step4 bookingData={bookingData} calculateTotalPrice={calculateTotalPrice} handlePrevStep={handlePrevStep} handleSubmitBooking={handleSubmitBooking} isLoading={isLoading} />;
         case 5:
-            // ส่ง errorMessage ไปที่ Step5 ด้วย
             return <Step5 bookingResult={bookingResult} navigateToHome={navigateToHome} errorMessage={errorMessage} />;
         default:
             return <Step1 bookingData={bookingData} handleChange={handleChange} handleNextStep={handleNextStep} />;
