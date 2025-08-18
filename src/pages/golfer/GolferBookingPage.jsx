@@ -1,5 +1,3 @@
-// src/pages/golfer/GolferBookingPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // เพิ่มการ import axios เพื่อใช้เรียก API
 import { useNavigate } from 'react-router-dom';

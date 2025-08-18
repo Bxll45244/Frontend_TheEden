@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
@@ -140,24 +139,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div>
-            <label htmlFor="role" className="sr-only">
-              บทบาท
-            </label>
-            <select
-              id="role"
-              name="role"
-              required
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="user">ผู้ใช้งานทั่วไป</option>
-              <option value="admin">ผู้ดูแล</option>
-              <option value="caddy">แคดดี้</option>
-              <option value="starter">สตาร์ทเตอร์</option>
-            </select>
-          </div>
+          
 
           {error && (
             <div className="text-red-600 text-sm text-center">{error}</div>
