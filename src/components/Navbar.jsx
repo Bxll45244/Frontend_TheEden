@@ -5,7 +5,7 @@ import { CircleUser } from "lucide-react";
 import { Button } from "../components/Button";
 
 export default function Navbar() {
-  const { user, logout } = useContext(AuthContext); 
+  const { user, logout } = useContext(AuthContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -25,14 +25,15 @@ export default function Navbar() {
         <div className="hidden md:flex items-center space-x-6 relative">
 
           {/* register button */}
-          <Button
-            to="/register"
-            variant="primary"
-            className="text-lg"
-          >
-            Join Us
-          </Button>
-
+          {!user && (
+            <Button
+              to="/register"
+              variant="primary"
+              className="text-lg"
+            >
+              Join Us
+            </Button>
+          )}
           {user && (
             <div className="relative">
               <button
