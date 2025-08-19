@@ -67,16 +67,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user, // true if user object exists
   };
 
-  // Show a loading spinner or null while initial user data is being loaded
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-green-500" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
+  
 
   return (
     <AuthContext.Provider value={value}>

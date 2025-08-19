@@ -1,12 +1,28 @@
-import React from 'react';
+// src/App.jsx
+import React, { useState, useEffect } from 'react';
+import LoadingAnimation from './components/animations/LoadingAnimation'; 
 
 function App({ children }) {
-  return (
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    // จำลองการโหลด
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  }, []);
+
+  return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-grow">
-        {children}
-      </main>
+      {isLoading ? (
+        <div className="flex-grow flex justify-center items-center">
+          <LoadingAnimation /> 
+        </div>
+      ) : (
+        <main className="flex-grow">
+          {children}
+        </main>
+      )}
     </div>
   );
 }

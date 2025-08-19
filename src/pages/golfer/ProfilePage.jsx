@@ -33,16 +33,6 @@ export default function ProfilePage() {
   }, [loading, isAuthenticated, user, navigate]);
 
 
-  if (loading || fetching) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-green-500" role="status">
-          <span className="visually-hidden">กำลังโหลด...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
