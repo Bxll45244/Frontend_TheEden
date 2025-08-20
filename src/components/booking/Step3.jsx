@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import LoadingAnimation from '../animations/LoadingAnimation';
+import LoadingAnimation from '../animations/LoadingAnimation'; // ตรวจสอบเส้นทางถูกต้อง
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "http://localhost:5000/api"; // หรือรับเป็น props มาจาก GolferBookingPage
 
-const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
+const Step3 = ({ bookingData, handleChange, onNext, onPrev, API_BASE_URL }) => {
     const { golfCartQty, golfBagQty, caddy, caddySelectionEnabled } = bookingData;
     const [caddySearchTerm, setCaddySearchTerm] = useState('');
     const [availableCaddies, setAvailableCaddies] = useState([]);
@@ -16,11 +16,35 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await axios.get(`${API_BASE_URL}/caddies/available`);
-                setAvailableCaddies(response.data);
+                // *** สำคัญ: ลบการดึง token ด้วย JavaScript และ Authorization Header ออกไป ***
+                // const token = getCookie('jwt'); // ลบออก
+                // if (!token) { // ลบออก
+                //     setError('กรุณาเข้าสู่ระบบเพื่อดูข้อมูลแคดดี้'); // ลบออก
+                //     setIsLoading(false); // ลบออก
+                //     return; // ลบออก
+                // } // ลบออก
+                // const config = { // ลบออก
+                //     headers: { // ลบออก
+                //         'Authorization': `Bearer ${token}` // ลบออก
+                //     } // ลบออก
+                // }; // ลบออก
+
+                // เรียก API โดยให้เบราว์เซอร์ส่ง HttpOnly cookie ไปเอง
+                const response = await axios.get(`${API_BASE_URL}/user/available-caddies`, {
+                    withCredentials: true // 👈 เพิ่มบรรทัดนี้ เพื่อให้ส่ง HttpOnly cookie
+                });
+                
+                // ตรวจสอบว่าข้อมูลที่ได้มาอยู่ในรูปแบบที่ถูกต้องหรือไม่
+                if (Array.isArray(response.data)) {
+                    setAvailableCaddies(response.data);
+                } else {
+                    throw new Error('รูปแบบข้อมูลแคดดี้ไม่ถูกต้องจากเซิร์ฟเวอร์');
+                }
+                
             } catch (err) {
-                console.error("Failed to fetch caddies:", err);
-                setError('ไม่สามารถดึงข้อมูลแคดดี้ได้ กรุณาลองใหม่อีกครั้ง');
+                console.error("Failed to fetch caddies:", err.response?.data?.message || err.message);
+                // ปรับปรุงข้อความ error ให้ผู้ใช้เข้าใจง่ายขึ้น
+                setError(err.response?.data?.message || 'ไม่สามารถดึงข้อมูลแคดดี้ได้ กรุณาลองเข้าสู่ระบบอีกครั้ง');
             } finally {
                 setIsLoading(false);
             }
@@ -28,8 +52,12 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
 
         if (caddySelectionEnabled) {
             getCaddies();
+        } else {
+            // เมื่อ caddySelectionEnabled เป็น false ให้ล้างรายการ caddies
+            setAvailableCaddies([]);
+            setError(null);
         }
-    }, [caddySelectionEnabled]);
+    }, [caddySelectionEnabled, API_BASE_URL]); // เพิ่ม API_BASE_URL ใน dependency array
 
     const filteredCaddies = availableCaddies.filter(caddyOption =>
         caddyOption.name.toLowerCase().includes(caddySearchTerm.toLowerCase())
@@ -40,15 +68,22 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
         if (updatedCaddies.includes(caddyId)) {
             updatedCaddies = updatedCaddies.filter(id => id !== caddyId);
         } else {
-            updatedCaddies.push(caddyId);
+            // ไม่ให้เลือกแคดดี้เกินจำนวนผู้เล่น
+            if (updatedCaddies.length < bookingData.players) {
+                updatedCaddies.push(caddyId);
+            } else {
+                setError(`สามารถเลือกแคดดี้ได้สูงสุด ${bookingData.players} คน`);
+                return;
+            }
         }
+        setError(null); // Clear error if selection is successful
         handleChange({ target: { name: 'caddy', value: updatedCaddies } });
     };
 
     return (
         <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
             <h2 className="text-xl font-semibold mb-4 text-center">Step 3: บริการเสริม</h2>
-            {/* JSX for optional services */}
+            
             <div className="mb-4 text-center">
                 <label className="block text-gray-700 text-sm font-bold mb-2">จำนวนกระเป๋าไม้กอล์ฟ:</label>
                 <div className="flex items-center justify-center space-x-2">
@@ -97,7 +132,14 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
                         type="checkbox"
                         id="caddy-selection-toggle"
                         checked={caddySelectionEnabled}
-                        onChange={() => handleChange({ target: { name: 'caddySelectionEnabled', value: !caddySelectionEnabled } })}
+                        onChange={() => {
+                            // Clear selected caddies when disabling selection
+                            if (caddySelectionEnabled) {
+                                handleChange({ target: { name: 'caddy', value: [] } });
+                            }
+                            handleChange({ target: { name: 'caddySelectionEnabled', value: !caddySelectionEnabled } });
+                            setError(null); // Clear error when toggling
+                        }}
                         className="mr-2 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                     />
                     <label htmlFor="caddy-selection-toggle" className="text-gray-800 font-bold text-sm">
@@ -129,9 +171,15 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
                                             onClick={() => handleCaddySelection(caddyOption._id)}
                                         >
                                             <div className="relative w-20 h-20 rounded-full overflow-hidden mb-2">
-                                                <img src={caddyOption.profilePic} alt={caddyOption.name} className="w-full h-full object-cover" />
+                                                {/* ควรใช้ placeholder image หาก caddyOption.profilePic ไม่มีข้อมูล */}
+                                                <img 
+                                                    src={caddyOption.profilePic || `https://placehold.co/80x80/cccccc/ffffff?text=Caddy`} 
+                                                    alt={caddyOption.name} 
+                                                    className="w-full h-full object-cover" 
+                                                    onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/80x80/cccccc/ffffff?text=Caddy"; }}
+                                                />
                                                 {caddy.includes(caddyOption._id) && (
-                                                    <div className="absolute inset-0 bg-green-500 bg-opacity-70 flex items-center justify-center">
+                                                    <div className="absolute inset-0 bg-green-500 bg-opacity-70 flex items-center justify-center rounded-full"> {/* เพิ่ม rounded-full */}
                                                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                                                         </svg>

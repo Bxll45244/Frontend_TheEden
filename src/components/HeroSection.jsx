@@ -38,16 +38,16 @@ export default function HeroSection() {
       </div>
 
 {/* Timeline Bar */}
-<div className="absolute bottom-[-2rem] left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 h-64">
+{/* <div className="absolute bottom-[-2rem] left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 h-64">
   <div className="bg-white rounded-xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 px-6 py-4 h-full">
 
   </div>
-</div>
+</div> */}
 
       {/* new container*/}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-20 flex flex-col justify-start h-full text-white items-start">
+      {/* <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-20 flex flex-col justify-start h-full text-white items-start">
         
-      </div>
+      </div> */}
     </section>
   );
 }

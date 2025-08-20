@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 // Import all step components
 import Step1 from '../../components/booking/Step1';
 import Step2 from '../../components/booking/Step2';
-import Step3 from '../../components/booking/Step3';
+import Step3 from '../../components/booking/Step3'; 
 import Step4 from '../../components/booking/Step4';
 import Step5 from '../../components/booking/Step5';
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "http://localhost:5000/api"; // หรือ import.meta.env.VITE_API_BASE_URL
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -83,7 +83,7 @@ export default function GolferBookingPage() {
         let total = (pricePerPlayer * players);
         total += (golfCartQty * 500);
         total += (golfBagQty * 300);
-        total += (caddy.length * 400);
+        total += (caddy.length * 400); // Caddy price is fixed at 400 per caddy
         return total;
     };
 
@@ -98,21 +98,25 @@ export default function GolferBookingPage() {
                 date: formatDate(bookingData.date),
             };
 
-            const token = localStorage.getItem('token');
+
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                },
+                withCredentials: true 
             };
 
-            const response = await axios.post(`${API_BASE_URL}/bookings`, bookingPayload, config);
+
+            const response = await axios.post(`${API_BASE_URL}/bookings/book`, bookingPayload, config); 
+            
             setBookingResult({ success: true, message: response.data.message, booking: response.data.booking });
             setCurrentStep(5);
         } catch (error) {
             console.error('Error submitting booking:', error);
-            setBookingResult({ success: false, message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
-            setErrorMessage(error.response?.data?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด');
+
+            const backendErrorMessage = error.response?.data?.message || error.response?.data?.error;
+            setBookingResult({ success: false, message: backendErrorMessage || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
+            setErrorMessage(backendErrorMessage || 'เกิดข้อผิดพลาดที่ไม่คาดคิด');
             setCurrentStep(5);
         } finally {
             setIsLoading(false);
@@ -126,7 +130,7 @@ export default function GolferBookingPage() {
             case 2:
                 return <Step2 bookingData={bookingData} handleChange={handleChange} onPrev={() => setCurrentStep(1)} onNext={() => setCurrentStep(3)} />;
             case 3:
-                return <Step3 bookingData={bookingData} handleChange={handleChange} onPrev={() => setCurrentStep(2)} onNext={() => setCurrentStep(4)} />;
+                return <Step3 bookingData={bookingData} handleChange={handleChange} onPrev={() => setCurrentStep(2)} onNext={() => setCurrentStep(4)} API_BASE_URL={API_BASE_URL} />;
             case 4:
                 return <Step4 bookingData={bookingData} calculateTotalPrice={calculateTotalPrice} onPrev={() => setCurrentStep(3)} onSubmit={handleSubmitBooking} isLoading={isLoading} />;
             case 5:

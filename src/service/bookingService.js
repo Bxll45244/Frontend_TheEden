@@ -1,19 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-/**
- * ฟังก์ชันสำหรับสร้างการจองใหม่
- * @param {object} bookingData - ข้อมูลการจองตาม Backend Model
- * @returns {Promise<object>} - ผลลัพธ์ของการจอง
- */
 export const createBooking = async (bookingData) => {
     try {
         const response = await fetch(`${API_BASE_URL}/bookings/book`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // คุณได้คอมเมนต์ส่วน Authorization Header ออกไป ซึ่งถูกต้องแล้วสำหรับ HttpOnly Cookie
+
             },
-            // *** สำคัญมาก: เพิ่มบรรทัดนี้เข้ามา ***
+
             credentials: 'include', // เพื่อให้ Browser ส่ง HttpOnly Cookie ไปด้วย
             body: JSON.stringify(bookingData),
         });
