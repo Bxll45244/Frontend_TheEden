@@ -1,32 +1,37 @@
-// src/components/Header.jsx
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid"; // ใช้ใน StepProgress
+import { faExclamation } from "@fortawesome/free-solid-svg-icons"; // ใช้ใน Popup ของ ReportPage
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"; // ใช้ใน Popup ของ ReportPage
+import { faCircleCheck } from "@fortawesome/free-regular-svg-icons"; // ใช้ใน Popup ของ ReportPage
 
 // ---------------- Header ----------------
-export const Header = ({ currentDate }) => {
+export const Header = ({ currentDate }) => { // Header รับ prop currentDate
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const pathname = location.pathname;
+  // ตรวจสอบว่าเป็น Route ของ Caddy หรือไม่
   const isCaddy = pathname.startsWith("/caddy");
 
-  const isStatusPage =
-    pathname === "/" ||
-    pathname === "/status" ||
-    pathname === "/caddy" ||
-    pathname === "/caddy/status";
+  // กำหนดสถานะ active ของปุ่ม "สถานะ"
+  // สำหรับ Starter: /starter
+  // สำหรับ Caddy: /caddy
+  const isStatusPage = (isCaddy && pathname === "/caddy") || (!isCaddy && pathname === "/starter");
 
-  const isReportPage =
-    pathname === "/report" || pathname === "/caddy/report";
+  // กำหนดสถานะ active ของปุ่ม "แจ้งปัญหา"
+  // สำหรับ Starter: /report (top-level)
+  // สำหรับ Caddy: /caddy/booking (ซึ่งทำหน้าที่เป็นแจ้งปัญหาในบริบทของ Caddy)
+  const isReportPage = (isCaddy && pathname === "/caddy/booking") || (!isCaddy && pathname === "/report");
+
 
   return (
     <header className="bg-white shadow-md px-4 py-4 sm:py-8 flex items-center justify-between relative min-h-[150px]">
-      {/* ปุ่มสำหรับจอใหญ่ */}
+      {/* ปุ่มสำหรับจอใหญ่ (Desktop) */}
       <div className="hidden sm:flex space-x-3 ml-auto">
         <button
-          onClick={() => navigate(isCaddy ? "/caddy" : "/")}
+          onClick={() => navigate(isCaddy ? "/caddy" : "/starter")} // แก้ไข: สำหรับ Starter ไปที่ /starter
           className={`px-3 py-1.5 rounded-full font-semibold border transition ${
             isStatusPage
               ? "bg-gray-700 text-white border-gray-700"
@@ -36,7 +41,7 @@ export const Header = ({ currentDate }) => {
           สถานะ
         </button>
         <button
-          onClick={() => navigate(isCaddy ? "/caddy/report" : "/report")}
+          onClick={() => navigate(isCaddy ? "/caddy/booking" : "/report")} // แก้ไข: สำหรับ Starter ไปที่ /report
           className={`px-3 py-1.5 rounded-full font-semibold border transition ${
             isReportPage
               ? "bg-gray-700 text-white border-gray-700"
@@ -47,10 +52,10 @@ export const Header = ({ currentDate }) => {
         </button>
       </div>
 
-      {/* โลโก้และชื่อสนาม */}
+      {/* โลโก้และชื่อสนามอยู่ตรงกลาง */}
       <div className="absolute left-1/2 top-[50%] transform -translate-x-1/2 translate-y-[-40%] text-center">
         <img
-          src={isCaddy ? "/images/caddy/eden-Logo.png" : "/images/starter/eden-Logo.png"}
+          src={isCaddy ? "/images/caddy/eden-Logo.png" : "/images/starter/eden-Logo.png"} // โลโก้เปลี่ยนตามบทบาท
           alt="Logo"
           className="h-20 w-auto mx-auto mb-1"
         />
@@ -60,7 +65,7 @@ export const Header = ({ currentDate }) => {
       </div>
 
       {/* วันที่ (เฉพาะ Caddy) */}
-      {isCaddy && (
+      {isCaddy && ( // แสดงวันที่เมื่อเป็น Caddy เท่านั้น
         <div className="absolute right-4 top-4 bg-[#324441] text-white rounded-full px-4 py-1 text-sm select-none">
           {currentDate}
         </div>
@@ -94,7 +99,7 @@ export const Header = ({ currentDate }) => {
         <div className="absolute top-full right-4 mt-2 bg-white border rounded-lg shadow-lg p-3 w-40 sm:hidden z-40">
           <button
             onClick={() => {
-              navigate(isCaddy ? "/caddy" : "/");
+              navigate(isCaddy ? "/caddy" : "/starter"); // แก้ไข: สำหรับ Starter ไปที่ /starter
               setMenuOpen(false);
             }}
             className={`w-full text-left px-3 py-2 rounded mb-2 font-semibold border transition text-sm ${
@@ -107,7 +112,7 @@ export const Header = ({ currentDate }) => {
           </button>
           <button
             onClick={() => {
-              navigate(isCaddy ? "/caddy/report" : "/report");
+              navigate(isCaddy ? "/caddy/booking" : "/report"); // แก้ไข: สำหรับ Starter ไปที่ /report
               setMenuOpen(false);
             }}
             className={`w-full text-left px-3 py-2 rounded font-semibold border transition text-sm ${
@@ -119,35 +124,34 @@ export const Header = ({ currentDate }) => {
             แจ้งปัญหา
           </button>
 
-          {/* ออกจากระบบ (มือถือ, Caddy เท่านั้น) */}
+          {/* เพิ่ม Avatar สำหรับ Mobile ใน dropdown เมื่อเป็น Caddy */}
           {isCaddy && (
-            <button
-              className="mt-3 w-full bg-[#324441] text-white rounded-full px-4 py-1 text-sm"
-              onClick={() => {
-                alert("ออกจากระบบ");
-                setMenuOpen(false);
-              }}
-            >
-              ออกจากระบบ
-            </button>
+            <div className="avatar flex justify-center my-3">
+              <div className="ring-primary ring-offset-base-100 w-16 h-16 rounded-full ring-2 ring-offset-2">
+                <img src="https://img.daisyui.com/images/profile/demo/spiderperson@192.webp" alt="User Avatar" />
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      {/* ออกจากระบบ (Desktop, Caddy เท่านั้น) */}
-      {isCaddy && (
-        <button
-          className="hidden sm:block bg-[#324441] text-white px-4 py-1 rounded-full text-sm ml-4"
-          onClick={() => alert("ออกจากระบบ")}
-        >
-          ออกจากระบบ
-        </button>
+      {/* เพิ่มส่วน Avatar ที่มุมขวาบน แทนปุ่ม "ออกจากระบบ" */}
+      {/* ใช้ Tailwind absolute position เพื่อวางไว้ด้านขวาบน */}
+      {isCaddy && ( // *** เพิ่มเงื่อนไข isCaddy เข้าไปตรงนี้! ***
+        <div className="absolute right-4 top-4 z-50 hidden sm:block"> {/* Desktop */}
+          <div className="avatar">
+            <div className="ring-primary ring-offset-base-100 w-16 h-16 rounded-full ring-2 ring-offset-2">
+              <img src="https://img.daisyui.com/images/profile/demo/spiderperson@192.webp" alt="User Avatar" />
+            </div>
+          </div>
+        </div>
       )}
+
     </header>
   );
 };
 
-// ---------------- StatusCard ----------------
+// ---------------- StatusCard ---------------- (ไม่มีการเปลี่ยนแปลง)
 export const StatusCard = ({ image, count, label, color, className }) => {
   const colorClasses = {
     success: {
@@ -198,7 +202,7 @@ export const StatusCard = ({ image, count, label, color, className }) => {
   );
 };
 
-// ---------------- StepProgress ----------------
+// ---------------- StepProgress ---------------- (ไม่มีการเปลี่ยนแปลง)
 const steps = [
   { label: "ออกรอบกอล์ฟ", key: "start" },
   { label: "จบการเล่น", key: "end" },

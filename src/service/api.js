@@ -1,22 +1,25 @@
-import axios from "axios";  
-import TokenService from "./token.service";
+// api.js
+import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_BASE_URL;
-
-const instance = axios.create({
-  baseURL: baseURL,
+const api = axios.create({
+    baseURL: 'http://localhost:5000/api',
     headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
 
-instance.interceptors.request.use(
+api.interceptors.request.use(
     (config) => {
-        const token = TokenService.getLocalAccessToken();
+        const token = localStorage.getItem('authToken'); // ดึง Token
         if (token) {
-        config.headers["x-access-token"] = token;
+            config.headers['Authorization'] = `Bearer ${token}`; // แนบ Token
         }
         return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    );
-export default instance;
+);
+
+export default api;

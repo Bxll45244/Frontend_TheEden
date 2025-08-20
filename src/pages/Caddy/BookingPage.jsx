@@ -3,6 +3,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamation, faCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate, useLocation } from "react-router-dom";
 
+// นำเข้า Header Component จากตำแหน่งที่ถูกต้อง (components/caddy/Header.jsx)
+import Header from "../../components/Caddy/Header.jsx"; // ตรวจสอบ Path ให้ถูกต้องตามโครงสร้างไฟล์ของคุณ
+
 const formatDateThai = (date) => {
   const thMonths = [
     "ม.ค","ก.พ","มี.ค","เม.ย","พ.ค","มิ.ย",
@@ -20,7 +23,8 @@ const BookingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentDate = formatDateThai(fixedDate);
+  const currentDate = formatDateThai(fixedDate); // เตรียม currentDate สำหรับส่งให้ Header
+
   const golfTimes = ["06.00", "17.00"];
   const schedule = [
     { date: "8 ก.พ ปี 2568", times: [] },
@@ -81,13 +85,17 @@ const BookingPage = () => {
 
   return (
     <div className="min-h-screen bg-white p-4 space-y-6 font-sans">
-      <div className="flex justify-end">
-        <button className="bg-[#324441] text-white px-4 py-1 rounded-full text-sm">
-          ออกจากระบบ
-        </button>
-      </div>
+      {/* ส่วน Header */}
+      {/* เนื่องจาก BookingPage เป็นหน้าหลักของ Caddy คุณอาจต้องการ Header ที่เหมาะสมกับ Caddy
+          ถ้า Header Component ของคุณมี logic ที่จัดการบทบาท Caddy ได้ ก็ใช้ตัวนี้ได้เลย */}
+      {/* <Header currentDate={currentDate} /> */} 
 
+      {/* เนื้อหาหลักของ BookingPage เริ่มต้นจากตรงนี้ */}
+      {/* Avatar ถูกย้ายไปอยู่ใน Header Component แล้ว */}
+      
       <div className="text-center space-y-2">
+        {/* โลโก้และชื่อ The Eden Golf Club (ถ้า Header ไม่มีส่วนนี้) */}
+        {/* ถ้า Header มีโลโก้แล้ว สามารถลบส่วนนี้ได้เพื่อไม่ให้ซ้ำซ้อน */}
         <img src="/images/caddy/eden-Logo.png" alt="logo" className="mx-auto h-24" />
         <h1 className="text-black text-xl font-bold uppercase">
           The Eden Golf Club
@@ -95,6 +103,7 @@ const BookingPage = () => {
       </div>
 
       <div className="flex justify-center">
+        {/* วันที่ (ถ้า Header มีส่วนนี้แล้ว สามารถลบส่วนนี้ได้) */}
         <div className="bg-[#324441] text-white rounded-full px-4 py-1 text-sm">
           {currentDate}
         </div>
@@ -129,26 +138,26 @@ const BookingPage = () => {
             </tr>
           </thead>
           <tbody>
-  {schedule.map(({ date }) => (
-    <tr key={date} className="border-t">
-      <td className="p-2">{date}</td>
-      <td className="p-2">
-        {isCompleted(date, "06.00") ? (
-          <span className="text-green-600 text-2xl font-bold">✓</span>
-        ) : (
-          "-"
-        )}
-      </td>
-      <td className="p-2">
-        {isCompleted(date, "17.00") ? (
-          <span className="text-green-600 text-2xl font-bold">✓</span>
-        ) : (
-          "-"
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
+            {schedule.map(({ date }) => (
+              <tr key={date} className="border-t">
+                <td className="p-2">{date}</td>
+                <td className="p-2">
+                  {isCompleted(date, "06.00") ? (
+                    <span className="text-green-600 text-2xl font-bold">✓</span>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+                <td className="p-2">
+                  {isCompleted(date, "17.00") ? (
+                    <span className="text-green-600 text-2xl font-bold">✓</span>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
@@ -200,38 +209,36 @@ const BookingPage = () => {
       )}
 
       {popup?.type === "success" && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
-      <FontAwesomeIcon
-        icon={faCircleCheck}
-        className="text-green-500 text-5xl mx-auto"
-      />
-      <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
-      <h3 className="text-base font-normal text-gray-800">
-        {`เริ่มงาน${popup.title} สำเร็จ`}
-      </h3>
-      <button
-        disabled={clicked}
-        onClick={() => {
-          if (clicked) return;
-          setClicked(true);
-          navigate("/caddy/booking", {
-            state: { completedSchedules: [...completed] },
-          });
-        }}
-        className={`mt-4 px-6 py-2 rounded-full text-white ${
-          clicked
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-green-500 hover:bg-green-600"
-        }`}
-      >
-        {clicked ? "กำลังเปลี่ยนหน้า..." : "ตกลง"}
-      </button>
-    </div>
-  </div>
-)}
-
-
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
+            <FontAwesomeIcon
+              icon={faCircleCheck}
+              className="text-green-500 text-5xl mx-auto"
+            />
+            <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
+            <h3 className="text-base font-normal text-gray-800">
+              {`เริ่มงาน${popup.title} สำเร็จ`}
+            </h3>
+            <button
+              disabled={clicked}
+              onClick={() => {
+                if (clicked) return;
+                setClicked(true);
+                navigate("/caddy/booking", {
+                  state: { completedSchedules: [...completed] },
+                });
+              }}
+              className={`mt-4 px-6 py-2 rounded-full text-white ${
+                clicked
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600"
+              }`}
+            >
+              {clicked ? "กำลังเปลี่ยนหน้า..." : "ตกลง"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

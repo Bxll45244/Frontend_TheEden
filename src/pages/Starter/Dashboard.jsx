@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from 'axios';
+// อิมพอร์ต api instance ที่เราสร้างไว้แทน axios โดยตรง
+import api from '../../service/api'; 
 import StatusCard from "../../components/Caddy/StatusCard";
 
 const Dashboard = () => {
@@ -14,9 +15,8 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAssetStatus = async () => {
       try {
-        // *** แก้ไข URL ตรงนี้ให้ตรงกับ backend ของคุณ ***
-        // ต้องเป็น /api/assets/status/overall เพื่อให้ตรงกับ server.js และ assetRoutes.js
-        const response = await axios.get('http://localhost:5000/api/assets/status/overall');
+        // ใช้ api instance ที่มีการตั้งค่า Interceptor สำหรับแนบ Token แล้ว
+        const response = await api.get('/assets/status/overall');
         const { golfCart, golfBag } = response.data;
 
         const formattedCartStatus = [
@@ -43,7 +43,16 @@ const Dashboard = () => {
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching asset status:", err);
-        setError("ไม่สามารถดึงข้อมูลสถานะได้");
+        // ปรับปรุงการจัดการ Error ให้ละเอียดขึ้น
+        if (err.response) {
+            if (err.response.status === 401) {
+                setError("คุณไม่ได้รับอนุญาตให้เข้าถึงข้อมูลนี้ กรุณาเข้าสู่ระบบอีกครั้ง");
+            } else {
+                setError(`เกิดข้อผิดพลาดในการดึงข้อมูล: ${err.message}`);
+            }
+        } else {
+            setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+        }
         setIsLoading(false);
       }
     };

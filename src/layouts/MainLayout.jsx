@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "../components/Caddy/Header.jsx";
+import Header from "../components/Starter/Header.jsx";
 import { Outlet } from "react-router-dom";
 
 const MainLayout = () => {
@@ -12,12 +12,14 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header currentDate={currentDate} />
+      {/* ไม่ต้องส่ง currentDate ให้ Header แล้ว เพราะ Header ไม่ได้ใช้ prop นี้ */}
+      <Header /> 
       <main className="flex-grow p-4">
         <Outlet />
       </main>
     </div>
-  );
+  )
 };
 
 export default MainLayout;
+

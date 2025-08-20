@@ -6,8 +6,10 @@ const Header = () => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // เปลี่ยนตรงนี้
-  const isStatusPage = location.pathname === "/status";
+  // ปรับปรุงการเช็ค Path ให้ตรงกับ Route ใน AppRouter.jsx
+  // /starter คือหน้าสถานะของ Starter/Admin
+  const isStatusPage = location.pathname === "/starter"; 
+  // /report คือหน้าแจ้งปัญหา
   const isReportPage = location.pathname === "/report";
 
   return (
@@ -15,7 +17,8 @@ const Header = () => {
       {/* ปุ่มสำหรับจอใหญ่ */}
       <div className="hidden sm:flex space-x-3 ml-auto">
         <button
-          onClick={() => navigate("/status")}
+          // แก้ไขการนำทางให้ไปที่ "/starter" อย่างชัดเจน
+          onClick={() => navigate("/starter")} 
           className={`px-3 py-1.5 rounded-full font-semibold border transition ${
             isStatusPage
               ? "bg-gray-700 text-white border-gray-700"
@@ -25,6 +28,7 @@ const Header = () => {
           สถานะ
         </button>
         <button
+          // การนำทางไปที่ "/report" ถูกต้องแล้ว
           onClick={() => navigate("/report")}
           className={`px-3 py-1.5 rounded-full font-semibold border transition ${
             isReportPage
@@ -76,7 +80,7 @@ const Header = () => {
         <div className="absolute top-full right-4 mt-2 bg-white border rounded-lg shadow-lg p-3 w-40 sm:hidden z-40">
           <button
             onClick={() => {
-              navigate("/status");
+              navigate("/starter"); // แก้ไขการนำทางให้ไปที่ "/starter"
               setMenuOpen(false);
             }}
             className={`w-full text-left px-3 py-2 rounded mb-2 font-semibold border transition text-sm ${
@@ -89,7 +93,7 @@ const Header = () => {
           </button>
           <button
             onClick={() => {
-              navigate("/report");
+              navigate("/report"); // การนำทางไปที่ "/report" ถูกต้องแล้ว
               setMenuOpen(false);
             }}
             className={`w-full text-left px-3 py-2 rounded font-semibold border transition text-sm ${
