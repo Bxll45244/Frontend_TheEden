@@ -9,17 +9,45 @@ export default function EmployeeDetail({ employee, onBack }) {
   };
 
   const handleSave = () => {
-    // สามารถเพิ่ม logic สำหรับการบันทึกไปยัง backend ได้ที่นี่
+    // TODO: เพิ่ม logic บันทึกไป backend
     setIsEditing(false);
   };
 
+  const renderField = (label, key, isTextarea = false) => (
+    <div>
+      <p className="text-sm font-semibold text-gray-600 mb-1">{label}</p>
+      {isEditing ? (
+        isTextarea ? (
+          <textarea
+            value={formData[key]}
+            onChange={e => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full resize-none"
+          />
+        ) : (
+          <input
+            type="text"
+            value={formData[key]}
+            onChange={e => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full"
+          />
+        )
+      ) : (
+        <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">{formData[key]}</p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-xl">
-      <button onClick={onBack} className="mb-6 text-blue-600 font-medium hover:underline">
+    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl">
+      <button
+        onClick={onBack}
+        className="mb-6 text-blue-600 font-medium hover:underline"
+      >
         ← ย้อนกลับ
       </button>
 
       <div className="flex flex-col md:flex-row gap-10">
+        {/* รูปภาพ */}
         <div className="flex-shrink-0 text-center">
           <img
             src={formData.image}
@@ -31,6 +59,7 @@ export default function EmployeeDetail({ employee, onBack }) {
           </button>
         </div>
 
+        {/* ข้อมูล */}
         <div className="flex-1 space-y-8">
           {/* ข้อมูลส่วนตัว */}
           <section>
@@ -38,10 +67,6 @@ export default function EmployeeDetail({ employee, onBack }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField("ชื่อ-นามสกุล", "name")}
               {renderField("เพศ", "gender")}
-              {renderField("วันเกิด", "birthdate")}
-              {renderField("สัญชาติ", "nationality")}
-              {renderField("เลขบัตรประชาชน", "idCard")}
-              {renderField("ที่อยู่", "address", true)}
             </div>
           </section>
 
@@ -51,7 +76,6 @@ export default function EmployeeDetail({ employee, onBack }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField("เบอร์โทรศัพท์", "phone")}
               {renderField("อีเมล", "email")}
-              {renderField("ไลน์ไอดี", "lineId")}
             </div>
           </section>
 
@@ -61,18 +85,12 @@ export default function EmployeeDetail({ employee, onBack }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField("ตำแหน่ง", "position")}
               {renderField("รหัสพนักงาน", "employeeCode")}
-              {/*<p><strong>รหัสพนักงาน:</strong> {formData.employeeCode}</p>*/}
-              {renderField("วันที่เริ่มงาน", "startDate")}
-              {renderField("วันหมดสัญญา", "contractEnd")}
-              {renderField("ประเภทพนักงาน", "workType")}
-              {renderField("สถานที่ทำงาน", "workplace")}
-              {renderField("เงินเดือน", "salary")}
               {renderField("แผนก", "department")}
             </div>
           </section>
 
-          {/* ปุ่มแก้ไข/บันทึก */}
-          <div className="pt-4 flex gap-4">
+          {/* ปุ่มแก้ไข / บันทึก */}
+          <div className="pt-4 flex gap-4 flex-wrap">
             {isEditing ? (
               <>
                 <button
@@ -101,30 +119,4 @@ export default function EmployeeDetail({ employee, onBack }) {
       </div>
     </div>
   );
-
-  function renderField(label, key, isTextarea = false) {
-    return (
-      <div>
-        <p className="text-sm font-semibold text-gray-600 mb-1">{label}</p>
-        {isEditing ? (
-          isTextarea ? (
-            <textarea
-              value={formData[key]}
-              onChange={(e) => handleChange(key, e.target.value)}
-              className="border border-gray-300 rounded p-2 w-full resize-none"
-            />
-          ) : (
-            <input
-              type="text"
-              value={formData[key]}
-              onChange={(e) => handleChange(key, e.target.value)}
-              className="border border-gray-300 rounded p-2 w-full"
-            />
-          )
-        ) : (
-          <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">{formData[key]}</p>
-        )}
-      </div>
-    );
-  }
 }
