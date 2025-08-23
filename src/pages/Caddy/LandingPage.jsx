@@ -19,10 +19,15 @@ const LandingPage = () => {
                 {/* โลโก้และชื่อคลับ */}
                 <div className="flex-1 text-center space-y-2">
                     <img src="/images/caddy/eden-Logo.png" alt="logo" className="mx-auto h-24" />
-                    <h1 className="text-black text-xl font-bold uppercase">
+                    <h1 className="text-black text-lg font-bold uppercase">
                         The Eden Golf Club
                     </h1>
                 </div>
+                
+                {/* ปุ่ม "เข้าสู่ระบบ" ที่จัดให้ชิดขวา */}
+                <button className="bg-[#324441] text-white px-4 py-2 rounded-full font-bold text-sm hover:bg-opacity-90">
+                    เข้าสู่ระบบ
+                </button>
             </div>
 
             <div className="flex justify-center mb-6">
@@ -38,7 +43,7 @@ const LandingPage = () => {
             
             {/* ส่วนเวลาออกรอบกอล์ฟ ที่แสดงเพียงแค่ "-" */}
             <div className="bg-[#324441] text-white text-center rounded-2xl py-4 px-6 mx-auto w-[85%] space-y-2 mb-6">
-                <h2 className="text-base">เวลาออกรอบกอล์ฟ</h2>
+                <h2 className="text-base font-bold">เวลาออกรอบกอล์ฟ</h2>
                 <div className="flex justify-center gap-6">
                     <p className="text-gray-400">-</p>
                 </div>
@@ -47,7 +52,7 @@ const LandingPage = () => {
             {/* ส่วนการทำงานรายสัปดาห์ ที่แสดงเฉพาะส่วนหัวตารางและเพิ่ม 1 แถว */}
             <div className="bg-white mx-auto w-[90%] rounded-2xl shadow-md overflow-hidden mb-6">
                 <div className="bg-[#324441] text-white text-center py-3">
-                    <h2 className="text-xl font-bold">การทำงานรายสัปดาห์</h2>
+                    <h2 className="text-lg font-bold">การทำงานรายสัปดาห์</h2>
                 </div>
                 <table className="w-full text-center text-sm">
                     <thead className="bg-gray-100">
@@ -69,7 +74,7 @@ const LandingPage = () => {
 
             {/* ข้อความ "กรุณาเข้าสู่ระบบ" */}
             <div className="flex justify-center mt-6 mb-6">
-                <h3 className="text-red-500 font-bold text-xl md:text-2xl">
+                <h3 className="text-red-500 font-bold text-lg md:text-xl text-center">
                     *กรุณาเข้าสู่ระบบ
                 </h3>
             </div>
