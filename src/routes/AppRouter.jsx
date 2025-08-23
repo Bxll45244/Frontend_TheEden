@@ -12,6 +12,8 @@ import GolferBookingPage from '../pages/golfer/GolferBookingPage';
 // Caddy Pages
 import BookingPage from "../pages/Caddy/BookingPage";
 import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
+import LandingPage from "../pages/Caddy/LandingPage"; // เพิ่มการนำเข้า LandingPage
+import HistoryPage from "../pages/Caddy/HistoryPage"; // ตรวจสอบ path ให้ถูกต้อง
 
 // Starter Pages
 import Dashboard from "../pages/Starter/Dashboard";
@@ -29,6 +31,9 @@ function AppRouter() {
         {/* Auth Routes */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
+        
+        {/* Landing Page Route สำหรับคนที่ยังไม่ login หรือ logout ออกจากระบบ */}
+        <Route path="/landing" element={<LandingPage />} />
 
         {/* Golfer Routes (ภายใน UserMobileLayout) */}
         <Route path="/" element={<UserMobileLayout />}>
@@ -36,22 +41,19 @@ function AppRouter() {
           <Route path="booking" element={<GolferBookingPage />} /> 
         </Route>
 
-        {/* Caddy Routes */}
-        <Route path="/caddy" element={<BookingPage />} /> 
-        <Route path="/caddy/booking" element={<ProcessGolfPage />} /> 
-
-        {/* Starter Routes (ภายใน MainLayout) */}
+        {/* Caddy Routes (ปรับปรุงให้ใช้ Nested Route อย่างถูกต้อง) */}
+        <Route path="/caddy">
+          <Route index element={<BookingPage />} /> 
+          <Route path="booking" element={<ProcessGolfPage />} /> 
+          <Route path="history" element={<HistoryPage />} /> {/* เพิ่มบรรทัดนี้ */}
+        </Route>
+        
+        {/* Starter Routes (ปรับปรุงให้ใช้ Nested Route อย่างถูกต้อง) */}
         <Route path="/starter" element={<MainLayout />}>
           <Route index element={<Dashboard />} /> 
-          <Route path="dashboard" element={<Dashboard />} /> 
+          <Route path="report" element={<ReportPage />} /> 
+          <Route path="report/confirm" element={<ReportConfirmPage />} /> 
         </Route>
-
-        {/* ---------------------------------------------------- */}
-        {/* Report Routes (ถูกย้ายออกมาเป็น top-level routes) */}
-        {/* ---------------------------------------------------- */}
-        <Route path="/report" element={<ReportPage />} /> 
-        <Route path="/report/confirm" element={<ReportConfirmPage />} /> 
-
       </Routes>
     </BrowserRouter>
   );
