@@ -1,4 +1,6 @@
 import { HiClipboardList, HiUserAdd, HiUserGroup } from "react-icons/hi";
+import React from "react";
+
 
 export default function Sidebar({ activePage, setActivePage }) {
   return (

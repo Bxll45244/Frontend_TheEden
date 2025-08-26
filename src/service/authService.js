@@ -1,4 +1,5 @@
 import axios from 'axios';
+import React from "react";
 
 // Load BASE URL from .env (VITE_API_BASE_URL=http://localhost:5000/api)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -85,7 +86,7 @@ export const logout = async () => {
 // Get Current User Profile (Use JWT cookie for authentication)
 export const getUserProfile = async () => {
   try {
-    const res = await api.get('/user/profile'); 
+    //const res = await api.get('/user/profile'); 
     return { 
       success: true, 
       user: res.data,  //Get user object from backend
@@ -99,7 +100,7 @@ export const getUserProfile = async () => {
       };
     }
 
-    console.error("Profile fetch error:", err.response?.data || err.message);
+    //console.error("Profile fetch error:", err.response?.data || err.message);
 
     return { 
       success: false, 

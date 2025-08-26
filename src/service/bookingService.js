@@ -20,9 +20,16 @@ const api = axios.create({
 export const getBookings = async () => {
   try {
     const res = await api.get('/bookings');
+
+    // ✅ log ดูว่าข้อมูล backend ส่งอะไรมาจริงๆ
+    console.log("📌 API Response:", res.data);
+
+    // ✅ ปรับให้แน่ใจว่า bookings เป็น array
+    const bookings = res.data.bookings || res.data;
+
     return {
       success: true,
-      bookings: res.data,
+      bookings,
       message: 'ดึงข้อมูลการจองสำเร็จ'
     };
   } catch (err) {
@@ -34,6 +41,7 @@ export const getBookings = async () => {
   }
 };
 
+/** : res.data*/
 /**
  * ฟังก์ชันสำหรับสร้างการจองใหม่
  * @param {object} bookingData - ข้อมูลการจองที่ต้องการสร้าง

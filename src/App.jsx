@@ -1,4 +1,6 @@
 // src/App.jsx
+//import React from "react";
+
 import React, { useState, useEffect } from 'react';
 import LoadingAnimation from './components/animations/LoadingAnimation'; 
 

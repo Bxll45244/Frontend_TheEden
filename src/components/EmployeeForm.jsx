@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 // Import service สำหรับเรียก API
 import { registerByAdmin } from "../service/userService.js";
+import React from "react";
+
 
 export default function EmployeeForm({ onCancel, onAddEmployee }) {
   const [formData, setFormData] = useState({
@@ -84,14 +86,14 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
           <img
             src={formData.image}
             alt="Profile"
-            className="rounded-full w-40 h-40 mx-auto object-cover"
+            className="rounded-full w-10 h-10 mx-auto object-cover"
           />
           <Button className="w-full mt-4">อัปโหลดรูปภาพ</Button>
         </div>
       </div>
 
       {/* ฟอร์ม */}
-      <form onSubmit={handleSubmit} className="flex-1 bg-white p-6 rounded shadow-md space-y-4">
+      <form onSubmit={handleSubmit} className="flex-1 bg-white p-6 rounded shadow-md space-y-4 max-w-lg mx-auto">
         {error && <div className="text-red-500 text-center">{error}</div>}
         {success && <div className="text-green-500 text-center">{success}</div>}
         <div>

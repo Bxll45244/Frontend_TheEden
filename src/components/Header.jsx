@@ -1,4 +1,6 @@
 import { HiUserGroup, HiClipboardList, HiUserAdd } from "react-icons/hi";
+import React from "react";
+
 
 export default function Header({ activePage }) {
   const pageData = {
