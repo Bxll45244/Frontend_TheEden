@@ -13,7 +13,7 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "", // เปลี่ยนชื่อจาก 'position' เป็น 'role' เพื่อให้สอดคล้องกับ backend
+    role: "", 
     image: "/Images/Profile.jpg",
   });
   const [loading, setLoading] = useState(false);

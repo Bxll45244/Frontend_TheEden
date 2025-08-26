@@ -2,6 +2,7 @@ import React from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
+// Component ที่ชื่อ EmployeeCard รับ props (ข้อมูล) สองตัวคือ employee และ onClick
 export default function EmployeeCard({ employee, onClick }) {
 return (
         <Card

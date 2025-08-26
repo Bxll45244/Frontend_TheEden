@@ -1,8 +1,7 @@
 import React from "react";
-
-import { useState, useEffect } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { useState, useEffect } from "react"; // useState: จัดการ state, useEffect: จัดการ side-effects เช่น fetch data
+import { Dialog, Transition } from "@headlessui/react"; // สำหรับ modal/dialog
+import { Fragment } from "react"; // ใช้แทน wrapper ที่ไม่ render element จริง
 import {
   UserRound,
   Clock,
@@ -12,31 +11,76 @@ import {
   RefreshCw,
   Trash2,
   Hash,
-} from "lucide-react";
+} from "lucide-react"; // icon ต่าง ๆ
 
-// Import service functions
-import { getBookings, updateBooking, deleteBooking } from "../service/bookingService.js";
+// Mock data สำหรับทดลอง
+const mockBookings = [
+  { _id: '1', timeSlot: '06:00', caddy: [{ name: 'John' }], groupName: 'Group A', bookedPlayers: 4, teamName: 'Team Alpha' },
+  { _id: '2', timeSlot: '07:30', caddy: [{ name: 'Jane' }], groupName: 'Group B', bookedPlayers: 2, teamName: 'Team Beta' },
+  { _id: '3', timeSlot: '12:00', caddy: [{ name: 'Mike' }], groupName: 'Group C', bookedPlayers: 3, teamName: 'Team Gamma' },
+];
 
-export default function BookingTable() {
-  const [selected, setSelected] = useState(null);
-  const [holeFilter, setHoleFilter] = useState("all");
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// Mock API function สำหรับดึงข้อมูล
+const getBookings = async () => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({ success: true, bookings: mockBookings });
+    }, 500);
+  });
+};
 
-  // States for update/delete dialogs
+// Mock API function สำหรับอัปเดตการจอง
+const updateBooking = async (id, data) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const updatedBooking = { ...mockBookings.find(b => b._id === id), ...data };
+      resolve({ success: true, booking: updatedBooking, message: "Booking updated successfully." });
+    }, 500);
+  });
+};
+
+// Mock API function สำหรับลบการจอง
+const deleteBooking = async (id) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const remaining = mockBookings.filter(b => b._id !== id);
+      resolve({ success: true, message: "Booking deleted successfully." });
+    }, 500);
+  });
+};
+
+// --- Main Component ---
+export default function App() {
+  // State หลัก
+  const [selected, setSelected] = useState(null); // booking ที่เลือก
+  const [holeFilter, setHoleFilter] = useState("all"); // filter หลุม
+  const [bookings, setBookings] = useState([]); // รายการ booking
+  const [loading, setLoading] = useState(true); // loading state
+  const [error, setError] = useState(null); // error state
+
+  // State สำหรับ modal update/delete
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [newTimeSlot, setNewTimeSlot] = useState("");
+  const [newTimeSlot, setNewTimeSlot] = useState(""); // เวลาใหม่สำหรับ update
 
-  const activeColor = "#4F6767";
-  const hoverColor = "#3d5151";
+  // State สำหรับแสดงข้อความ success/error
+  const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Fetch bookings on component mount
+  const activeColor = "#4F6767"; // สีปุ่ม active
+  const hoverColor = "#3d5151"; // สี hover
+
+  // ฟังก์ชันแสดงข้อความ และซ่อนอัตโนมัติ
+  const showMessage = (text, type) => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: '', type: '' }), 5000);
+  };
+
+  // useEffect เรียก fetchBookings ตอน mount component
   useEffect(() => {
     fetchBookings();
   }, []);
 
+  // ฟังก์ชันดึงข้อมูล booking
   const fetchBookings = async () => {
     setLoading(true);
     try {
@@ -54,68 +98,71 @@ export default function BookingTable() {
     }
   };
 
-  // Handlers for update and delete
+  // ฟังก์ชันเปิด modal update
   const handleUpdateClick = (booking) => {
-    setSelected(booking);
-    setNewTimeSlot(booking.timeSlot);
-    setIsUpdateModalOpen(true);
+    setSelected(booking); // เลือก booking
+    setNewTimeSlot(booking.timeSlot); // ตั้งเวลาเริ่มต้น
+    setIsUpdateModalOpen(true); // เปิด modal
   };
 
+  // ฟังก์ชันเปิด modal delete
   const handleDeleteClick = (booking) => {
     setSelected(booking);
     setIsDeleteModalOpen(true);
   };
 
+  // ฟังก์ชันยืนยัน update
   const handleUpdateConfirm = async () => {
     if (!selected || !newTimeSlot) return;
     try {
       const response = await updateBooking(selected._id, { timeSlot: newTimeSlot });
       if (response.success) {
-        // อัปเดตข้อมูลใน UI โดยไม่ต้องโหลดใหม่ทั้งหมด
         const updatedBookings = bookings.map(b => b._id === selected._id ? response.booking : b);
-        setBookings(updatedBookings);
+        setBookings(updatedBookings); // อัปเดต state
         setSelected(null);
         setIsUpdateModalOpen(false);
-        // สามารถเพิ่มการแจ้งเตือนสำเร็จได้ที่นี่
-        alert("อัปเดตการจองสำเร็จ!");
+        showMessage("อัปเดตการจองสำเร็จ!", "success"); // แสดงข้อความ success
       } else {
-        alert("อัปเดตไม่สำเร็จ: " + response.message);
+        showMessage("อัปเดตไม่สำเร็จ: " + response.message, "error");
       }
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการอัปเดต");
+      showMessage("เกิดข้อผิดพลาดในการอัปเดต", "error");
     }
   };
 
+  // ฟังก์ชันยืนยัน delete
   const handleDeleteConfirm = async () => {
     if (!selected) return;
     try {
       const response = await deleteBooking(selected._id);
       if (response.success) {
-        // ลบข้อมูลออกจาก UI
         const remainingBookings = bookings.filter(b => b._id !== selected._id);
-        setBookings(remainingBookings);
+        setBookings(remainingBookings); // อัปเดต state
         setSelected(null);
         setIsDeleteModalOpen(false);
-        alert("ลบการจองสำเร็จ!");
+        showMessage("ลบการจองสำเร็จ!", "success"); // แสดงข้อความ success
       } else {
-        alert("ลบไม่สำเร็จ: " + response.message);
+        showMessage("ลบไม่สำเร็จ: " + response.message, "error");
       }
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการลบ");
+      showMessage("เกิดข้อผิดพลาดในการลบ", "error");
     }
   };
 
+  // สร้างเวลา 6:00 ถึง 9:30 โดยเพิ่มทีละ 15 นาที
   const times = Array.from({ length: 15 }).map((_, index) => {
     const hour = Math.floor(index / 4) + 6;
     const min = (index % 4) * 15;
     return `${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
   });
 
+  // filter เวลา ถ้าเลือก 9 หลุม
   const filteredTimes = times.filter(time => {
     if (holeFilter === "9") return time <= "11:30";
     return true;
   });
 
+  // ปุ่ม filter
   function FilterButton({ label, value }) {
     const isActive = holeFilter === value;
     return (
@@ -135,26 +182,37 @@ export default function BookingTable() {
     );
   }
 
+  // ถ้า loading
   if (loading) {
     return <div className="text-center p-8">กำลังโหลดข้อมูลการจอง...</div>;
   }
 
+  // ถ้า error
   if (error) {
     return <div className="text-center p-8 text-red-500">เกิดข้อผิดพลาด: {error}</div>;
   }
 
   return (
     <div className="p-4 bg-white shadow rounded-xl overflow-x-auto">
+      {/* ข้อความแจ้งเตือน */}
+      {message.text && (
+        <div className={`p-4 mb-4 rounded-lg text-center font-bold ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* ปุ่ม Filter */}
       <div className="mb-4 flex gap-3">
         <FilterButton label="9 หลุม" value="9" />
         <FilterButton label="18 หลุม" value="18" />
         <FilterButton label="ทั้งหมด" value="all" />
       </div>
 
+      {/* ตาราง booking */}
       <table className="min-w-full text-sm text-center border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
-            {[
+            {[ // แสดง column headers พร้อม icon
               { icon: Hash, label: "คิว" },
               { icon: UserRound, label: "แคดดี้" },
               { icon: Clock, label: "เวลา" },
@@ -175,24 +233,23 @@ export default function BookingTable() {
         </thead>
         <tbody>
           {filteredTimes.map((time, index) => {
-            const booking = bookings.find(b => b.timeSlot === time);
+            const booking = bookings.find(b => b.timeSlot === time); // หา booking ตามเวลา
             return (
               <tr
                 key={time}
-                className={`h-10 ${
-                  booking ? "bg-green-100 hover:bg-green-200 cursor-pointer" : ""
-                }`}
+                className={`h-10 ${booking ? "bg-green-100 hover:bg-green-200 cursor-pointer" : ""}`}
                 onClick={() => booking && setSelected(booking)}
               >
-                <td>{index + 1}</td>
-                <td className="text-xs font-mono">{booking?.caddy?.map(c => c.name).join(" ")}</td>
-                <td className="text-orange-600 font-mono">{time}</td>
+                <td>{index + 1}</td> {/* ลำดับ */}
+                <td className="text-xs font-mono">{booking?.caddy?.map(c => c.name).join(" ")}</td> {/* ชื่อ caddy */}
+                <td className="text-orange-600 font-mono">{time}</td> {/* เวลา */}
                 {booking ? (
                   <>
                     <td className="font-semibold">{booking.groupName}</td>
                     <td>{booking.bookedPlayers}</td>
                     <td>{booking.teamName}</td>
                     <td>
+                      {/* ปุ่มเลื่อนเวลา */}
                       <button
                         className="bg-gray-800 text-white text-xs px-3 py-1 rounded-full hover:bg-gray-500"
                         onClick={(e) => { e.stopPropagation(); handleUpdateClick(booking); }}
@@ -201,6 +258,7 @@ export default function BookingTable() {
                       </button>
                     </td>
                     <td>
+                      {/* ปุ่มยกเลิก */}
                       <button
                         className="bg-gray-800 text-white text-xs px-3 py-1 rounded-full hover:bg-red-500"
                         onClick={(e) => { e.stopPropagation(); handleDeleteClick(booking); }}
@@ -210,7 +268,7 @@ export default function BookingTable() {
                     </td>
                   </>
                 ) : (
-                  <td colSpan={6}></td>
+                  <td colSpan={6}></td> // ถ้าไม่มี booking
                 )}
               </tr>
             );
@@ -218,9 +276,9 @@ export default function BookingTable() {
         </tbody>
       </table>
 
-      {/* --- Dialog สำหรับดูรายละเอียด (Original) --- */}
+      {/* --- Dialog แสดงรายละเอียด booking --- */}
       <Dialog
-        open={!!selected}
+        open={!!selected} // เปิดเมื่อมี booking ที่เลือก
         onClose={() => setSelected(null)}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
@@ -247,7 +305,7 @@ export default function BookingTable() {
         </div>
       </Dialog>
 
-      {/* --- Dialog สำหรับอัปเดต --- */}
+      {/* --- Dialog อัปเดต booking --- */}
       <Transition appear show={isUpdateModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setIsUpdateModalOpen(false)}>
           <Transition.Child
@@ -293,6 +351,7 @@ export default function BookingTable() {
                     />
                   </div>
                   <div className="mt-4">
+                    {/* ปุ่มยืนยัน */}
                     <button
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -300,6 +359,7 @@ export default function BookingTable() {
                     >
                       ยืนยันการเลื่อนเวลา
                     </button>
+                    {/* ปุ่มยกเลิก */}
                     <button
                       type="button"
                       className="ml-2 inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
@@ -315,7 +375,7 @@ export default function BookingTable() {
         </Dialog>
       </Transition>
 
-      {/* --- Dialog สำหรับลบ --- */}
+      {/* --- Dialog ลบ booking --- */}
       <Transition appear show={isDeleteModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setIsDeleteModalOpen(false)}>
           <Transition.Child
@@ -350,6 +410,7 @@ export default function BookingTable() {
                     </p>
                   </div>
                   <div className="mt-4">
+                    {/* ปุ่มยืนยัน */}
                     <button
                       type="button"
                       className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
@@ -357,6 +418,7 @@ export default function BookingTable() {
                     >
                       ยืนยันการยกเลิก
                     </button>
+                    {/* ปุ่มยกเลิก */}
                     <button
                       type="button"
                       className="ml-2 inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
