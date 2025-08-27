@@ -96,9 +96,8 @@ export const getUserProfile = async () => {
         const data = await response.json();
 
         if (response.ok) {
-            return { success: true, user: data.user || data }; // Backend อาจส่ง user ตรงๆ หรือใน data.user
+            return { success: true, user: data.user || data }; 
         } else {
-            // หากไม่สำเร็จ อาจเป็นเพราะ Token หมดอายุ, ไม่มีการ Login
             return { success: false, message: data.message || 'Failed to fetch user profile' };
         }
     } catch (error) {
