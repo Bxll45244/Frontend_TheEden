@@ -257,84 +257,90 @@ const BookingPage = () => {
                 </table>
             </div>
 
-            {/* Popup */}
-            {popup?.type === "confirm" && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[60%] max-w-xs">
-                        <FontAwesomeIcon
-                            icon={faExclamation}
-                            className="text-yellow-400 text-4xl mb-4"
-                        />
-                        <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
-                        <div className="flex justify-center gap-4">
-                            <button
-                                onClick={handleConfirm}
-                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
-                            >
-                                ตกลง
-                            </button>
-                            <button
-                                onClick={closePopup}
-                                className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
-                            >
-                                ยกเลิก
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Popup แบบ confirm */}
+{/* Popup แสดงผลรวมทุกกรณี */}
+{popup && (
+  <div className="fixed inset-0 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-3xl shadow-xl border-2 border-black text-center w-[70%] max-w-xs space-y-4">
+      
+      {/* Confirm */}
+      {popup.type === "confirm" && (
+        <>
+          <FontAwesomeIcon
+            icon={faExclamation}
+            className="text-yellow-400 text-5xl mx-auto"
+          />
+          <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={handleConfirm}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+            >
+              ตกลง
+            </button>
+            <button
+              onClick={closePopup}
+              className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+            >
+              ยกเลิก
+            </button>
+          </div>
+        </>
+      )}
 
-            {popup?.type === "notTime" && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[60%] max-w-xs">
-                        <FontAwesomeIcon
-                            icon={faExclamation}
-                            className="text-yellow-500 text-4xl mb-4"
-                        />
-                        <h3 className="text-lg font-semibold mb-4">ยังไม่ถึงเวลา</h3>
-                        <div className="flex justify-center">
-                            <button
-                                onClick={closePopup}
-                                className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
-                            >
-                                ปิด
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+      {/* Not Time */}
+      {popup.type === "notTime" && (
+        <>
+          <FontAwesomeIcon
+            icon={faExclamation}
+            className="text-red-500 text-5xl mx-auto"
+          />
+          <h3 className="text-lg font-semibold mb-4">ยังไม่ถึงเวลาเริ่มงาน</h3>
+          <button
+            onClick={closePopup}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+          >
+            ตกลง
+          </button>
+        </>
+      )}
 
-            {popup?.type === "success" && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
-                        <FontAwesomeIcon
-                            icon={faCircleCheck}
-                            className="text-green-500 text-5xl mx-auto"
-                        />
-                        <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
-                        <h3 className="text-base font-normal text-gray-800">
-                            {`เริ่มงาน${popup.title} สำเร็จ`}
-                        </h3>
-                        <button
-                            disabled={clicked}
-                            onClick={() => {
-                                if (clicked) return;
-                                setClicked(true);
-                                navigate("/caddy/booking", {
-                                    state: { completedSchedules: [...completed] },
-                                });
-                            }}
-                            className={`mt-4 px-6 py-2 rounded-full text-white ${
-                                clicked
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-green-500 hover:bg-green-600"
-                            }`}
-                        >
-                            {clicked ? "กำลังเปลี่ยนหน้า..." : "ตกลง"}
-                        </button>
-                    </div>
-                </div>
-            )}
+      {/* Success */}
+      {popup.type === "success" && (
+        <>
+          <FontAwesomeIcon
+            icon={faCircleCheck}
+            className="text-green-500 text-5xl mx-auto"
+          />
+          <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
+          <h3 className="text-base font-normal text-gray-800">
+            {`เริ่มงาน${popup.title} สำเร็จ`}
+          </h3>
+          <button
+            disabled={clicked}
+            onClick={() => {
+              if (clicked) return;
+              setClicked(true);
+              navigate("/caddy/booking", {
+                state: { completedSchedules: [...completed] },
+              });
+            }}
+            className={`mt-4 px-6 py-2 rounded-full text-white ${
+              clicked
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600"
+            }`}
+          >
+            {clicked ? "กำลังเปลี่ยนหน้า..." : "ตกลง"}
+          </button>
+        </>
+      )}
+      
+
+    </div>
+  </div>
+)}
+
         </div>
     );
 };
