@@ -9,7 +9,6 @@ import BookingTable from "../components/BookingTable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import employeesData from "../data/employees";
 
-
 export default function AdminDashboard() {
   // state สำหรับ Tab ปัจจุบัน
   const [tab, setTab] = useState("All");
@@ -34,19 +33,16 @@ export default function AdminDashboard() {
   return (
     // container หลักเป็น flex row, min-h-screen ให้เต็มหน้าจอ
     <div className="flex min-h-screen">
-      
       {/* Sidebar แสดงเมนูด้านซ้าย */}
       <Sidebar activePage={activePage} setActivePage={setActivePage} />
-      
+
       {/* container เนื้อหาหลัก */}
       <div className="flex-1 flex flex-col p-6 bg-gray-100">
-        
         {/* Header แสดงชื่อหน้าปัจจุบัน */}
         <Header activePage={activePage} />
 
         {/* ส่วนเนื้อหา scrollable */}
         <div className="flex-1 overflow-auto mt-4">
-          
           {/* ถ้า activePage เป็น employeeData */}
           {activePage === "employeeData" && (
             <>
@@ -59,39 +55,48 @@ export default function AdminDashboard() {
               ) : (
                 <>
                   {/* Search + Tabs */}
-                  <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-                    {/* ช่องค้นหาชื่อพนักงาน */}
-                    <input
-                      type="text"
-                      placeholder="ค้นหาชื่อพนักงาน..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="border rounded-lg p-2 w-full md:w-80"
-                    />
+                  <div className="flex flex-col gap-4 mb-4">
+                    {/* ช่องค้นหา: อยู่ด้านขวา */}
+                    <div className="flex justify-end">
+                      <input
+                        type="text"
+                        placeholder="ค้นหาชื่อพนักงาน..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="border rounded-lg p-2 w-full md:w-80"
+                      />
+                    </div>
 
-                    {/* Tabs สำหรับเลือกประเภทพนักงาน */}
-                    <Tabs value={tab} onValueChange={setTab}>
-                      <TabsList className="flex gap-2 bg-gray-200 p-2 rounded shadow-inner">
-                        {["All", "General", "Admin", "Caddie", "Starter"].map((pos) => {
-                          const count =
-                            pos === "All"
-                              ? employees.length
-                              : employees.filter((e) => e.position === pos).length;
+                    {/* Tabs: อยู่ตรงกลาง */}
+                    <div className="flex justify-center">
+                      <Tabs value={tab} onValueChange={setTab}>
+                        <TabsList className="flex gap-2 bg-gray-200 p-2 rounded shadow-inner">
+                          {["All", "General", "Admin", "Caddie", "Starter"].map(
+                            (pos) => {
+                              const count =
+                                pos === "All"
+                                  ? employees.length
+                                  : employees.filter((e) => e.position === pos)
+                                      .length;
 
-                          return (
-                            <TabsTrigger
-                              key={pos}
-                              value={pos}
-                              className={`px-4 py-2 rounded ${
-                                tab === pos ? "bg-gray-500 text-white" : "text-black"
-                              }`}
-                            >
-                              {pos} ({count})
-                            </TabsTrigger>
-                          );
-                        })}
-                      </TabsList>
-                    </Tabs>
+                              return (
+                                <TabsTrigger
+                                  key={pos}
+                                  value={pos}
+                                  className={`px-4 py-2 rounded ${
+                                    tab === pos
+                                      ? "bg-gray-500 text-white"
+                                      : "text-black"
+                                  }`}
+                                >
+                                  {pos} ({count})
+                                </TabsTrigger>
+                              );
+                            }
+                          )}
+                        </TabsList>
+                      </Tabs>
+                    </div>
                   </div>
 
                   {/* แสดง Employee List */}

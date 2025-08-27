@@ -18,31 +18,53 @@ export default function EmployeeDetail({ employee, onBack }) {
     setIsEditing(false); // ปิดโหมดแก้ไขหลังบันทึก
   };
 
- 
   // label = ชื่อ field, key = key ของ formData, isTextarea = true ถ้าเป็น textarea
   const renderField = (label, key, isTextarea = false) => (
     <div>
       <p className="text-sm font-semibold text-gray-600 mb-1">{label}</p>
       {isEditing ? (
-        isTextarea ? (
-          // ถ้าอยู่ในโหมดแก้ไขและเป็น textarea
+        key === "position" ? (
+          // ✅ ถ้า key คือ "status" แสดง select
+          <select
+            value={formData[key]}
+            onChange={(e) => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full"
+          >
+            <option value="General">General</option>
+            <option value="Caddie">Caddie</option>
+            <option value="Starter">Starter</option>
+          </select>
+        ) : key === "status" ? (
+          // dropdown สำหรับสถานะ
+          <select
+            value={formData[key]}
+            onChange={(e) => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full"
+          >
+            <option value="ทำงานอยู่">ทำงานอยู่</option>
+            <option value="ออกแล้ว">ออกแล้ว</option>
+          </select>
+        ) : isTextarea ? (
+          // textarea
           <textarea
             value={formData[key]}
-            onChange={e => handleChange(key, e.target.value)}
+            onChange={(e) => handleChange(key, e.target.value)}
             className="border border-gray-300 rounded p-2 w-full resize-none"
           />
         ) : (
-          // ถ้าอยู่ในโหมดแก้ไขและเป็น input text
+          // input ธรรมดา
           <input
             type="text"
             value={formData[key]}
-            onChange={e => handleChange(key, e.target.value)}
+            onChange={(e) => handleChange(key, e.target.value)}
             className="border border-gray-300 rounded p-2 w-full"
           />
         )
       ) : (
-        // ถ้าไม่อยู่ในโหมดแก้ไข แสดงเป็น text ธรรมดา
-        <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">{formData[key]}</p>
+        // โหมดแสดงผล (ไม่แก้ไข)
+        <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">
+          {formData[key]}
+        </p>
       )}
     </div>
   );
@@ -62,7 +84,7 @@ export default function EmployeeDetail({ employee, onBack }) {
         {/* รูปภาพ */}
         <div className="flex-shrink-0 text-center">
           <img
-            src={formData.image} 
+            src={formData.image}
             alt={formData.name}
             className="w-44 h-44 object-cover rounded-full mx-auto shadow-md"
           />
@@ -80,8 +102,8 @@ export default function EmployeeDetail({ employee, onBack }) {
               ข้อมูลส่วนตัว
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderField("ชื่อ-นามสกุล", "name")} 
-              {renderField("เพศ", "gender")}          
+              {renderField("ชื่อ-นามสกุล", "name")}
+              {renderField("เพศ", "gender")}
             </div>
           </section>
 
@@ -91,8 +113,8 @@ export default function EmployeeDetail({ employee, onBack }) {
               ข้อมูลการติดต่อ
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderField("เบอร์โทรศัพท์", "phone")} 
-              {renderField("อีเมล", "email")}          
+              {renderField("เบอร์โทรศัพท์", "phone")}
+              {renderField("อีเมล", "email")}
             </div>
           </section>
 
@@ -102,9 +124,9 @@ export default function EmployeeDetail({ employee, onBack }) {
               ข้อมูลตำแหน่งงาน
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderField("ตำแหน่ง", "position")}       
-              {renderField("รหัสพนักงาน", "employeeCode")} 
-              {renderField("แผนก", "department")}       
+              {renderField("ตำแหน่ง", "position")}
+              {renderField("รหัสพนักงาน", "employeeCode")}
+              {renderField("สถานะ", "status")}
             </div>
           </section>
 
@@ -131,7 +153,7 @@ export default function EmployeeDetail({ employee, onBack }) {
               // ปุ่มเปิดโหมดแก้ไข
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow"
+                className="px-6 py-2 bg-green-800 text-white font-medium rounded-lg hover:bg-green-800 shadow"
               >
                 แก้ไขข้อมูล
               </button>

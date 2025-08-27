@@ -8,18 +8,16 @@ const employees = [
     email: "charlotte.evans@email.com",
     status: "ทำงานอยู่",
     image: "/Images/G1.jpg",
-   
   },
   {
     name: "เอมิลี่ คาร์เตอร์",
     gender: "หญิง",
     position: "General",
     employeeCode: "E-2023002",
-     phone: "092-456-7890",
+    phone: "092-456-7890",
     email: "emily.carter@email.com",
     status: "ทำงานอยู่",
     image: "/Images/G2.jpg",
-    
   },
   {
     name: "โนอาห์ แฮร์ริส",
@@ -30,7 +28,6 @@ const employees = [
     email: "noah.harris@email.com",
     status: "ออกแล้ว",
     image: "/Images/B3.jpg",
-    
   },
   {
     name: "โซเฟีย รีด",
@@ -41,7 +38,6 @@ const employees = [
     email: "sophia.reed@email.com",
     status: "ทำงานอยู่",
     image: "/Images/G3.png",
-   
   },
   {
     name: "เอวา มอร์แกน",
@@ -52,7 +48,6 @@ const employees = [
     email: "ava.morgan@email.com",
     status: "ออกแล้ว",
     image: "/Images/G4.png",
-    
   },
   {
     name: "โอลิเวีย เบนเน็ตต์",
@@ -63,7 +58,6 @@ const employees = [
     email: "olivia.bennett@email.com",
     status: "ทำงานอยู่",
     image: "/Images/G5.jpg",
-    
   },
   {
     name: "อิซาเบลล่า บรูกส์",
@@ -74,7 +68,6 @@ const employees = [
     email: "isabella.brooks@email.com",
     status: "ทำงานอยู่",
     image: "/Images/G6.jpg",
-    
   },
   {
     name: "เบนจามิน สก็อตต์",
@@ -98,7 +91,4 @@ const employees = [
   },
 ];
 
-  
-  export default employees;
-
-  
+export default employees;

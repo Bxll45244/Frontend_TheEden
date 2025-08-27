@@ -15,14 +15,35 @@ import {
 
 // Mock data สำหรับทดลอง
 const mockBookings = [
-  { _id: '1', timeSlot: '06:00', caddy: [{ name: 'John' }], groupName: 'Group A', bookedPlayers: 4, teamName: 'Team Alpha' },
-  { _id: '2', timeSlot: '07:30', caddy: [{ name: 'Jane' }], groupName: 'Group B', bookedPlayers: 2, teamName: 'Team Beta' },
-  { _id: '3', timeSlot: '12:00', caddy: [{ name: 'Mike' }], groupName: 'Group C', bookedPlayers: 3, teamName: 'Team Gamma' },
+  {
+    _id: "1",
+    timeSlot: "06:00",
+    caddy: [{ name: "John" }],
+    groupName: "Group A",
+    bookedPlayers: 4,
+    teamName: "Team Alpha",
+  },
+  {
+    _id: "2",
+    timeSlot: "07:30",
+    caddy: [{ name: "Jane" }],
+    groupName: "Group B",
+    bookedPlayers: 2,
+    teamName: "Team Beta",
+  },
+  {
+    _id: "3",
+    timeSlot: "12:00",
+    caddy: [{ name: "Mike" }],
+    groupName: "Group C",
+    bookedPlayers: 3,
+    teamName: "Team Gamma",
+  },
 ];
 
 // Mock API function สำหรับดึงข้อมูล
 const getBookings = async () => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve({ success: true, bookings: mockBookings });
     }, 500);
@@ -31,19 +52,26 @@ const getBookings = async () => {
 
 // Mock API function สำหรับอัปเดตการจอง
 const updateBooking = async (id, data) => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      const updatedBooking = { ...mockBookings.find(b => b._id === id), ...data };
-      resolve({ success: true, booking: updatedBooking, message: "Booking updated successfully." });
+      const updatedBooking = {
+        ...mockBookings.find((b) => b._id === id),
+        ...data,
+      };
+      resolve({
+        success: true,
+        booking: updatedBooking,
+        message: "Booking updated successfully.",
+      });
     }, 500);
   });
 };
 
 // Mock API function สำหรับลบการจอง
 const deleteBooking = async (id) => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      const remaining = mockBookings.filter(b => b._id !== id);
+      const remaining = mockBookings.filter((b) => b._id !== id);
       resolve({ success: true, message: "Booking deleted successfully." });
     }, 500);
   });
@@ -64,7 +92,7 @@ export default function App() {
   const [newTimeSlot, setNewTimeSlot] = useState(""); // เวลาใหม่สำหรับ update
 
   // State สำหรับแสดงข้อความ success/error
-  const [message, setMessage] = useState({ text: '', type: '' });
+  const [message, setMessage] = useState({ text: "", type: "" });
 
   const activeColor = "#4F6767"; // สีปุ่ม active
   const hoverColor = "#3d5151"; // สี hover
@@ -72,7 +100,7 @@ export default function App() {
   // ฟังก์ชันแสดงข้อความ และซ่อนอัตโนมัติ
   const showMessage = (text, type) => {
     setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), 5000);
+    setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   };
 
   // useEffect เรียก fetchBookings ตอน mount component
@@ -115,9 +143,13 @@ export default function App() {
   const handleUpdateConfirm = async () => {
     if (!selected || !newTimeSlot) return;
     try {
-      const response = await updateBooking(selected._id, { timeSlot: newTimeSlot });
+      const response = await updateBooking(selected._id, {
+        timeSlot: newTimeSlot,
+      });
       if (response.success) {
-        const updatedBookings = bookings.map(b => b._id === selected._id ? response.booking : b);
+        const updatedBookings = bookings.map((b) =>
+          b._id === selected._id ? response.booking : b
+        );
         setBookings(updatedBookings); // อัปเดต state
         setSelected(null);
         setIsUpdateModalOpen(false);
@@ -136,7 +168,9 @@ export default function App() {
     try {
       const response = await deleteBooking(selected._id);
       if (response.success) {
-        const remainingBookings = bookings.filter(b => b._id !== selected._id);
+        const remainingBookings = bookings.filter(
+          (b) => b._id !== selected._id
+        );
         setBookings(remainingBookings); // อัปเดต state
         setSelected(null);
         setIsDeleteModalOpen(false);
@@ -150,18 +184,24 @@ export default function App() {
   };
 
   // สร้างเวลา 6:00 ถึง 9:30 โดยเพิ่มทีละ 15 นาที
-  const times = Array.from({ length: 15 }).map((_, index) => {
+  const times = Array.from({ length: 30 }).map((_, index) => {
     const hour = Math.floor(index / 4) + 6;
     const min = (index % 4) * 15;
-    return `${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+    return `${hour.toString().padStart(2, "0")}:${min
+      .toString()
+      .padStart(2, "0")}`;
   });
 
   // filter เวลา ถ้าเลือก 9 หลุม
-  const filteredTimes = times.filter(time => {
-    if (holeFilter === "9") return time <= "11:30";
+  const filteredTimes = times.filter((time) => {
+    if (holeFilter === "9") {
+      return time > "11:30";
+    }
+    if (holeFilter === "18") {
+      return time <= "11:30";
+    }
     return true;
   });
-
   // ปุ่ม filter
   function FilterButton({ label, value }) {
     const isActive = holeFilter === value;
@@ -174,8 +214,12 @@ export default function App() {
           color: isActive ? "white" : activeColor,
           borderColor: activeColor,
         }}
-        onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = hoverColor)}
-        onMouseLeave={(e) => !isActive && (e.currentTarget.style.backgroundColor = "white")}
+        onMouseEnter={(e) =>
+          !isActive && (e.currentTarget.style.backgroundColor = hoverColor)
+        }
+        onMouseLeave={(e) =>
+          !isActive && (e.currentTarget.style.backgroundColor = "white")
+        }
       >
         {label}
       </button>
@@ -189,14 +233,24 @@ export default function App() {
 
   // ถ้า error
   if (error) {
-    return <div className="text-center p-8 text-red-500">เกิดข้อผิดพลาด: {error}</div>;
+    return (
+      <div className="text-center p-8 text-red-500">
+        เกิดข้อผิดพลาด: {error}
+      </div>
+    );
   }
 
   return (
     <div className="p-4 bg-white shadow rounded-xl overflow-x-auto">
       {/* ข้อความแจ้งเตือน */}
       {message.text && (
-        <div className={`p-4 mb-4 rounded-lg text-center font-bold ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div
+          className={`p-4 mb-4 rounded-lg text-center font-bold ${
+            message.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
           {message.text}
         </div>
       )}
@@ -212,7 +266,8 @@ export default function App() {
       <table className="min-w-full text-sm text-center border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
-            {[ // แสดง column headers พร้อม icon
+            {[
+              // แสดง column headers พร้อม icon
               { icon: Hash, label: "คิว" },
               { icon: UserRound, label: "แคดดี้" },
               { icon: Clock, label: "เวลา" },
@@ -233,16 +288,24 @@ export default function App() {
         </thead>
         <tbody>
           {filteredTimes.map((time, index) => {
-            const booking = bookings.find(b => b.timeSlot === time); // หา booking ตามเวลา
+            const booking = bookings.find((b) => b.timeSlot === time); // หา booking ตามเวลา
             return (
               <tr
                 key={time}
-                className={`h-10 ${booking ? "bg-green-100 hover:bg-green-200 cursor-pointer" : ""}`}
+                className={`h-10 ${
+                  booking
+                    ? "bg-green-100 hover:bg-green-200 cursor-pointer"
+                    : ""
+                }`}
                 onClick={() => booking && setSelected(booking)}
               >
                 <td>{index + 1}</td> {/* ลำดับ */}
-                <td className="text-xs font-mono">{booking?.caddy?.map(c => c.name).join(" ")}</td> {/* ชื่อ caddy */}
-                <td className="text-orange-600 font-mono">{time}</td> {/* เวลา */}
+                <td className="text-xs font-mono">
+                  {booking?.caddy?.map((c) => c.name).join(" ")}
+                </td>{" "}
+                {/* ชื่อ caddy */}
+                <td className="text-orange-600 font-mono">{time}</td>{" "}
+                {/* เวลา */}
                 {booking ? (
                   <>
                     <td className="font-semibold">{booking.groupName}</td>
@@ -252,7 +315,10 @@ export default function App() {
                       {/* ปุ่มเลื่อนเวลา */}
                       <button
                         className="bg-gray-800 text-white text-xs px-3 py-1 rounded-full hover:bg-gray-500"
-                        onClick={(e) => { e.stopPropagation(); handleUpdateClick(booking); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateClick(booking);
+                        }}
                       >
                         เลื่อนเวลา
                       </button>
@@ -261,7 +327,10 @@ export default function App() {
                       {/* ปุ่มยกเลิก */}
                       <button
                         className="bg-gray-800 text-white text-xs px-3 py-1 rounded-full hover:bg-red-500"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(booking); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(booking);
+                        }}
                       >
                         ยกเลิก
                       </button>
@@ -282,16 +351,32 @@ export default function App() {
         onClose={() => setSelected(null)}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
-        <div className="bg-black bg-opacity-30 fixed inset-0" aria-hidden="true" />
+        <div
+          className="bg-black bg-opacity-30 fixed inset-0"
+          aria-hidden="true"
+        />
         <div className="relative bg-white rounded-lg shadow-xl w-[90%] max-w-md p-6 z-50">
-          <Dialog.Title className="text-lg font-bold mb-2">รายละเอียดการจอง</Dialog.Title>
+          <Dialog.Title className="text-lg font-bold mb-2">
+            รายละเอียดการจอง
+          </Dialog.Title>
           {selected && (
             <div className="text-sm space-y-2">
-              <p><strong>ชื่อกลุ่ม:</strong> {selected.groupName}</p>
-              <p><strong>ชื่อผู้จอง:</strong> {selected.teamName}</p>
-              <p><strong>เวลา:</strong> {selected.timeSlot}</p>
-              <p><strong>จำนวนผู้เล่น:</strong> {selected.bookedPlayers}</p>
-              <p><strong>แคดดี้:</strong> {selected.caddy.map(c => c.name).join(", ")}</p>
+              <p>
+                <strong>ชื่อกลุ่ม:</strong> {selected.groupName}
+              </p>
+              <p>
+                <strong>ชื่อผู้จอง:</strong> {selected.teamName}
+              </p>
+              <p>
+                <strong>เวลา:</strong> {selected.timeSlot}
+              </p>
+              <p>
+                <strong>จำนวนผู้เล่น:</strong> {selected.bookedPlayers}
+              </p>
+              <p>
+                <strong>แคดดี้:</strong>{" "}
+                {selected.caddy.map((c) => c.name).join(", ")}
+              </p>
             </div>
           )}
           <div className="mt-4 text-right">
@@ -307,7 +392,11 @@ export default function App() {
 
       {/* --- Dialog อัปเดต booking --- */}
       <Transition appear show={isUpdateModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setIsUpdateModalOpen(false)}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setIsUpdateModalOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -332,14 +421,21 @@ export default function App() {
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
                     เลื่อนเวลาการจอง
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500 mb-2">
-                      กำลังเลื่อนเวลาของ **{selected?.groupName}** จาก **{selected?.timeSlot}**
+                      กำลังเลื่อนเวลาของ **{selected?.groupName}** จาก **
+                      {selected?.timeSlot}**
                     </p>
-                    <label htmlFor="newTime" className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="newTime"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       เวลาใหม่
                     </label>
                     <input
@@ -377,7 +473,11 @@ export default function App() {
 
       {/* --- Dialog ลบ booking --- */}
       <Transition appear show={isDeleteModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setIsDeleteModalOpen(false)}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setIsDeleteModalOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -401,12 +501,16 @@ export default function App() {
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
                     ยืนยันการยกเลิกการจอง
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองของ **{selected?.groupName}** เวลา **{selected?.timeSlot}**?
+                      คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองของ **
+                      {selected?.groupName}** เวลา **{selected?.timeSlot}**?
                     </p>
                   </div>
                   <div className="mt-4">

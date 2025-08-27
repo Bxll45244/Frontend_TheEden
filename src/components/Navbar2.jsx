@@ -13,26 +13,20 @@ export default function Navbar2() {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-
         {/* Logo */}
         <Link to="/">
           <img
             src="/images/eden-Logo.png"
             alt="The Eden Golf Club Logo"
-            className="h-12 sm:h-14"
+            className="h-20 sm:h-15"
           />
         </Link>
 
         {/* Navigation */}
         <div className="hidden md:flex items-center space-x-6 relative">
-
           {/* register button */}
           {!user && (
-            <Button
-              to="/register"
-              variant="primary"
-              className="text-lg"
-            >
+            <Button to="/register" variant="primary" className="text-lg">
               Join Us
             </Button>
           )}

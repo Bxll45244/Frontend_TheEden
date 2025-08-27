@@ -6,14 +6,13 @@ import { useState } from "react";
 import { registerByAdmin } from "../service/userService.js";
 import React from "react";
 
-
 export default function EmployeeForm({ onCancel, onAddEmployee }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "", 
+    role: "",
     image: "/Images/Profile.jpg",
   });
   const [loading, setLoading] = useState(false);
@@ -36,11 +35,13 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
       setLoading(false);
       return;
     }
-    
+
     // ตรวจสอบ Role ว่าอยู่ในรูปแบบที่กำหนดหรือไม่
-    const allowedRoles = ['admin', 'caddy', 'starter'];
+    const allowedRoles = ["admin", "caddy", "starter"];
     if (!allowedRoles.includes(formData.role.toLowerCase())) {
-      setError("ตำแหน่งงานไม่ถูกต้อง กรุณาเลือก 'admin', 'caddy' หรือ 'starter'");
+      setError(
+        "ตำแหน่งงานไม่ถูกต้อง กรุณาเลือก 'admin', 'caddy' หรือ 'starter'"
+      );
       setLoading(false);
       return;
     }
@@ -79,21 +80,26 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-8">
+    <div className="flex flex-col md:flex-row gap-4">
       {/* รูปโปรไฟล์ */}
-      <div className="flex justify-center">
-        <div className="bg-white p-4 rounded shadow-md w-52 h-fit text-center">
+      <div className="flex justify-center items-start">
+        <div className="bg-white p-2 rounded shadow-md w-48 h-fit text-center">
           <img
             src={formData.image}
             alt="Profile"
-            className="rounded-full w-10 h-10 mx-auto object-cover"
+            className="rounded-full w-20 h-20 mx-auto object-cover"
           />
-          <Button className="w-full mt-4">อัปโหลดรูปภาพ</Button>
+          <Button className="w-full mt-4 bg-green-800 text-white hover:bg-green-800">
+            อัปโหลดรูปภาพ
+          </Button>
         </div>
       </div>
 
       {/* ฟอร์ม */}
-      <form onSubmit={handleSubmit} className="flex-1 bg-white p-6 rounded shadow-md space-y-4 max-w-lg mx-auto">
+      <form
+        onSubmit={handleSubmit}
+        className="flex-1 bg-white p-6 rounded shadow-md space-y-4 max-w-md mx-auto"
+      >
         {error && <div className="text-red-500 text-center">{error}</div>}
         {success && <div className="text-green-500 text-center">{success}</div>}
         <div>
@@ -146,14 +152,18 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
         </div>
 
         <div className="flex gap-4 flex-wrap">
-          <Button type="submit" className="flex-1" disabled={loading}>
+          <Button
+            type="submit"
+            className="flex-1 bg-green-600 text-white hover:bg-green-800"
+            disabled={loading}
+          >
             {loading ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
           </Button>
           {onCancel && (
             <Button
               type="button"
               variant="secondary"
-              className="flex-1"
+              className="flex-1 bg-red-500  text-white hover:bg-red-800"
               onClick={onCancel}
             >
               ยกเลิก
