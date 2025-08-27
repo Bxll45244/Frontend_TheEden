@@ -13,7 +13,8 @@ import th from 'date-fns/locale/th';
 registerLocale('th', th);
 
 // นำเข้า Header Component จากตำแหน่งที่ถูกต้อง (components/caddy/Header.jsx)
-import Header from "../../components/Caddy/Header.jsx";
+import Header from "./components/Caddy/Header.jsx";
+
 
 const formatDateThai = (date) => {
   const thMonths = [
