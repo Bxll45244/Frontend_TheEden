@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createBooking } from '../../service/bookingService'; // ฟังก์ชันสร้างการจอง
+import { createBooking } from '../../service/booking.service'; // ฟังก์ชันสร้างการจอง
 import { useNavigate } from 'react-router-dom'; // สำหรับเปลี่ยนหน้า
 
 // Helper function to format date to 'YYYY-MM-DD'
