@@ -183,7 +183,7 @@ export default function App() {
     }
   };
 
-  // สร้างเวลา 6:00 ถึง 9:30 โดยเพิ่มทีละ 15 นาที
+  // สร้างเวลา 6:00  โดยเพิ่มทีละ 15 นาที
   const times = Array.from({ length: 30 }).map((_, index) => {
     const hour = Math.floor(index / 4) + 6;
     const min = (index % 4) * 15;

@@ -8,7 +8,7 @@ export default function Sidebar({ activePage, setActivePage }) {
         <img
           src="/Images/eden-Logo.png"
           alt="Logo"
-          className=" mx-auto h-20 mb-10 "
+          className=" mx-auto h-20 mb-1 "
         />
         <nav className="space-y-4">
           <button
