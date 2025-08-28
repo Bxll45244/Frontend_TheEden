@@ -3,7 +3,8 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { getUserProfile, logoutUser } from '../service/authService'; // สมมติว่ามี getUserProfile, logoutUser
 
 // สร้าง Context
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null); // ✅ เพิ่ม export ตรงนี้
+
 
 // สร้าง Provider Component
 export const AuthProvider = ({ children }) => {

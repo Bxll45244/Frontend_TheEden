@@ -86,7 +86,7 @@ const HistoryPage = () => {
         <div className="min-h-screen bg-gray-100 font-sans p-4">
             <div className="max-w-2xl mx-auto">
                 {/* ส่วนหัว */}
-                <div className="bg-[#324441] text-white py-4 rounded-b-xl shadow-md flex justify-center items-center mb-6">
+                <div className="bg-gradient-to-r from-teal-600 via-indigo-600 to-purple-600 text-white py-4 rounded-b-xl shadow-md flex justify-center items-center mb-6">
                     <h1 className="text-white text-2xl font-bold uppercase">
                         ประวัติการทำงาน
                     </h1>
