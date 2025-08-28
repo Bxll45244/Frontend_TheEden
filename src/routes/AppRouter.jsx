@@ -14,6 +14,7 @@ import BookingPage from "../pages/Caddy/BookingPage";
 import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
 import LandingPage from "../pages/Caddy/LandingPage"; // เพิ่มการนำเข้า LandingPage
 import HistoryPage from "../pages/Caddy/HistoryPage"; // ตรวจสอบ path ให้ถูกต้อง
+import CaddyProfile from "../pages/Caddy/CaddyProfile"; // ตรวจสอบ path ให้ถูกต้อง
 
 // Starter Pages
 import Dashboard from "../pages/Starter/Dashboard";
@@ -46,6 +47,7 @@ function AppRouter() {
           <Route index element={<BookingPage />} /> 
           <Route path="booking" element={<ProcessGolfPage />} /> 
           <Route path="history" element={<HistoryPage />} /> {/* เพิ่มบรรทัดนี้ */}
+          <Route path="profile" element={<CaddyProfile />} />
         </Route>
         
         {/* Starter Routes (ปรับปรุงให้ใช้ Nested Route อย่างถูกต้อง) */}
