@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
-import { login as apiLogin } from "../../service/authService"; // Rename to avoid conflict with authLogin
-import { useAuth } from "../../context/useAuth"; // Import useAuth hook
+import { login as apiLogin } from "../../service/authService"; 
+import { useAuth } from "../../context/useAuth"; 
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
-  const { login: authLogin } = useAuth(); // Get login function from AuthContext
+  const { login: authLogin } = useAuth(); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,33 +25,43 @@ export default function LoginPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
+  e.preventDefault();
+  setError(null);
+  setSuccess(null);
 
-    try {
-      const result = await apiLogin(formData); // Call login function from authService
+  // ✅ client-side validation
+  if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    setError("กรุณากรอกอีเมลที่ถูกต้อง");
+    return;
+  }
+  if (formData.password.length < 8) {
+    setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+    return;
+  }
 
-      if (result.success) {
-        setSuccess(result.message || "เข้าสู่ระบบสำเร็จ!");
-        authLogin(result.user); // Update user state in AuthContext
-        console.log("User logged in:", result.user);
-        
-        // Redirect to home or dashboard after successful login
-        setTimeout(() => {
-          navigate('/'); 
-        }, 1500); 
-      } else {
-        setError(result.message || "เข้าสู่ระบบไม่สำเร็จ");
-      }
-    } catch (err) {
-      console.error("Error during login:", err);
-      setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const result = await apiLogin(formData); // axios/fetch ต้องมี withCredentials: true
+
+    if (result.success) {
+      setSuccess(result.message || "เข้าสู่ระบบสำเร็จ!");
+      authLogin(result.user);
+      setFormData(prev => ({ ...prev, password: "" })); // ✅ ล้าง password
+
+      setTimeout(() => navigate('/'), 1500);
+    } else {
+      setError(result.message || "Email หรือรหัสผ่านไม่ถูกต้อง"); // ✅ ปลอดภัย
+      setFormData(prev => ({ ...prev, password: "" })); // ล้าง password
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+    setFormData(prev => ({ ...prev, password: "" })); // ล้าง password
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
