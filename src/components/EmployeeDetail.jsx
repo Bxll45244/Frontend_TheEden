@@ -103,7 +103,6 @@ export default function EmployeeDetail({ employee, onBack }) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField("ชื่อ-นามสกุล", "name")}
-              {renderField("เพศ", "gender")}
             </div>
           </section>
 
@@ -125,7 +124,7 @@ export default function EmployeeDetail({ employee, onBack }) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField("ตำแหน่ง", "role")}
-              {renderField("รหัสพนักงาน", "employeeCode")}
+
               {renderField("สถานะ", "status")}
             </div>
           </section>

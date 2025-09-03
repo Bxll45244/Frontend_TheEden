@@ -1,9 +1,10 @@
 const employees = [
   {
     name: "ชาร์ลอตต์ อีแวนส์",
-    gender: "หญิง",
+    /*lastname: "",*/
+    /*gender: "หญิง",*/
     role: "Admin",
-    employeeCode: "E-2023001",
+    /*employeeCode: "E-2023001",*/
     phone: "091-234-5678",
     email: "charlotte.evans@email.com",
     status: "ทำงานอยู่",
@@ -11,19 +12,19 @@ const employees = [
   },
   {
     name: "เอมิลี่ คาร์เตอร์",
-    gender: "หญิง",
+
     role: "General",
-    employeeCode: "E-2023002",
+
     phone: "092-456-7890",
     email: "emily.carter@email.com",
     status: "ทำงานอยู่",
     image: "/Images/G2.jpg",
   },
   {
-    name: "โนอาห์ แฮร์ริส",
-    gender: "ชาย",
+    name: "โนอาห์ แฮร์ริส ",
+
     role: "General",
-    employeeCode: "E-2023003",
+
     phone: "093-567-8910",
     email: "noah.harris@email.com",
     status: "ออกแล้ว",
@@ -31,9 +32,9 @@ const employees = [
   },
   {
     name: "โซเฟีย รีด",
-    gender: "หญิง",
+
     role: "Caddie",
-    employeeCode: "E-2023004",
+
     phone: "094-678-9012",
     email: "sophia.reed@email.com",
     status: "ทำงานอยู่",
@@ -41,9 +42,9 @@ const employees = [
   },
   {
     name: "เอวา มอร์แกน",
-    gender: "หญิง",
+
     role: "Caddie",
-    employeeCode: "E-2023005",
+
     phone: "095-123-4567",
     email: "ava.morgan@email.com",
     status: "ออกแล้ว",
@@ -51,9 +52,9 @@ const employees = [
   },
   {
     name: "โอลิเวีย เบนเน็ตต์",
-    gender: "หญิง",
+
     role: "Caddie",
-    employeeCode: "E-2023006",
+
     phone: "096-789-0123",
     email: "olivia.bennett@email.com",
     status: "ทำงานอยู่",
@@ -61,9 +62,9 @@ const employees = [
   },
   {
     name: "อิซาเบลล่า บรูกส์",
-    gender: "หญิง",
+
     role: "Caddie",
-    employeeCode: "E-2023007",
+
     phone: "097-345-6789",
     email: "isabella.brooks@email.com",
     status: "ทำงานอยู่",
@@ -71,9 +72,9 @@ const employees = [
   },
   {
     name: "เบนจามิน สก็อตต์",
-    gender: "ชาย",
+
     role: "Starter",
-    employeeCode: "E-2023008",
+
     phone: "098-456-7890",
     email: "benjamin.scott@email.com",
     status: "ทำงานอยู่",
@@ -81,9 +82,9 @@ const employees = [
   },
   {
     name: "อีธาน วอล์คเกอร์",
-    gender: "ชาย",
+
     role: "Starter",
-    employeeCode: "E-2023009",
+
     phone: "099-567-8901",
     email: "ethan.walker@email.com",
     status: "ออกแล้ว",
