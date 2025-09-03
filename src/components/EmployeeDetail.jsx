@@ -23,7 +23,7 @@ export default function EmployeeDetail({ employee, onBack }) {
     <div>
       <p className="text-sm font-semibold text-gray-600 mb-1">{label}</p>
       {isEditing ? (
-        key === "position" ? (
+        key === "role" ? (
           // ✅ ถ้า key คือ "status" แสดง select
           <select
             value={formData[key]}
@@ -124,7 +124,7 @@ export default function EmployeeDetail({ employee, onBack }) {
               ข้อมูลตำแหน่งงาน
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderField("ตำแหน่ง", "position")}
+              {renderField("ตำแหน่ง", "role")}
               {renderField("รหัสพนักงาน", "employeeCode")}
               {renderField("สถานะ", "status")}
             </div>

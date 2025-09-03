@@ -21,7 +21,7 @@ export default function EmployeeCard({ employee, onClick }) {
         </p>
         <p className="text-sm">
           <span className="font-semibold text-gray-700">ตำแหน่ง: </span>
-          <span className="text-gray-800">{employee.position}</span>
+          <span className="text-gray-800">{employee.role}</span>
         </p>
       </div>
     </div>

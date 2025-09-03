@@ -27,7 +27,7 @@ export default function AdminDashboard() {
 
   // filter พนักงานตาม Tab และข้อความค้นหา
   const filtered = employees
-    .filter((e) => tab === "All" || e.position === tab)
+    .filter((e) => tab === "All" || e.role === tab)
     .filter((e) => e.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
                               const count =
                                 pos === "All"
                                   ? employees.length
-                                  : employees.filter((e) => e.position === pos)
+                                  : employees.filter((e) => e.role === pos)
                                       .length;
 
                               return (

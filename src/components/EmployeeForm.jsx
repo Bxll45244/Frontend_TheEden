@@ -142,13 +142,19 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
           />
         </div>
         <div>
-          <Label>ตำแหน่งงาน (admin, caddy, starter)</Label>
-          <Input
+          <Label>กรุณาเลือกตำแหน่งงาน</Label>
+          <select
             placeholder="กรุณากรอกตำแหน่งงาน"
             required
             value={formData.role}
             onChange={(e) => handleChange("role", e.target.value)}
-          />
+            className="border border-gray-300 rounded p-2 w-full"
+          >
+            <option value="  "> กรุณากรอกตำแหน่งงาน </option>
+            <option value="Admin">admin</option>
+            <option value="Caddy">caddy</option>
+            <option value="Starter">starter</option>
+          </select>
         </div>
 
         <div className="flex gap-4 flex-wrap">
