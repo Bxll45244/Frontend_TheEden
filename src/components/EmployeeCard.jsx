@@ -7,7 +7,7 @@ export default function EmployeeCard({ employee, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer rounded-2xl shadow-md hover:shadow-xl transition-transform bg-white border border-gray-200 w-full max-w-xs mx-auto"
+      className="cursor-pointer rounded-2xl shadow-md hover:shadow-xl transition-transform bg-white border border-gray-200 w-full max-w-xs mx-auto flex-none"
     >
       <div className="p-4 flex flex-col items-center text-center">
         <img

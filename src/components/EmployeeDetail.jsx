@@ -1,8 +1,9 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
 
 // Component แสดงรายละเอียดพนักงาน
-export default function EmployeeDetail({ employee, onBack }) {
+export default function EmployeeDetail({ employee, onBack, onUpdateEmployee }) {
   // state สำหรับเปิด/ปิดโหมดแก้ไข
   const [isEditing, setIsEditing] = useState(false);
   // state สำหรับเก็บข้อมูลฟอร์มพนักงาน (เริ่มต้นจาก props.employee)
@@ -15,7 +16,26 @@ export default function EmployeeDetail({ employee, onBack }) {
 
   // ฟังก์ชันบันทึกการแก้ไข (TODO: เพิ่ม logic backend)
   const handleSave = () => {
-    setIsEditing(false); // ปิดโหมดแก้ไขหลังบันทึก
+    // ✅ เรียกใช้ prop ที่ส่งมาจาก AdminDashboard และส่งข้อมูลที่อัปเดตไป
+    onUpdateEmployee(formData);
+    setIsEditing(false); 
+  };
+
+  const fileInputRef = useRef(null);
+
+  const handleButtonClick = () => {
+    // เมื่อกดปุ่มนี้ จะไปเรียก click() ที่ input file ที่ซ่อนอยู่
+    fileInputRef.current.click();
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // สร้าง URL ชั่วคราวสำหรับแสดงรูปภาพที่เลือก
+      const newImageUrl = URL.createObjectURL(file);
+      // ✅ แก้ไข: อัปเดต state ของ formData โดยตรง
+      setFormData({ ...formData, image: newImageUrl }); 
+    }
   };
 
   // label = ชื่อ field, key = key ของ formData, isTextarea = true ถ้าเป็น textarea
@@ -88,11 +108,24 @@ export default function EmployeeDetail({ employee, onBack }) {
             alt={formData.name}
             className="w-44 h-44 object-cover rounded-full mx-auto shadow-md"
           />
+          <Input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="hidden" // ใช้ Tailwind CSS เพื่อซ่อน input
+            accept="image/*" // กำหนดให้เลือกได้เฉพาะไฟล์รูปภาพ
+          />
           {/* ปุ่มเปลี่ยน/อัปโหลดรูปภาพ */}
-          <button className="mt-4 px-5 py-2 bg-gray-700 text-white rounded-full hover:bg-gray-800">
+          <button
+            className="mt-4 px-5 py-2 bg-gray-700 text-white rounded-full hover:bg-gray-800"
+            onClick={handleButtonClick}
+            type="button" // กำหนด type เป็น button เพื่อป้องกันการ submit form
+          >
             เปลี่ยน/อัปโหลดรูปภาพ
           </button>
         </div>
+
+        
 
         {/* ข้อมูล */}
         <div className="flex-1 space-y-8">

@@ -12,24 +12,35 @@ import employeesData from "../data/employees";
 export default function AdminDashboard() {
   // state สำหรับ Tab ปัจจุบัน
   const [tab, setTab] = useState("All");
-
   // state สำหรับหน้า active ปัจจุบัน (employeeData, addEmployee, booking)
   const [activePage, setActivePage] = useState("employeeData");
-
   // state สำหรับเก็บพนักงานที่ถูกเลือกเพื่อแสดงรายละเอียด
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
   // state สำหรับข้อความค้นหา
   const [searchTerm, setSearchTerm] = useState("");
-
   // state สำหรับเก็บข้อมูลพนักงานทั้งหมด
-  const [employees, setEmployees] = useState(employeesData);
+  const [employees, setEmployees] = useState(() => {
+    // ใช้ map เพื่อสร้าง object ใหม่สำหรับพนักงานแต่ละคน
+    return employeesData.map(emp => ({ ...emp }));
+  });
+
+  const handleUpdateEmployee = (updatedEmployee) => {
+    // โค้ดนี้ทำหน้าที่อัปเดตเฉพาะพนักงานที่มี id ตรงกันเท่านั้น
+    const updatedEmployees = employees.map((emp) =>
+      emp.id === updatedEmployee.id ? updatedEmployee : emp
+    );
+    setEmployees(updatedEmployees);
+    setSelectedEmployee(updatedEmployee);
+  };
+
 
   // filter พนักงานตาม Tab และข้อความค้นหา
   const filtered = employees
     .filter((e) => tab === "All" || e.role === tab)
     .filter((e) => e.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  
+  
   return (
     // container หลักเป็น flex row, min-h-screen ให้เต็มหน้าจอ
     <div className="flex min-h-screen">
@@ -51,21 +62,40 @@ export default function AdminDashboard() {
                 <EmployeeDetail
                   employee={selectedEmployee}
                   onBack={() => setSelectedEmployee(null)}
+                  onUpdateEmployee={handleUpdateEmployee} 
                 />
               ) : (
                 <>
                   {/* Search + Tabs */}
                   <div className="flex flex-col gap-4 mb-4">
-                    {/* ช่องค้นหา: อยู่ด้านขวา */}
-                    <div className="flex justify-end">
-                      <input
-                        type="text"
-                        placeholder="ค้นหาชื่อพนักงาน..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="border rounded-lg p-2 w-full md:w-80"
-                      />
-                    </div>
+                {/* ช่องค้นหา: อยู่ด้านขวา */}
+                <div className="flex justify-end">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="ค้นหาชื่อพนักงาน..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="border rounded-lg p-2 w-full md:w-80 pl-10 "
+                    />
+                    <svg
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      width="20"
+                      height="20"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                  </div>
+                </div>
+              
 
                     {/* Tabs: อยู่ตรงกลาง */}
                     <div className="flex justify-center">
@@ -127,3 +157,6 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
+//focus:ring-green-500

@@ -391,74 +391,64 @@ export default function App() {
       </Dialog>
 
       {/* --- Dialog อัปเดต booking --- */}
-      <Transition appear show={isUpdateModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-50"
-          onClose={() => setIsUpdateModalOpen(false)}
-        >
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
+        <Transition appear show={isUpdateModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsUpdateModalOpen(false)}>
+          <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    เลื่อนเวลาการจอง
+              <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
+                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-3xl bg-white p-8 text-left align-middle shadow-2xl transition-all">
+                  <Dialog.Title as="div" className="flex items-center gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-xl font-bold leading-6 text-gray-900">เลื่อนเวลาการจอง</h3>
                   </Dialog.Title>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500 mb-2">
-                      กำลังเลื่อนเวลาของ **{selected?.groupName}** จาก **
-                      {selected?.timeSlot}**
+                  
+                  <div className="border-t border-gray-200 pt-4">
+                    <p className="text-sm text-gray-700 mb-4 font-semibold">
+                      กำลังเลื่อนเวลาของ <span className="text-indigo-600 font-extrabold">{selected?.groupName}</span> จาก <span className="text-indigo-600 font-extrabold">{selected?.timeSlot}</span>
                     </p>
-                    <label
-                      htmlFor="newTime"
-                      className="block text-sm font-medium text-gray-700"
-                    >
+                    
+                    <label htmlFor="newTime" className="block text-sm font-medium text-gray-700 mb-1">
                       เวลาใหม่
                     </label>
-                    <input
-                      type="time"
-                      id="newTime"
-                      value={newTimeSlot}
-                      onChange={(e) => setNewTimeSlot(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
+
+                    
+                    <div className="mt-2 grid grid-cols-4 gap-2 md:grid-cols-5 lg:grid-cols-6">
+                      {filteredTimes.map((time) => (
+                        <button
+                          key={time}
+                          onClick={() => {
+                            setNewTimeSlot(time);
+                            
+                          }}
+                          className={`
+                            px-2 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors duration-150
+                            ${newTimeSlot === time ? "bg-green-700 text-white shadow-md" : "bg-gray-100 text-gray-900 hover:bg-gray-200"}
+                          `}
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    {/* ปุ่มยืนยัน */}
+
+                  <div className="mt-6 flex justify-end gap-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="rounded-md border  bg-green-700 px-4 py-2  font-medium text-white  hover:bg-green-900  "
                       onClick={handleUpdateConfirm}
+                      disabled={!newTimeSlot} // ปิดการใช้งานปุ่มหากยังไม่ได้เลือกเวลา
                     >
                       ยืนยันการเลื่อนเวลา
                     </button>
-                    {/* ปุ่มยกเลิก */}
                     <button
                       type="button"
-                      className="ml-2 inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                      className="rounded-md border bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 "
                       onClick={() => setIsUpdateModalOpen(false)}
                     >
                       ยกเลิก
@@ -512,6 +502,7 @@ export default function App() {
                       คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองของ **
                       {selected?.groupName}** เวลา **{selected?.timeSlot}**?
                     </p>
+                    
                   </div>
                   <div className="mt-4">
                     {/* ปุ่มยืนยัน */}

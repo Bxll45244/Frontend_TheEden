@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useRef } from "react";
 // Import service สำหรับเรียก API
 import { registerByAdmin } from "../service/userService.js";
 import React from "react";
@@ -19,8 +19,27 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
+  const fileInputRef = useRef(null);
+
   const handleChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
+  };
+
+  // จัดการการเปลี่ยนรูปภาพ
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // สร้าง URL ชั่วคราวจากไฟล์ที่เลือก
+      const newImageUrl = URL.createObjectURL(file);
+      setFormData({ ...formData, image: newImageUrl });
+      // ในการใช้งานจริง คุณจะส่งไฟล์นี้ไปที่ API
+      // เช่น: uploadImage(file);
+    }
+  };
+
+  // ฟังก์ชันสำหรับเรียก input file เมื่อกดปุ่ม
+  const handleButtonClick = () => {
+    fileInputRef.current.click();
   };
 
   const handleSubmit = async (e) => {
@@ -80,16 +99,27 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4">
+    <div className="flex flex-col md:flex-row gap-4 justify-center items-start p-4 max-w-4xl mx-auto">
       {/* รูปโปรไฟล์ */}
-      <div className="flex justify-center items-start">
+      <div className="flex justify-center md:justify-start">
         <div className="bg-white p-2 rounded shadow-md w-48 h-fit text-center">
           <img
             src={formData.image}
             alt="Profile"
-            className="rounded-full w-20 h-20 mx-auto object-cover"
+            className="rounded-full w-40 h-40 mx-auto object-cover"
           />
-          <Button className="w-full mt-4 bg-green-800 text-white hover:bg-green-800">
+          <Input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="hidden" // ซ่อน input จากการแสดงผล
+            accept="image/*" // อนุญาตเฉพาะไฟล์ภาพ
+          />
+          <Button
+            className="w-full mt-4 bg-green-600 text-white hover:bg-green-800"
+            onClick={handleButtonClick}
+            type="button" // กำหนด type เป็น button เพื่อป้องกันการ submit ฟอร์ม
+          >
             อัปโหลดรูปภาพ
           </Button>
         </div>
@@ -98,7 +128,7 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
       {/* ฟอร์ม */}
       <form
         onSubmit={handleSubmit}
-        className="flex-1 bg-white p-6 rounded shadow-md space-y-4 max-w-md mx-auto"
+        className="flex-1 bg-white p-6 rounded shadow-md space-y-4 w-full max-w-md"
       >
         {error && <div className="text-red-500 text-center">{error}</div>}
         {success && <div className="text-green-500 text-center">{success}</div>}
@@ -144,13 +174,13 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
         <div>
           <Label>กรุณาเลือกตำแหน่งงาน</Label>
           <select
-            placeholder="กรุณากรอกตำแหน่งงาน"
             required
             value={formData.role}
             onChange={(e) => handleChange("role", e.target.value)}
-            className="border border-gray-300 rounded p-2 w-full"
+            className="border border-black rounded p-2 w-full"
+            
           >
-            <option value="  "> กรุณากรอกตำแหน่งงาน </option>
+            <option value="">กรุณากรอกตำแหน่งงาน</option>
             <option value="Admin">admin</option>
             <option value="Caddy">caddy</option>
             <option value="Starter">starter</option>
@@ -169,7 +199,7 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
             <Button
               type="button"
               variant="secondary"
-              className="flex-1 bg-red-500  text-white hover:bg-red-800"
+              className="flex-1 bg-red-500 text-white hover:bg-red-800"
               onClick={onCancel}
             >
               ยกเลิก
