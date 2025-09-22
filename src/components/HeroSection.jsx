@@ -1,5 +1,9 @@
 import { useContext } from "react";
+<<<<<<< HEAD
 import { AuthContext } from "../context/AuthContext";
+=======
+import { AuthContext } from "../contexts/AuthContext.jsx";
+>>>>>>> caddy_starter
 import { Button } from "../components/Button";
 import { useNavigate } from "react-router-dom";
 
@@ -23,8 +27,13 @@ export default function HeroSection() {
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-20 flex flex-col justify-start h-full text-white items-center">
+<<<<<<< HEAD
         <h1 className="text-4xl md:text-6xl font-bold text-center whitespace-nowrap mt-5">
           {user ? `Welcome, ${user.name}` : "Welcome to The Eden Golf Club"}
+=======
+        <h1 className="text-4xl md:text-6xl font-bold max-w-3xl text-center">
+          {user ? `Welcome, ${user.name}` : "Great swings start with passion and precision"}
+>>>>>>> caddy_starter
         </h1>
         <p className="mt-4 text-lg md:text-xl max-w-2xl text-center">
           Find skilled candidates, in-demand jobs and the solutions you need to help you do your best work yet.
@@ -50,4 +59,8 @@ export default function HeroSection() {
       </div> */}
     </section>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> caddy_starter
