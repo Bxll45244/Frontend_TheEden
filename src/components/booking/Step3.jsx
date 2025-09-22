@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import LoadingAnimation from '../animations/LoadingAnimation'; // ตรวจสอบเส้นทางถูกต้อง
+import LoadingAnimation from '../animations/LoadingAnimation'; 
 
-const API_BASE_URL = "http://localhost:5000/api"; // หรือรับเป็น props มาจาก GolferBookingPage
+const API_BASE_URL = "http://localhost:5000/api"; 
 
-const Step3 = ({ bookingData, handleChange, onNext, onPrev, API_BASE_URL }) => {
+const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
     const { golfCartQty, golfBagQty, caddy, caddySelectionEnabled } = bookingData;
     const [caddySearchTerm, setCaddySearchTerm] = useState('');
     const [availableCaddies, setAvailableCaddies] = useState([]);
@@ -31,7 +31,7 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev, API_BASE_URL }) => {
 
                 // เรียก API โดยให้เบราว์เซอร์ส่ง HttpOnly cookie ไปเอง
                 const response = await axios.get(`${API_BASE_URL}/user/available-caddies`, {
-                    withCredentials: true // 👈 เพิ่มบรรทัดนี้ เพื่อให้ส่ง HttpOnly cookie
+                    withCredentials: true 
                 });
                 
                 // ตรวจสอบว่าข้อมูลที่ได้มาอยู่ในรูปแบบที่ถูกต้องหรือไม่

@@ -4,7 +4,6 @@ import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
 import { register as apiRegister } from "../../service/authService";
 
-
 const Notification = ({ type, message }) => {
   const bgColor = type === "success" ? "bg-green-600" : "bg-red-600";
   return (
@@ -34,6 +33,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
+    phone: "", 
     email: "",
     password: "",
     confirmPassword: "",
@@ -55,7 +55,6 @@ export default function RegisterPage() {
     setError(null);
     setSuccess(null);
 
-   
     if (formData.password !== formData.confirmPassword) return setError("รหัสผ่านไม่ตรงกัน");
     if (!passwordPattern.test(formData.password)) return setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร, ตัวใหญ่, ตัวเล็ก และตัวเลข");
 
@@ -92,10 +91,11 @@ export default function RegisterPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
-            {["name", "email", "password", "confirmPassword"].map((field, idx) => {
+            {["name", "phone", "email", "password", "confirmPassword"].map((field, idx, arr) => {
               const isPassword = field.includes("password");
               const placeholderMap = {
                 name: "ชื่อ",
+                phone: "เบอร์โทรศัพท์",
                 email: "ที่อยู่อีเมล",
                 password: "รหัสผ่าน",
                 confirmPassword: "ยืนยันรหัสผ่าน",
@@ -106,10 +106,27 @@ export default function RegisterPage() {
                   <input
                     id={field}
                     name={field}
-                    type={isPassword ? "password" : field === "email" ? "email" : "text"}
-                    autoComplete={isPassword ? "new-password" : field === "email" ? "email" : undefined}
+                    type={
+                      isPassword
+                        ? "password"
+                        : field === "email"
+                        ? "email"
+                        : field === "phone"
+                        ? "tel"
+                        : "text"
+                    }
+                    autoComplete={
+                      isPassword
+                        ? "new-password"
+                        : field === "email"
+                        ? "email"
+                        : field === "phone"
+                        ? "tel"
+                        : undefined
+                    }
                     required
-                    className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm ${idx === 0 ? "rounded-t-md" : idx === 3 ? "rounded-b-md" : ""}`}
+                    className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm 
+                      ${idx === 0 ? "rounded-t-md" : idx === arr.length - 1 ? "rounded-b-md" : ""}`}
                     placeholder={placeholderMap[field]}
                     value={formData[field]}
                     onChange={handleChange}

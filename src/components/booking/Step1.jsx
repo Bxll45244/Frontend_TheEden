@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-// ✅ เพิ่มตรงนี้: กำหนด API_BASE_URL จาก env
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Step1 = ({ bookingData, handleChange, onNext }) => {
   const { courseType, date, timeSlot } = bookingData;
-  const [reservedTimeSlots, setReservedTimeSlots] = useState([]); // ✅ เพิ่ม state สำหรับเก็บเวลาที่ถูกจอง
+  const [reservedTimeSlots, setReservedTimeSlots] = useState([]); 
 
   const availableTimeSlots18 = [
     "06:00","06:15","06:30","06:45","07:00","07:15","07:30","07:45",
@@ -26,7 +25,7 @@ const Step1 = ({ bookingData, handleChange, onNext }) => {
   const holidayPrice = courseType === "18" ? 4000 : 2500;
   const isNextDisabled = !date || !timeSlot || !courseType;
 
-  // ✅ เพิ่ม useEffect เพื่อ fetch reservedTimeSlots จาก backend
+
   useEffect(() => {
     if (date && courseType) {
         // Fetch reserved time slots from backend
@@ -105,7 +104,7 @@ const Step1 = ({ bookingData, handleChange, onNext }) => {
             type="button"
             className={`px-3 py-1 text-sm rounded-full font-medium transition duration-200 ${
               reservedTimeSlots.includes(time)
-                ? "bg-red-500 text-white cursor-not-allowed" // ✅ แสดงเวลาที่จองแล้ว
+                ? "bg-red-500 text-white cursor-not-allowed" 
                 : timeSlot === time
                 ? "bg-green-600 text-white shadow-lg"
                 : "bg-gray-200 text-gray-800 hover:bg-green-100"
