@@ -11,17 +11,14 @@ export function Button({
 }) {
 
   // Main button layout
-  const baseStyle = `
-    btn btn-soft
-  `;
+  const baseStyle = `btn btn-soft`;
 
   const variants = {
     primary: ``,
     secondary: `bg-transparent border-2 border-white text-white 
-                  hover:bg-white hover:text-gray-800
-                  px-8 py-4 text-lg`,
+                hover:bg-white hover:text-gray-800
+                px-8 py-4 text-lg`,
     danger: ``,
-
   };
 
   const allClass = `${baseStyle} ${variants[variant]} ${className}`.trim();
@@ -39,8 +36,4 @@ export function Button({
       {children}
     </button>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> caddy_starter

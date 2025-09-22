@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Layouts
 import UserMobileLayout from '../layouts/UserMobileLayout';
@@ -22,14 +22,18 @@ import Dashboard from "../pages/Starter/Dashboard";
 import ReportPage from "../pages/Starter/ReportPage";
 import ReportConfirmPage from "../pages/Starter/ReportConfirmPage";
 
+// Admin Page
+import AdminDashboard from "../pages/AdminDashboard";
+
 // Auth Pages
 import RegisterPage from '../pages/auth/RegisterPage';
 import LoginPage from '../pages/auth/LoginPage';
 
-function AppRouter() {
+export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+
         {/* Auth Routes */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -42,6 +46,8 @@ function AppRouter() {
           <Route index element={<GolferHomePage />} />
           <Route path="booking" element={<GolferBookingPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          {/* Admin nested under UserMobileLayout */}
+          <Route path="admin" element={<AdminDashboard />} />
         </Route>
 
         {/* Caddy Routes */}
@@ -58,9 +64,8 @@ function AppRouter() {
           <Route path="report" element={<ReportPage />} />
           <Route path="report/confirm" element={<ReportConfirmPage />} />
         </Route>
+
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default AppRouter;

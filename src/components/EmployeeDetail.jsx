@@ -1,0 +1,198 @@
+import React from "react";
+import { useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
+
+// Component แสดงรายละเอียดพนักงาน
+export default function EmployeeDetail({ employee, onBack, onUpdateEmployee }) {
+  // state สำหรับเปิด/ปิดโหมดแก้ไข
+  const [isEditing, setIsEditing] = useState(false);
+  // state สำหรับเก็บข้อมูลฟอร์มพนักงาน (เริ่มต้นจาก props.employee)
+  const [formData, setFormData] = useState(employee);
+
+  // ฟังก์ชันเปลี่ยนค่า field ใน formData
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  // ฟังก์ชันบันทึกการแก้ไข (TODO: เพิ่ม logic backend)
+  const handleSave = () => {
+    // ✅ เรียกใช้ prop ที่ส่งมาจาก AdminDashboard และส่งข้อมูลที่อัปเดตไป
+    onUpdateEmployee(formData);
+    setIsEditing(false); 
+  };
+
+  const fileInputRef = useRef(null);
+
+  const handleButtonClick = () => {
+    // เมื่อกดปุ่มนี้ จะไปเรียก click() ที่ input file ที่ซ่อนอยู่
+    fileInputRef.current.click();
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // สร้าง URL ชั่วคราวสำหรับแสดงรูปภาพที่เลือก
+      const newImageUrl = URL.createObjectURL(file);
+      // ✅ แก้ไข: อัปเดต state ของ formData โดยตรง
+      setFormData({ ...formData, image: newImageUrl }); 
+    }
+  };
+
+  // label = ชื่อ field, key = key ของ formData, isTextarea = true ถ้าเป็น textarea
+  const renderField = (label, key, isTextarea = false) => (
+    <div>
+      <p className="text-sm font-semibold text-gray-600 mb-1">{label}</p>
+      {isEditing ? (
+        key === "role" ? (
+          // ✅ ถ้า key คือ "status" แสดง select
+          <select
+            value={formData[key]}
+            onChange={(e) => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full"
+          >
+            <option value="General">General</option>
+            <option value="Caddie">Caddie</option>
+            <option value="Starter">Starter</option>
+          </select>
+        ) : key === "status" ? (
+          // dropdown สำหรับสถานะ
+          <select
+            value={formData[key]}
+            onChange={(e) => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full"
+          >
+            <option value="ทำงานอยู่">ทำงานอยู่</option>
+            <option value="ออกแล้ว">ออกแล้ว</option>
+          </select>
+        ) : isTextarea ? (
+          // textarea
+          <textarea
+            value={formData[key]}
+            onChange={(e) => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full resize-none"
+          />
+        ) : (
+          // input ธรรมดา
+          <input
+            type="text"
+            value={formData[key]}
+            onChange={(e) => handleChange(key, e.target.value)}
+            className="border border-gray-300 rounded p-2 w-full"
+          />
+        )
+      ) : (
+        // โหมดแสดงผล (ไม่แก้ไข)
+        <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">
+          {formData[key]}
+        </p>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl">
+      {/* ปุ่มย้อนกลับ */}
+      <button
+        onClick={onBack}
+        className="mb-6 text-blue-600 font-medium hover:underline"
+      >
+        ← ย้อนกลับ
+      </button>
+
+      {/* Container หลักแบ่งสองคอลัมน์: รูปภาพ กับ ข้อมูล */}
+      <div className="flex flex-col md:flex-row gap-10">
+        {/* รูปภาพ */}
+        <div className="flex-shrink-0 text-center">
+          <img
+            src={formData.image}
+            alt={formData.name}
+            className="w-44 h-44 object-cover rounded-full mx-auto shadow-md"
+          />
+          <Input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="hidden" // ใช้ Tailwind CSS เพื่อซ่อน input
+            accept="image/*" // กำหนดให้เลือกได้เฉพาะไฟล์รูปภาพ
+          />
+          {/* ปุ่มเปลี่ยน/อัปโหลดรูปภาพ */}
+          <button
+            className="mt-4 px-5 py-2 bg-gray-700 text-white rounded-full hover:bg-gray-800"
+            onClick={handleButtonClick}
+            type="button" // กำหนด type เป็น button เพื่อป้องกันการ submit form
+          >
+            เปลี่ยน/อัปโหลดรูปภาพ
+          </button>
+        </div>
+
+        
+
+        {/* ข้อมูล */}
+        <div className="flex-1 space-y-8">
+          {/* ข้อมูลส่วนตัว */}
+          <section>
+            <h2 className="text-xl font-bold text-gray-700 mb-3 border-b pb-1 text-center">
+              ข้อมูลส่วนตัว
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderField("ชื่อ-นามสกุล", "name")}
+            </div>
+          </section>
+
+          {/* ข้อมูลการติดต่อ */}
+          <section>
+            <h2 className="text-xl font-bold text-gray-700 mb-3 border-b pb-1 text-center">
+              ข้อมูลการติดต่อ
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderField("เบอร์โทรศัพท์", "phone")}
+              {renderField("อีเมล", "email")}
+            </div>
+          </section>
+
+          {/* ข้อมูลตำแหน่งงาน */}
+          <section>
+            <h2 className="text-xl font-bold text-gray-700 mb-3 border-b pb-1 text-center">
+              ข้อมูลตำแหน่งงาน
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderField("ตำแหน่ง", "role")}
+
+              {renderField("สถานะ", "status")}
+            </div>
+          </section>
+
+          {/* ปุ่มแก้ไข / บันทึก */}
+          <div className="pt-4 flex gap-4 flex-wrap">
+            {isEditing ? (
+              <>
+                {/* ปุ่มบันทึก */}
+                <button
+                  onClick={handleSave}
+                  className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow"
+                >
+                  บันทึกการเปลี่ยนแปลง
+                </button>
+                {/* ปุ่มยกเลิก */}
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-6 py-2 bg-gray-400 text-white font-medium rounded-lg hover:bg-gray-500 shadow"
+                >
+                  ยกเลิก
+                </button>
+              </>
+            ) : (
+              // ปุ่มเปิดโหมดแก้ไข
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-6 py-2 bg-green-800 text-white font-medium rounded-lg hover:bg-green-800 shadow"
+              >
+                แก้ไขข้อมูล
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
