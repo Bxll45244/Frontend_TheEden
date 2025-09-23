@@ -1,14 +1,13 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
-// Layouts
-import UserMobileLayout from '../layouts/UserMobileLayout';
-import MainLayout from '../layouts/MainLayout';
+// Layout
+import Layout from '../layouts/Layout';
 
 // Golfer Pages
 import GolferHomePage from '../pages/golfer/GolferHomePage';
 import GolferBookingPage from '../pages/golfer/GolferBookingPage';
-import ProfilePage from '../pages/golfer/ProfilePage';
+import ProfilePage from '../pages/golfer/ProfilePage'; 
 
 // Caddy Pages
 import BookingPage from "../pages/Caddy/BookingPage";
@@ -31,41 +30,39 @@ import LoginPage from '../pages/auth/LoginPage';
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
 
-        {/* Auth Routes */}
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
+      {/* Auth Routes */}
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={<LoginPage />} />
 
-        {/* Landing Page */}
-        <Route path="/landing" element={<LandingPage />} />
+      {/* Landing Page */}
+      <Route path="/landing" element={<LandingPage />} />
 
-        {/* Golfer Routes */}
-        <Route path="/" element={<UserMobileLayout />}>
-          <Route index element={<GolferHomePage />} />
-          <Route path="booking" element={<GolferBookingPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          {/* Admin nested under UserMobileLayout */}
-          <Route path="admin" element={<AdminDashboard />} />
-        </Route>
+      {/* Golfer/User Routes */}
+      <Route path="/" element={<Layout />}>
+        <Route index element={<GolferHomePage />} />
+        <Route path="booking" element={<GolferBookingPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        {/* Admin nested under User */}
+        <Route path="admin" element={<AdminDashboard />} />
+      </Route>
 
-        {/* Caddy Routes */}
-        <Route path="/caddy">
-          <Route index element={<BookingPage />} />
-          <Route path="booking" element={<ProcessGolfPage />} />
-          <Route path="history" element={<HistoryPage />} />
-          <Route path="profile" element={<CaddyProfile />} />
-        </Route>
+      {/* Caddy Routes */}
+      <Route path="/caddy">
+        <Route index element={<BookingPage />} />
+        <Route path="booking" element={<ProcessGolfPage />} />
+        <Route path="history" element={<HistoryPage />} />
+        <Route path="profile" element={<CaddyProfile />} />
+      </Route>
 
-        {/* Starter Routes */}
-        <Route path="/starter" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="report" element={<ReportPage />} />
-          <Route path="report/confirm" element={<ReportConfirmPage />} />
-        </Route>
+      {/* Starter Routes */}
+      <Route path="/starter">
+        <Route index element={<Dashboard />} />
+        <Route path="report" element={<ReportPage />} />
+        <Route path="report/confirm" element={<ReportConfirmPage />} />
+      </Route>
 
-      </Routes>
-    </BrowserRouter>
+    </Routes>
   );
 }

@@ -1,8 +1,8 @@
-// src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
 import { register as apiRegister } from "../../service/authService";
+import n
 
 const Notification = ({ type, message }) => {
   const bgColor = type === "success" ? "bg-green-600" : "bg-red-600";
