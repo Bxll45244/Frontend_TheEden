@@ -47,7 +47,7 @@ export function calculateTotalPrice(bookingData = {}) {
  
 export const createBooking = async (bookingData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/book`, {
+    const response = await fetch(`${API_BASE_URL}/booking/book`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -57,7 +57,13 @@ export const createBooking = async (bookingData) => {
     const data = await response.json();
 
     if (response.ok) {
-      return { success: true, message: data.message || 'Booking created successfully!', booking: data.booking };
+      // ✅ Return ทั้ง booking + paymentUrl
+      return { 
+        success: true, 
+        message: data.message || 'Booking created successfully!', 
+        booking: data.booking,
+        paymentUrl: data.paymentUrl  // <-- เพิ่มตรงนี้
+      };
     } else {
       console.error('Backend Error for createBooking:', data);
       return { success: false, message: data.error || data.message || 'Failed to create booking' };

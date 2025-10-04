@@ -17,7 +17,7 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
             setError(null);
 
             try {
-                const response = await axios.get(`${API_BASE_URL}/user/available-caddies`, {
+                const response = await axios.get(`${API_BASE_URL}/caddy/available-caddies`, {
                     withCredentials: true // ให้ browser ส่ง HttpOnly cookie ไปเอง
                 });
 
