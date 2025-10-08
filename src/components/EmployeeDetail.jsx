@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
+import { updateUser } from "../service/bookingService2";
 
 // Component แสดงรายละเอียดพนักงาน
 export default function EmployeeDetail({ employee, onBack, onUpdateEmployee }) {
@@ -15,11 +16,33 @@ export default function EmployeeDetail({ employee, onBack, onUpdateEmployee }) {
   };
 
   // ฟังก์ชันบันทึกการแก้ไข (TODO: เพิ่ม logic backend)
-  const handleSave = () => {
-    // ✅ เรียกใช้ prop ที่ส่งมาจาก AdminDashboard และส่งข้อมูลที่อัปเดตไป
-    onUpdateEmployee(formData);
-    setIsEditing(false); 
-  };
+const handleSave = async () => {
+  try {
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("phone", formData.phone);
+    data.append("email", formData.email);
+    data.append("role", formData.role);
+    if (formData.password) data.append("password", formData.password);
+
+    // ถ้ามีรูปใหม่ให้ส่งด้วย
+    const file = fileInputRef.current?.files?.[0];
+    if (file) data.append("image", file);
+
+    const response = await updateUser(formData._id, data);
+
+    if (response.success) {
+      alert("✅ อัปเดตข้อมูลสำเร็จ!");
+      onUpdateEmployee(response.user);
+      setIsEditing(false);
+    } else {
+      alert("❌ " + response.message);
+    }
+  } catch (error) {
+    console.error("Error updating employee:", error);
+    alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+  }
+};
 
   const fileInputRef = useRef(null);
 
@@ -50,8 +73,9 @@ export default function EmployeeDetail({ employee, onBack, onUpdateEmployee }) {
             onChange={(e) => handleChange(key, e.target.value)}
             className="border border-gray-300 rounded p-2 w-full"
           >
-            <option value="General">General</option>
-            <option value="Caddie">Caddie</option>
+            <option value="Role">ตำแหน่ง</option>
+            <option value="Admin">Admin</option>
+            <option value="Caddy">Caddy</option>
             <option value="Starter">Starter</option>
           </select>
         ) : key === "status" ? (
@@ -158,7 +182,7 @@ export default function EmployeeDetail({ employee, onBack, onUpdateEmployee }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField("ตำแหน่ง", "role")}
 
-              {renderField("สถานะ", "status")}
+              
             </div>
           </section>
 

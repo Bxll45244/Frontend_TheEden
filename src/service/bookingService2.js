@@ -52,3 +52,24 @@ export const deleteBooking = async (id) => {
     };
   }
 };
+
+export const updateUser = async (id, userData) => {
+  try {
+    const res = await api.put(`/user/updateuser/${id}`, userData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return {
+      success: true,
+      message: res.data.message,
+      user: res.data.user,
+    };
+  } catch (err) {
+    console.error("Error updating user:", err.response?.data || err.message);
+    return {
+      success: false,
+      message: err.response?.data?.message || "ไม่สามารถอัปเดตข้อมูลผู้ใช้ได้",
+    };
+  }
+};
+
+
