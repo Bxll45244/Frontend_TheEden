@@ -51,7 +51,8 @@ export default function AppRouter() {
       {/* Caddy Routes */}
       <Route path="/caddy">
         <Route index element={<BookingPage />} />
-        <Route path="booking" element={<ProcessGolfPage />} />
+        {/* <Route path="booking" element={<ProcessGolfPage />} /> */}
+        <Route path="process" element={<ProcessGolfPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="profile" element={<CaddyProfile />} />
       </Route>

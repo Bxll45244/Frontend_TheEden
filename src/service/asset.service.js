@@ -19,7 +19,7 @@ const AssetStatusDashboard = () => {
             try {
                 // ส่งคำขอ GET ไปยัง endpoint API ของ backend
                 // **อย่าลืมเปลี่ยน URL เป็น URL เซิร์ฟเวอร์จริงของคุณ**
-                const response = await axios.get('http://localhost:5000/api/assets/status/overall');
+                const response = await axios.get('http://localhost:5000/api/item/all-status');
                 
                 // อัปเดต state ด้วยข้อมูลที่ได้มา
                 setAssetData(response.data);

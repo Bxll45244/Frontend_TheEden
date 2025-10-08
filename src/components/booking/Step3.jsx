@@ -144,11 +144,11 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
                                 {filteredCaddies.length > 0 ? (
                                     filteredCaddies.map(c => (
                                         <div
-                                            key={c._id}
+                                            key={c.caddy_id}
                                             className={`flex flex-col items-center p-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-                                                caddy.includes(c._id) ? 'bg-green-100 border-2 border-green-500' : 'bg-gray-100 border-2 border-transparent hover:bg-gray-200'
+                                                caddy.includes(c.caddy_id) ? 'bg-green-100 border-2 border-green-500' : 'bg-gray-100 border-2 border-transparent hover:bg-gray-200'
                                             }`}
-                                            onClick={() => handleCaddySelection(c._id)}
+                                            onClick={() => handleCaddySelection(c.caddy_id)}
                                         >
                                             <div className="relative w-20 h-20 rounded-full overflow-hidden mb-2">
                                                 <img
@@ -157,7 +157,7 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/80x80/cccccc/ffffff?text=Caddy"; }}
                                                 />
-                                                {caddy.includes(c._id) && (
+                                                {caddy.includes(c.caddy_id) && (
                                                     <div className="absolute inset-0 bg-green-500 bg-opacity-70 flex items-center justify-center rounded-full">
                                                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>

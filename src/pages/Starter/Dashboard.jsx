@@ -16,16 +16,16 @@ const Dashboard = () => {
     const fetchAssetStatus = async () => {
       try {
         // ใช้ api instance ที่มีการตั้งค่า Interceptor สำหรับแนบ Token แล้ว
-        const response = await api.get('/assets/status/overall');
-        const { golfCart, golfBag } = response.data;
+        const response = await api.get('/item/all-status');
+        const { golfCar, golfBag } = response.data;
 
-        const formattedCartStatus = [
-          { count: golfCart.available || 0, label: "รถกอล์ฟว่าง", color: "success" },
-          { count: golfCart.inUse || 0, label: "กำลังใช้งาน", color: "info" },
-          { count: golfCart.booked || 0, label: "จองแล้ว", color: "primary" },
-          { count: golfCart.clean || 0, label: "เปลี่ยนแบต", color: "purple" },
-          { count: golfCart.spare || 0, label: "รถสำรอง", color: "warning" },
-          { count: golfCart.broken || 0, label: "รถเสีย", color: "error" },
+        const formattedCarStatus = [
+          { count: golfCar.available || 0, label: "รถกอล์ฟว่าง", color: "success" },
+          { count: golfCar.inUse || 0, label: "กำลังใช้งาน", color: "info" },
+          { count: golfCar.booked || 0, label: "จองแล้ว", color: "primary" },
+          { count: golfCat.clean || 0, label: "เปลี่ยนแบต", color: "purple" },
+          { count: golfCar.spare || 0, label: "รถสำรอง", color: "warning" },
+          { count: golfCar.broken || 0, label: "รถเสีย", color: "error" },
         ];
 
         const formattedBagStatus = [
@@ -37,7 +37,7 @@ const Dashboard = () => {
         ];
         
         setAssetStatus({
-          golfCart: formattedCartStatus,
+          golfCart: formattedCarStatus,
           golfBag: formattedBagStatus
         });
         setIsLoading(false);

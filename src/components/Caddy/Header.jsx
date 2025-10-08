@@ -152,16 +152,7 @@ export const Header = ({ currentDate }) => {
         </div>
       )}
 
-      {/* Avatar สำหรับ Desktop: แสดงมุมขวาบนเมื่อหน้าจอเป็น sm ขึ้นไป */}
-      <div className="absolute right-4 top-4 z-50 hidden sm:block">
-        <div className="avatar">
-          {/* วงแหวนรอบ avatar เช่นเดียวกับในเมนูมือถือ */}
-          <div className="ring-primary ring-offset-base-100 w-16 h-16 rounded-full ring-2 ring-offset-2">
-            {/* รูปผู้ใช้เป็นตัวอย่าง */}
-            <img src="https://img.daisyui.com/images/profile/demo/spiderperson@192.webp" alt="User Avatar" />
-          </div>
-        </div>
-      </div>
+
     </header>
   );
 };
