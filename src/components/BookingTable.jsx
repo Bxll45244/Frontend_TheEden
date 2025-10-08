@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react"; // useState: จัดการ state, useEffect: จัดการ side-effects เช่น fetch data
 import { Dialog, Transition } from "@headlessui/react"; // สำหรับ modal/dialog
 import { Fragment } from "react"; // ใช้แทน wrapper ที่ไม่ render element จริง
+import { getBookingToday, updateBooking, deleteBooking } from "../service/bookingService2.js"; // ฟังก์ชันดึงข้อมูลการจอง
 import {
   UserRound,
   Clock,
@@ -50,32 +51,7 @@ const getBookings = async () => {
   });
 };
 
-// Mock API function สำหรับอัปเดตการจอง
-const updateBooking = async (id, data) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const updatedBooking = {
-        ...mockBookings.find((b) => b._id === id),
-        ...data,
-      };
-      resolve({
-        success: true,
-        booking: updatedBooking,
-        message: "Booking updated successfully.",
-      });
-    }, 500);
-  });
-};
 
-// Mock API function สำหรับลบการจอง
-const deleteBooking = async (id) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const remaining = mockBookings.filter((b) => b._id !== id);
-      resolve({ success: true, message: "Booking deleted successfully." });
-    }, 500);
-  });
-};
 
 // --- Main Component ---
 export default function App() {
@@ -109,22 +85,22 @@ export default function App() {
   }, []);
 
   // ฟังก์ชันดึงข้อมูล booking
-  const fetchBookings = async () => {
-    setLoading(true);
-    try {
-      const response = await getBookings();
-      if (response.success) {
-        setBookings(response.bookings);
-      } else {
-        setError(response.message || "Failed to fetch bookings.");
-      }
-    } catch (err) {
-      setError("Network error or server is down.");
-      console.error("Error fetching bookings:", err);
-    } finally {
-      setLoading(false);
+const fetchBookings = async () => {
+  setLoading(true);
+  try {
+    const response = await getBookingToday(); // ← ดึงจาก backend จริง
+    if (response.success) {
+      setBookings(response.bookings);
+    } else {
+      setError(response.message || "ไม่สามารถโหลดข้อมูลการจองได้");
     }
-  };
+  } catch (err) {
+    setError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ฟังก์ชันเปิด modal update
   const handleUpdateClick = (booking) => {
@@ -141,47 +117,47 @@ export default function App() {
 
   // ฟังก์ชันยืนยัน update
   const handleUpdateConfirm = async () => {
-    if (!selected || !newTimeSlot) return;
-    try {
-      const response = await updateBooking(selected._id, {
-        timeSlot: newTimeSlot,
-      });
-      if (response.success) {
-        const updatedBookings = bookings.map((b) =>
-          b._id === selected._id ? response.booking : b
-        );
-        setBookings(updatedBookings); // อัปเดต state
-        setSelected(null);
-        setIsUpdateModalOpen(false);
-        showMessage("อัปเดตการจองสำเร็จ!", "success"); // แสดงข้อความ success
-      } else {
-        showMessage("อัปเดตไม่สำเร็จ: " + response.message, "error");
-      }
-    } catch (err) {
-      showMessage("เกิดข้อผิดพลาดในการอัปเดต", "error");
+  if (!selected || !newTimeSlot) return;
+
+  try {
+    const response = await updateBooking(selected._id, { timeSlot: newTimeSlot });
+
+    if (response.booking) {
+      // อัปเดตใน state
+      const updatedBookings = bookings.map((b) =>
+        b._id === selected._id ? response.booking : b
+      );
+      setBookings(updatedBookings);
+      setSelected(null);
+      setIsUpdateModalOpen(false);
+      showMessage("อัปเดตการจองสำเร็จ!", "success");
+    } else {
+      showMessage(response.message || "อัปเดตไม่สำเร็จ", "error");
     }
-  };
+  } catch (err) {
+    showMessage("เกิดข้อผิดพลาดในการอัปเดตเวลา", "error");
+  }
+};
 
   // ฟังก์ชันยืนยัน delete
-  const handleDeleteConfirm = async () => {
-    if (!selected) return;
-    try {
-      const response = await deleteBooking(selected._id);
-      if (response.success) {
-        const remainingBookings = bookings.filter(
-          (b) => b._id !== selected._id
-        );
-        setBookings(remainingBookings); // อัปเดต state
-        setSelected(null);
-        setIsDeleteModalOpen(false);
-        showMessage("ลบการจองสำเร็จ!", "success"); // แสดงข้อความ success
-      } else {
-        showMessage("ลบไม่สำเร็จ: " + response.message, "error");
-      }
-    } catch (err) {
-      showMessage("เกิดข้อผิดพลาดในการลบ", "error");
+const handleDeleteConfirm = async () => {
+  if (!selected) return;
+
+  try {
+    const response = await deleteBooking(selected._id);
+    if (response.message === "Booking deleted successfully") {
+      const remainingBookings = bookings.filter((b) => b._id !== selected._id);
+      setBookings(remainingBookings);
+      setSelected(null);
+      setIsDeleteModalOpen(false);
+      showMessage("ลบการจองสำเร็จ!", "success");
+    } else {
+      showMessage(response.message || "ลบไม่สำเร็จ", "error");
     }
-  };
+  } catch (err) {
+    showMessage("เกิดข้อผิดพลาดในการลบ", "error");
+  }
+};
 
   // สร้างเวลา 6:00  โดยเพิ่มทีละ 15 นาที
   const times = Array.from({ length: 30 }).map((_, index) => {
