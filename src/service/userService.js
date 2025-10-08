@@ -18,19 +18,26 @@ const api = axios.create({
  * @param {object} userData - ข้อมูลผู้ใช้ใหม่: { name, email, password, role }
  * @returns {Promise<object>} - ผลลัพธ์จากการสร้างบัญชี
  */
-export const registerByAdmin = async (userData) => {
+export const registerByAdmin = async (formData) => {
   try {
-    const res = await api.post('/user/admin/register', userData);
+    const isFormData = formData instanceof FormData;
+
+    const res = await api.post("/user/admin/register", formData, {
+      headers: isFormData
+        ? { "Content-Type": "multipart/form-data" }
+        : { "Content-Type": "application/json" },
+    });
+
     return {
       success: true,
-      message: 'สร้างบัญชีผู้ใช้สำเร็จ',
-      user: res.data
+      message: "สร้างบัญชีผู้ใช้สำเร็จ",
+      user: res.data,
     };
   } catch (err) {
-    console.error('Error registering user by admin:', err.response?.data || err.message);
+    console.error("Error registering user by admin:", err.response?.data || err.message);
     return {
       success: false,
-      message: err.response?.data?.message || 'ไม่สามารถสร้างบัญชีผู้ใช้ได้'
+      message: err.response?.data?.message || "ไม่สามารถสร้างบัญชีผู้ใช้ได้",
     };
   }
 };

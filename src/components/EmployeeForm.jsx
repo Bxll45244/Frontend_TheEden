@@ -10,6 +10,7 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
     role: "",
@@ -65,38 +66,45 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
       return;
     }
 
-    try {
-      // ส่งเฉพาะข้อมูลที่จำเป็นไปให้ API
-      const apiData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role.toLowerCase(),
-      };
+  try {
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("phone", formData.phone);
+    data.append("email", formData.email);
+    data.append("password", formData.password);
+    data.append("role", formData.role.toLowerCase());
 
-      const response = await registerByAdmin(apiData);
-
-      if (response.success) {
-        setSuccess("สร้างบัญชีผู้ใช้สำเร็จ!");
-        if (onAddEmployee) onAddEmployee(response.user);
-        // รีเซ็ตฟอร์มหลังจากสำเร็จ
-        setFormData({
-          name: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          role: "",
-          image: "/Images/Profile.jpg",
-        });
-      } else {
-        setError(response.message || "เกิดข้อผิดพลาดในการสร้างบัญชี");
-      }
-    } catch (err) {
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err.message);
-    } finally {
-      setLoading(false);
+    // ถ้ามีไฟล์รูป ให้ส่งด้วย
+    const file = fileInputRef.current.files[0];
+    if (file) {
+      data.append("image", file); // backend จะได้ req.files
     }
-  };
+
+    const response = await registerByAdmin(data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    if (response.success) {
+      setSuccess("สร้างบัญชีผู้ใช้สำเร็จ!");
+      if (onAddEmployee) onAddEmployee(response.user);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        role: "",
+        image: "/Images/Profile.jpg",
+      });
+    } else {
+      setError(response.message || "เกิดข้อผิดพลาดในการสร้างบัญชี");
+    }
+  } catch (err) {
+    setError("เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex flex-col md:flex-row gap-4 justify-center items-start p-4 max-w-4xl mx-auto">
@@ -151,6 +159,18 @@ export default function EmployeeForm({ onCancel, onAddEmployee }) {
             onChange={(e) => handleChange("email", e.target.value)}
           />
         </div>
+
+        <div>
+  <Label>เบอร์โทรศัพท์</Label>
+  <Input
+    type="text"
+    placeholder="กรุณากรอกเบอร์โทรศัพท์"
+    required
+    value={formData.phone}
+    onChange={(e) => handleChange("phone", e.target.value)}
+  />
+</div>
+
         <div>
           <Label>รหัสผ่าน</Label>
           <Input

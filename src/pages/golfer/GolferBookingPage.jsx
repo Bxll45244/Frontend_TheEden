@@ -14,6 +14,7 @@ const formatDate = (date) => {
 
 export default function GolferBookingPage() {
   const navigate = useNavigate();
+  
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
 
