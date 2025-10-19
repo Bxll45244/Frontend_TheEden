@@ -1,192 +1,200 @@
+// src/pages/Starter/ReportPage.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios"; 
+import axios from "axios";
 import { faExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
+import { useNavigate } from "react-router-dom";
 
-// กำหนด URL ของ API หลัก
-const API_BASE_URL = "http://localhost:5000/api/issues"; 
+const API_BASE_URL = "http://localhost:5000/api";
 
-// Mapping สีสำหรับ Tailwind CSS
 const colorMap = {
   red: "bg-red-500",
   blue: "bg-blue-500",
   green: "bg-green-500",
   orange: "bg-orange-500",
   yellow: "bg-yellow-400",
+  gray: "bg-gray-400",
 };
 
 const ReportPage = () => {
+  const navigate = useNavigate(); 
   const [confirmData, setConfirmData] = useState(null);
   const [popup, setPopup] = useState(null);
-  const [holeStatuses, setHoleStatuses] = useState([]); 
-  const [isLoading, setIsLoading] = useState(true); 
-  const [error, setError] = useState(null); 
-  const [authToken, setAuthToken] = useState(null); 
+  const [holeStatuses, setHoleStatuses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
 
-  // โหลด Token จาก localStorage
+  const handleAdminClick = () => navigate("/starter"); 
+
+  // โหลด token
   useEffect(() => {
     const storedToken = localStorage.getItem("userToken");
-    if (storedToken) {
-      setAuthToken(storedToken);
-    } else {
-      console.warn("No authentication token found. Please log in.");
-    }
+    if (storedToken) setAuthToken(storedToken);
   }, []);
 
-  // ดึงสถานะหลุมจาก backend
-  useEffect(() => {
-    if (authToken) {
-      fetchHoleStatuses();
-    } else if (!isLoading && !authToken && error === null) {
-      setError("กรุณาเข้าสู่ระบบเพื่อดูสถานะหลุมกอล์ฟ");
-      setIsLoading(false);
-    }
-  }, [authToken]);
+  // helper: map สถานะจาก backend → ที่ frontend ใช้
+  const normalizeHoles = (raw) => {
+    // รองรับได้ทั้ง {holes:[...]} หรือ {holeStatuses:[...]}
+    const list = Array.isArray(raw?.holes)
+      ? raw.holes
+      : Array.isArray(raw?.holeStatuses)
+      ? raw.holeStatuses
+      : [];
 
+    return list.map((h) => {
+      // ชื่อ field เผื่อกรณีไม่ตรงกัน
+      const holeNumber = h.holeNumber ?? h.number ?? h.hole ?? 0;
+      const currentStatus = h.currentStatus ?? h.status ?? "open";
+      const activeIssue = h.activeIssue ?? null;
+
+      let color = "green";
+      let statusText = "ใช้งานได้";
+
+      if (currentStatus === "closed") {
+        color = "red";
+        statusText = activeIssue?.description || "ปิดหลุม";
+      } else if (currentStatus === "under_maintenance") {
+        color = "blue";
+        statusText = "กำลังแก้ไข";
+      }
+
+      return {
+        number: Number(holeNumber),
+        color,
+        status: statusText,
+        issueId: activeIssue?._id || null,
+      };
+    });
+  };
+
+  // ดึงสถานะหลุมจาก backend (ใช้เส้นทางใหม่ /api/hole/gethole)
   const fetchHoleStatuses = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/hole-status`, {
+      const res = await axios.get(`${API_BASE_URL}/hole/gethole`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      const backendData = response.data;
-
-      if (!backendData || !Array.isArray(backendData.holeStatuses)) {
-        throw new Error("ข้อมูลที่ได้รับจากเซิร์ฟเวอร์ไม่ถูกต้อง");
-      }
-
-      const formattedStatuses = backendData.holeStatuses.map((hole) => {
-        let displayColor = "green";
-        let displayStatus = "ใช้งานได้";
-
-        if (hole.currentStatus === "closed") {
-          displayColor = "red";
-          displayStatus = hole.activeIssue?.description || "ปิดหลุม";
-        } else if (hole.currentStatus === "under_maintenance") {
-          displayColor = "blue";
-          displayStatus = "กำลังแก้ไข";
-        }
-
-        return {
-          number: hole.holeNumber,
-          color: displayColor,
-          status: displayStatus,
-          issueId: hole.activeIssue ? hole.activeIssue._id : null,
-        };
-      });
-
-      setHoleStatuses(formattedStatuses);
-      setIsLoading(false);
+      setHoleStatuses(normalizeHoles(res.data));
     } catch (err) {
-      console.error("Error fetching hole statuses:", err.response?.data || err.message);
-      if (err.response && err.response.status === 401) {
-        setError("การเข้าถึงไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่");
-      } else {
-        setError("ไม่สามารถดึงข้อมูลสถานะหลุมกอล์ฟได้");
-      }
+      console.error("fetchHoleStatuses:", err.response?.data || err.message);
+      setError(
+        err?.response?.status === 401
+          ? "การเข้าถึงไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่"
+          : "ไม่สามารถดึงข้อมูลสถานะหลุมกอล์ฟได้"
+      );
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // กด "ยืนยัน" ใน Card
-  const handleSubmit = (title, data) => {
-    const requiredFields = ["hole"];
-    if (title.includes("ชื่อ")) requiredFields.push("name");
-    if (title === "แจ้งปิดหลุม") requiredFields.push("issue");
-
-    const isValid = requiredFields.every(
-      (field) => data[field] && data[field].toString().trim() !== ""
-    );
-
-    if (!isValid) {
-      setPopup({ title: "กรุณากรอกข้อมูลให้ครบถ้วน", isError: true });
-      return;
+  useEffect(() => {
+    if (authToken) fetchHoleStatuses();
+    else if (!isLoading && !authToken) {
+      setError("กรุณาเข้าสู่ระบบเพื่อดูสถานะหลุมกอล์ฟ");
+      setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken]);
+
+  // ส่งคำสั่งจากการกดปุ่มยืนยันใน Card
+  const handleSubmit = (title, data) => {
+    const required = ["hole"];
+    if (title.includes("ชื่อ")) required.push("name");
+    if (title === "แจ้งปิดหลุม") required.push("issue");
+
+    const ok = required.every((k) => data[k] && String(data[k]).trim() !== "");
+    if (!ok) return setPopup({ title: "กรุณากรอกข้อมูลให้ครบถ้วน", isError: true });
 
     setConfirmData({ title, ...data });
   };
 
-  // กด "ตกลง" ใน Popup ยืนยัน
+  // ยิง API ตามปุ่มที่เลือก (ต่อกับ routes /api/hole/*)
   const handleConfirm = async () => {
     if (!confirmData) return;
-    if (!authToken) {
-      setPopup({ title: "คุณไม่ได้เข้าสู่ระบบ กรุณาเข้าสู่ระบบก่อนทำรายการ", isError: true });
-      setConfirmData(null);
-      return;
-    }
+    if (!authToken)
+      return setPopup({
+        title: "คุณไม่ได้เข้าสู่ระบบ กรุณาเข้าสู่ระบบก่อนทำรายการ",
+        isError: true,
+      });
 
-    const { title, hole, issue, issueId } = confirmData;
+    const { title, hole, issue, name } = confirmData;
     let endpoint = "";
-    let requestData = {};
+    let method = "put";
+    let data = {};
     let successMsg = "";
 
     try {
       if (title === "แจ้งปิดหลุม") {
-        endpoint = "/starter/report-hole-closure";
-        requestData = { 
-          holeNumber: Number(hole), 
-          description: issue, 
-          reportedBy: "user_caddy_starter_id"
+        endpoint = "/hole/close";
+        data = {
+          holeNumber: Number(hole),
+          description: issue,
+          reportedBy: "starter_user", // ปรับตามระบบจริงของคุณ
         };
         successMsg = "แจ้งปิดหลุมสำเร็จ";
-        await axios.post(`${API_BASE_URL}${endpoint}`, requestData, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
 
       } else if (title === "แจ้งสถานะกำลังแก้ไข") {
-        if (!issueId) throw new Error("ไม่พบ ID ปัญหาสำหรับการดำเนินการนี้ (กำลังแก้ไข)");
-        endpoint = `/${issueId}/mark-in-progress`;
+        endpoint = "/hole/report";
+        data = {
+          holeNumber: Number(hole),
+          personInCharge: name || "greenkeeper", // ใช้ชื่อจากฟอร์ม
+        };
         successMsg = "แจ้งสถานะกำลังแก้ไขสำเร็จ";
-        requestData = { personInCharge: "user_starter_id" };
-        await axios.put(`${API_BASE_URL}${endpoint}`, requestData, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
 
       } else if (title === "แจ้งเปิดใช้งานหลุม") {
-        if (!issueId) throw new Error("ไม่พบ ID ปัญหาสำหรับการดำเนินการนี้ (เปิดใช้งาน)");
-        endpoint = `/${issueId}/mark-resolved`;
+        endpoint = "/hole/open";
+        data = {
+          holeNumber: Number(hole),
+          resolvedBy: "resolver_user",
+        };
         successMsg = "แจ้งเปิดใช้งานหลุมสำเร็จ";
-        requestData = { resolvedBy: "user_resolver_id" };
-        await axios.put(`${API_BASE_URL}${endpoint}`, requestData, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
 
       } else if (title === "ส่งรถกอล์ฟ") {
-        updateHoleStatusOnFrontend({ hole, color: "orange", status: "ส่งรถกอล์ฟแล้ว" });
+        endpoint = "/hole/help-car";
+        data = {
+          holeNumber: Number(hole),
+          name: name || "starter_user",
+          type: "golfCart",
+        };
         successMsg = "ส่งรถกอล์ฟสำเร็จ";
+
       } else if (title === "ส่งกระเป๋ากอล์ฟ") {
-        updateHoleStatusOnFrontend({ hole, color: "yellow", status: "กระเป๋าเสีย" });
+        // ยังไม่มี endpoint แยก ใช้ help-car พร้อม type = golfBag
+        endpoint = "/hole/help-car";
+        data = {
+          holeNumber: Number(hole),
+          name: name || "starter_user",
+          type: "golfBag",
+        };
         successMsg = "ส่งกระเป๋ากอล์ฟสำเร็จ";
       }
+
+      await axios[method](`${API_BASE_URL}${endpoint}`, data, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
 
       await fetchHoleStatuses();
       setPopup({ title: successMsg, isError: false });
       setConfirmData(null);
-
     } catch (err) {
-      console.error("Error confirming action:", err.response?.data || err.message);
-      let errorMessage = `เกิดข้อผิดพลาดในการ ${title}`;
-      if (err.response) {
-        if (err.response.status === 401) {
-          errorMessage = "การเข้าถึงไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่";
-          localStorage.removeItem("userToken");
-          setAuthToken(null);
-        } else if (err.response.data && err.response.data.message) {
-          errorMessage += `: ${err.response.data.message}`;
-        } else {
-          errorMessage += `: ${err.message}`;
-        }
-      } else {
-        errorMessage += `: ${err.message}`;
+      console.error("handleConfirm:", err.response?.data || err.message);
+      let msg =
+        err?.response?.data?.message ||
+        err.message ||
+        `เกิดข้อผิดพลาดในการ ${title}`;
+      if (err?.response?.status === 401) {
+        localStorage.removeItem("userToken");
+        setAuthToken(null);
+        msg = "การเข้าถึงไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่";
       }
-      setPopup({ title: errorMessage, isError: true });
+      setPopup({ title: msg, isError: true });
       setConfirmData(null);
     }
   };
 
-  // อัปเดตสถานะเฉพาะ frontend
   const updateHoleStatusOnFrontend = ({ hole, color, status }) => {
     setHoleStatuses((prev) =>
       prev.map((h) => (h.number === Number(hole) ? { ...h, color, status } : h))
@@ -195,7 +203,6 @@ const ReportPage = () => {
 
   const handleSuccessClose = () => setPopup(null);
 
-  // Render popup
   const renderPopup = () => {
     if (confirmData) {
       return (
@@ -249,7 +256,6 @@ const ReportPage = () => {
     return null;
   };
 
-  // Card component
   const Card = ({ color, title, showName, showIssue }) => {
     const [hole, setHole] = useState("");
     const [name, setName] = useState("");
@@ -262,7 +268,7 @@ const ReportPage = () => {
       if (!hole.trim()) return false;
       if (showName && !name.trim()) return false;
       if (showIssue && !issue.trim()) return false;
-      if ((title === "แจ้งสถานะกำลังแก้ไข" || title === "แจ้งเปิดใช้งานหลุม") && !issueId) return false;
+      // ตอนนี้เราไม่ใช้ issueId กับ endpoints ชุดนี้ แต่เผื่อไว้
       return true;
     };
 
@@ -303,9 +309,7 @@ const ReportPage = () => {
               onChange={(e) => setIssue(e.target.value)}
               className="w-full mb-3 px-2 py-1 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
             >
-              <option value="" disabled>
-                -- กรุณาเลือกปัญหา --
-              </option>
+              <option value="" disabled>-- กรุณาเลือกปัญหา --</option>
               <option value="ระบายน้ำ แฟร์เวย์">ระบายน้ำ แฟร์เวย์</option>
               <option value="ระบายน้ำกรีน">ระบายน้ำกรีน</option>
               <option value="ระบายน้ำบังเกอร์">ระบายน้ำบังเกอร์</option>
@@ -335,10 +339,16 @@ const ReportPage = () => {
   return (
     <div className="min-h-screen bg-white font-inter">
       <div className="px-4 py-6">
-        <div className="flex justify-center mt-6 mb-8">
+        <div className="flex justify-center mt-6 mb-8 gap-3">
           <div className="inline-block bg-black text-white text-xl sm:text-2xl font-bold py-2 px-6 rounded-lg max-w-max shadow-md">
             แจ้งปัญหา
           </div>
+          <button
+            className="inline-block bg-black text-white text-2xl font-bold py-2 px-6 rounded max-w-max"
+            onClick={handleAdminClick}
+          >
+            สถานะ
+          </button>
         </div>
 
         {/* Cards */}
@@ -368,23 +378,18 @@ const ReportPage = () => {
                     className="border rounded-lg p-2 bg-white shadow-sm text-center transform hover:scale-105 transition-transform duration-200"
                   >
                     <div
-                      className={`text-xs font-semibold px-2 py-0.5 mb-2 rounded-full text-white
-                        ${colorMap[hole.color] || "bg-gray-400"}`}
+                      className={`text-xs font-semibold px-2 py-0.5 mb-2 rounded-full text-white ${colorMap[hole.color] || colorMap.gray}`}
                     >
                       หลุมที่ {hole.number}
                     </div>
                     <div className="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center border border-gray-300 shadow-inner bg-white">
-                      <div
-                        className={`w-6 h-6 rounded-full ${colorMap[hole.color] || "bg-gray-400"}`}
-                      ></div>
+                      <div className={`w-6 h-6 rounded-full ${colorMap[hole.color] || colorMap.gray}`}></div>
                     </div>
                     <div className="text-xs text-gray-700 truncate">{hole.status}</div>
                   </div>
                 ))
               ) : (
-                <div className="col-span-full text-center text-gray-500 py-10">
-                  ไม่พบข้อมูลสถานะหลุมกอล์ฟ
-                </div>
+                <div className="col-span-full text-center text-gray-500 py-10">ไม่พบข้อมูลสถานะหลุมกอล์ฟ</div>
               )}
             </div>
           )}

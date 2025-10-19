@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";  
 // อิมพอร์ต api instance ที่เราสร้างไว้แทน axios โดยตรง
 import api from '../../service/api'; 
 import StatusCard from "../../components/Caddy/StatusCard";
 
 const Dashboard = () => {
+  const navigate = useNavigate(); 
+
   const [assetStatus, setAssetStatus] = useState({
     golfCart: {},
     golfBag: {}
   });
+  
 
+const handleAdminClick = () => {
+    // Navigate to Admin Dashboard directly without checking user role
+    navigate("/starter/report");
+  };
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,7 +32,7 @@ const Dashboard = () => {
           { count: golfCar.available || 0, label: "รถกอล์ฟว่าง", color: "success" },
           { count: golfCar.inUse || 0, label: "กำลังใช้งาน", color: "info" },
           { count: golfCar.booked || 0, label: "จองแล้ว", color: "primary" },
-          { count: golfCat.clean || 0, label: "เปลี่ยนแบต", color: "purple" },
+          { count: golfCar.clean || 0, label: "เปลี่ยนแบต", color: "purple" },
           { count: golfCar.spare || 0, label: "รถสำรอง", color: "warning" },
           { count: golfCar.broken || 0, label: "รถเสีย", color: "error" },
         ];
@@ -71,6 +80,9 @@ const Dashboard = () => {
     <div className="min-h-screen bg-white px-4 sm:px-8 py-6">
       <div className="flex justify-center mt-6">
         <div className="inline-block bg-black text-white text-2xl font-bold py-2 px-6 rounded max-w-max">สถานะ</div>
+        <div className="inline-block bg-black text-white text-2xl font-bold py-2 px-6 rounded max-w-max">
+         <button className="text-white" onClick={handleAdminClick}>แจ้งปัญหา</button>
+          </div>
       </div>
 
       <div className="max-w-7xl mx-auto border rounded-xl shadow-md p-6 sm:p-8 mt-6">

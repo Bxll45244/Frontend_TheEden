@@ -5,7 +5,10 @@ import Step2 from '../../components/booking/Step2';
 import Step3 from '../../components/booking/Step3';
 import Step4 from '../../components/booking/Step4';
 import Step5 from '../../components/booking/Step5';
-import { calculateTotalPrice, createBooking, calculateTotalPriceDetailed } from '../../service/bookingService';
+//import { calculateTotalPrice, createBooking, calculateTotalPriceDetailed } from '../../service/bookingService';
+import { calculateTotalPrice, calculateTotalPriceDetailed } from '../../service/bookingService';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const formatDate = (date) => {
   const d = new Date(date);
@@ -17,7 +20,8 @@ export default function GolferBookingPage() {
   
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
-
+  const cancelled = searchParams.get("cancelled");
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState({
     courseType: '18',
@@ -48,70 +52,97 @@ export default function GolferBookingPage() {
     }));
   };
 
-  //---------------------------------------
+  //-----------------------------------------------------------------
   // โหลด booking หลัง redirect จาก Stripe
-  useEffect(() => {
-    const savedBooking = sessionStorage.getItem('bookingResult');
-    if (savedBooking) {
-      setBookingResult(JSON.parse(savedBooking));
-      setCurrentStep(5);
-      sessionStorage.removeItem('bookingResult');
-      return; // ถ้ามี saved booking ไม่ต้อง fetch
-    }
+useEffect(() => {
+  if (!sessionId) return;
 
-    if (sessionId) {
-      const fetchBooking = async () => {
-        setIsFetchingBooking(true);
-        try {
-          const res = await fetch(`${API_BASE_URL}/stripe/by-session/${sessionId}`, { credentials: "include" });
-          const data = await res.json();
-          if (data.success) {
-            setBookingResult(data.booking);
-            setCurrentStep(5);
-          } else {
-            console.error("Booking not found:", data.message);
-          }
-        } catch (err) {
-          console.error("Fetch booking by session failed:", err);
-        } finally {
-          setIsFetchingBooking(false);
-        }
-      };
-      fetchBooking();
-    }
-  }, [sessionId]);
+  let aborted = false;
 
-  //---------------------------------------
-  const handleSubmitBooking = async () => {
-    console.log("handleSubmitBooking called");
-    setIsLoading(true);
+  const fetchWithRetry = async (retries = 6) => {
     try {
-      const payload = { 
-        ...bookingData, 
-        totalPrice: calculateTotalPriceDetailed(bookingData).total, 
-        date: formatDate(bookingData.date) 
-      };
+      const res = await fetch(`${API_BASE_URL}/stripe/by-session/${sessionId}`, {
+        credentials: "include",
+      });
 
-      const result = await createBooking(payload);
+      // กันกรณี backend ส่ง HTML (เช่น 404) จะ parse ไม่ได้
+      if (!res.ok) {
+        if (retries > 0 && !aborted) {
+          setTimeout(() => fetchWithRetry(retries - 1), 1200); // รอ 1.2s แล้วลองใหม่
+        }
+        return;
+      }
 
-      console.log("Booking Result:", result);
-      console.log("Payment URL:", result.paymentUrl);
+      const data = await res.json();
 
-      if (result.success && result.paymentUrl) {
-        // เก็บ bookingResult ชั่วคราวก่อน redirect ไป Stripe
-        sessionStorage.setItem('bookingResult', JSON.stringify(result.booking));
-        window.location.href = result.paymentUrl;
-        return; 
+      if (data?.success && data?.booking) {
+        setBookingResult(data.booking);
+        setCurrentStep(5);                       // ✅ ไป Step5
+        navigate('/booking', { replace: true }); // ✅ ล้าง query ออกจาก URL
+      } else if (retries > 0 && !aborted) {
+        setTimeout(() => fetchWithRetry(retries - 1), 1200);
       } else {
-        alert(result.message || "ไม่สามารถสร้างการจองได้");
+        console.error("Booking not found after retries:", data);
       }
     } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาด");
-    } finally {
-      setIsLoading(false);
+      if (retries > 0 && !aborted) {
+        setTimeout(() => fetchWithRetry(retries - 1), 1200);
+      } else {
+        console.error("Fetch booking failed:", err);
+      }
     }
   };
+
+  fetchWithRetry();
+
+  return () => { aborted = true; };
+}, [sessionId, navigate]);
+
+
+  useEffect(() => {
+  if (cancelled === '1') {
+    setCurrentStep(4); // กลับไป Step4
+    navigate('/booking', { replace: true }); // ล้าง query ออกจาก URL
+  }
+}, [cancelled, navigate]);
+
+  //----------------------------------------------------------------- -----
+
+  const handleSubmitBooking = async () => {
+  console.log("handleSubmitBooking called");
+  setIsLoading(true);
+  try {
+    const payload = { 
+      ...bookingData, 
+      totalPrice: calculateTotalPriceDetailed(bookingData).total, 
+      date: formatDate(bookingData.date) 
+    };
+
+    // ✅ เรียก backend ให้สร้าง Stripe Checkout Session (ยังไม่บันทึก DB)
+    const res = await fetch(`${API_BASE_URL}/stripe/create-checkout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data?.ok && data?.url) {
+      // ✅ ไปชำระเงินก่อน – ห้ามสร้าง/เก็บ booking ฝั่ง client
+      window.location.href = data.url;
+      return;
+    } else {
+      alert(data?.message || "ไม่สามารถสร้าง Checkout ได้");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("เกิดข้อผิดพลาด");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   //---------------------------------------
   const renderStep = () => {
