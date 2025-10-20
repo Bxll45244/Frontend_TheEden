@@ -88,15 +88,17 @@ const BookingPage = () => {
       </div>
 
       {/* ปฏิทิน */}
-      <div className="flex justify-center mb-6">
-        <DatePicker
-          selected={selectedDate}
-          onChange={(date) => setSelectedDate(date)}
-          dateFormat="d MMM ปี yyyy"
-          locale="th"
-          className="bg-[#324441] text-white rounded-full px-4 py-2 text-sm cursor-pointer text-center"
-        />
-      </div>
+<div className="flex justify-center mb-6">
+  <DatePicker
+    selected={selectedDate}
+    onChange={(date) => setSelectedDate(date)}
+    dateFormat="d MMM ปี yyyy"
+    locale="th"
+    minDate={new Date()}              // ✅ ป้องกันการเลือกวันที่ก่อนวันนี้
+    className="bg-[#324441] text-white rounded-full px-4 py-2 text-sm cursor-pointer text-center"
+  />
+</div>
+
 
       {/* รายการรอบที่ได้รับมอบหมาย */}
       <div className="bg-[#3B6B5D] text-white text-center rounded-2xl shadow-lg py-6 px-6 mx-auto w-full max-w-sm space-y-4 mb-6">
