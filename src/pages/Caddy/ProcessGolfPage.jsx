@@ -17,7 +17,7 @@ const ProcessGolfPage = () => {
         await endRound(bookingId);
       } else if (step === 3) {
         await markCaddyAsAvailable(bookingId);
-        navigate("/caddy/booking");
+        navigate("/caddy"); // ✅ กลับไปหน้าหลัก Caddy
         return;
       }
       setStep(step + 1);

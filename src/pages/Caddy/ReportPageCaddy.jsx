@@ -6,12 +6,11 @@ import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // e.g. http://localhost:5000/api
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// ✅ สร้าง axios instance ภายในไฟล์นี้เอง
 const http = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // ส่ง cookie ไปด้วย
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -72,7 +71,7 @@ const ReportPageCaddy = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await http.get("/hole/gethole"); // ✅ ใช้ http แทน
+      const res = await http.get("/hole/gethole");
       setHoleStatuses(normalizeHoles(res.data));
     } catch (err) {
       console.error("fetchHoleStatuses:", err.response?.data || err.message);
@@ -87,10 +86,6 @@ const ReportPageCaddy = () => {
   };
 
   useEffect(() => {
-    console.log("[HTTP baseURL]", http?.defaults?.baseURL);
-    if (!http?.defaults?.baseURL) {
-      console.warn("VITE_API_BASE_URL ไม่ถูกตั้งค่า หรือว่าง");
-    }
     fetchHoleStatuses();
   }, []);
 
@@ -100,18 +95,17 @@ const ReportPageCaddy = () => {
     if (data.requireIssue) required.push("issue");
 
     const ok = required.every((k) => data[k] && String(data[k]).trim() !== "");
-    if (!ok) return setPopup({ title: "กรุณากรอกข้อมูลให้ครบถ้วน", isError: true });
+    if (!ok)
+      return setPopup({ title: "กรุณากรอกข้อมูลให้ครบถ้วน", isError: true });
 
     setConfirmData({ title, ...data });
   };
 
   const handleConfirm = async () => {
-    if (!confirmData) return;
-    if (isSubmitting) return;
+    if (!confirmData || isSubmitting) return;
     setIsSubmitting(true);
 
     const { title, hole, issue, name } = confirmData;
-
     let endpoint = "";
     let payload = {};
 
@@ -121,7 +115,7 @@ const ReportPageCaddy = () => {
     } else if (title === "แจ้งเปิดใช้งานหลุม") {
       endpoint = "/hole/open";
       payload = { holeNumber: Number(hole) };
-    } else if (title === "ส่งรถกอล์ฟ") {
+    } else if (title === "แจ้งรถกอล์ฟเสีย") {
       endpoint = "/hole/help-car";
       payload = {
         holeNumber: Number(hole),
@@ -137,22 +131,17 @@ const ReportPageCaddy = () => {
     }
 
     try {
-      console.log("[PUT]", endpoint, payload);
-      const res = await http.put(endpoint, payload); // ✅ ใช้ http แทน
-      console.log("[PUT:OK]", res.status, res.data);
-
+      const res = await http.put(endpoint, payload);
       await fetchHoleStatuses();
       setPopup({ title: "ดำเนินการสำเร็จ", isError: false });
       setConfirmData(null);
     } catch (err) {
-      console.error("[PUT:ERR]", err?.response?.status, err?.response?.data, err?.message);
       let msg =
         err?.response?.data?.message ||
         err.message ||
         `เกิดข้อผิดพลาดในการ ${title}`;
-      if (err?.response?.status === 401) {
+      if (err?.response?.status === 401)
         msg = "การเข้าถึงไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่";
-      }
       setPopup({ title: msg, isError: true });
       setConfirmData(null);
     } finally {
@@ -200,11 +189,17 @@ const ReportPageCaddy = () => {
           <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
             <FontAwesomeIcon
               icon={popup.isError ? faExclamation : faCircleCheck}
-              className={popup.isError ? "text-red-500 mx-auto" : "text-green-500 mx-auto"}
+              className={
+                popup.isError ? "text-red-500 mx-auto" : "text-green-500 mx-auto"
+              }
               style={{ fontSize: "48px" }}
             />
-            <h2 className="text-3xl font-extrabold">{popup.isError ? "เกิดข้อผิดพลาด!" : "สำเร็จ!"}</h2>
-            <h3 className="text-base font-normal text-gray-800">{popup.title}</h3>
+            <h2 className="text-3xl font-extrabold">
+              {popup.isError ? "เกิดข้อผิดพลาด!" : "สำเร็จ!"}
+            </h2>
+            <h3 className="text-base font-normal text-gray-800">
+              {popup.title}
+            </h3>
             <button
               type="button"
               onClick={handleSuccessClose}
@@ -268,7 +263,9 @@ const ReportPageCaddy = () => {
               onChange={(e) => setIssue(e.target.value)}
               className="w-full mb-3 px-2 py-1 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text_sm"
             >
-              <option value="" disabled>-- กรุณาเลือกปัญหา --</option>
+              <option value="" disabled>
+                -- กรุณาเลือกปัญหา --
+              </option>
               <option value="ระบายน้ำ แฟร์เวย์">ระบายน้ำ แฟร์เวย์</option>
               <option value="ระบายน้ำกรีน">ระบายน้ำกรีน</option>
               <option value="ระบายน้ำบังเกอร์">ระบายน้ำบังเกอร์</option>
@@ -292,7 +289,11 @@ const ReportPageCaddy = () => {
               })
             }
             className={`text-white text-sm px-4 py-1 rounded-full transition-colors
-              ${isValid() ? "bg-green-600 hover:bg-green-700" : "bg-slate-600 cursor-not-allowed"}`}
+              ${
+                isValid()
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-slate-600 cursor-not-allowed"
+              }`}
             disabled={!isValid()}
           >
             ยืนยัน
@@ -317,43 +318,73 @@ const ReportPageCaddy = () => {
           </button>
         </div>
 
-        {/* Cards */}
         <div className="border-2 border-gray-600 rounded-xl p-4 max-w-6xl mx-auto shadow-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 justify-items-center sm:justify-items-stretch">
-            <Card title="แจ้งปิดหลุม" color="red" showName={false} showIssue={true} />
-            <Card title="แจ้งเปิดใช้งานหลุม" color="green" showName={false} showIssue={false} />
-            <Card title="ส่งรถกอล์ฟ" color="orange" showName={true} showIssue={false} />
+            <Card
+              title="แจ้งปิดหลุม"
+              color="red"
+              showName={false}
+              showIssue={true}
+            />
+            <Card
+              title="แจ้งเปิดใช้งานหลุม"
+              color="green"
+              showName={false}
+              showIssue={false}
+            />
+            <Card
+              title="แจ้งรถกอล์ฟเสีย"
+              color="orange"
+              showName={true}
+              showIssue={false}
+            />
           </div>
         </div>
 
-        {/* Hole statuses */}
+        {/* ✅ แก้ส่วนนี้ให้ไม่แสดงหลุมสีเขียว */}
         <div className="max-w-[75rem] mx-auto mt-8 px-6">
-          <h2 className="text-2xl font-extrabold mb-4 text-center text-gray-800">สถานะหลุมกอล์ฟ</h2>
+          <h2 className="text-2xl font-extrabold mb-4 text-center text-gray-800">
+            สถานะหลุมกอล์ฟ
+          </h2>
           {isLoading ? (
-            <div className="text-center text-lg text-gray-600 py-10">กำลังโหลดข้อมูล...</div>
+            <div className="text-center text-lg text-gray-600 py-10">
+              กำลังโหลดข้อมูล...
+            </div>
           ) : error ? (
             <div className="text-center text-lg text-red-600 py-10">{error}</div>
           ) : (
             <div className="border-2 border-gray-400 rounded-xl p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 shadow-md">
               {holeStatuses.length > 0 ? (
-                holeStatuses.map((hole) => (
-                  <div
-                    key={hole.number}
-                    className="border rounded-lg p-2 bg-white shadow_sm text-center transform hover:scale-105 transition-transform duration-200"
-                  >
+                holeStatuses
+                  .filter((hole) => hole.color !== "green") // ✅ แสดงเฉพาะที่ไม่ใช่สีเขียว
+                  .map((hole) => (
                     <div
-                      className={`text-xs font-semibold px-2 py-0.5 mb-2 rounded-full text-white ${colorMap[hole.color] || colorMap.gray}`}
+                      key={hole.number}
+                      className="border rounded-lg p-2 bg-white shadow_sm text-center transform hover:scale-105 transition-transform duration-200"
                     >
-                      หลุมที่ {hole.number}
+                      <div
+                        className={`text-xs font-semibold px-2 py-0.5 mb-2 rounded-full text-white ${
+                          colorMap[hole.color] || colorMap.gray
+                        }`}
+                      >
+                        หลุมที่ {hole.number}
+                      </div>
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center border border-gray-300 shadow-inner bg-white">
+                        <div
+                          className={`w-6 h-6 rounded-full ${
+                            colorMap[hole.color] || colorMap.gray
+                          }`}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-700 truncate">
+                        {hole.status}
+                      </div>
                     </div>
-                    <div className="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center border border-gray-300 shadow-inner bg-white">
-                      <div className={`w-6 h-6 rounded-full ${colorMap[hole.color] || colorMap.gray}`}></div>
-                    </div>
-                    <div className="text-xs text-gray-700 truncate">{hole.status}</div>
-                  </div>
-                ))
+                  ))
               ) : (
-                <div className="col-span-full text-center text-gray-500 py-10">ไม่พบข้อมูลสถานะหลุมกอล์ฟ</div>
+                <div className="col-span-full text-center text-gray-500 py-10">
+                  ไม่พบข้อมูลสถานะหลุมกอล์ฟ
+                </div>
               )}
             </div>
           )}
