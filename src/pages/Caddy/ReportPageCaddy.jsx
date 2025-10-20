@@ -1,4 +1,4 @@
-// src/pages/Starter/ReportPage.jsx
+
 import React, { useState, useEffect } from "react";
 import { faExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
