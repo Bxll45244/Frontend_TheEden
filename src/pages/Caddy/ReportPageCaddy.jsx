@@ -1,25 +1,18 @@
 // src/pages/Starter/ReportPage.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { faExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api"; // ปรับตาม .env ได้
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // e.g. http://localhost:5000/api
 
-// ✅ สร้าง axios instance ภายในไฟล์นี้ และรองรับทั้ง cookie + Bearer
+// ✅ สร้าง axios instance ภายในไฟล์นี้เอง
 const http = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // ส่ง cookie ไปด้วย (ถ้าหลังบ้านใช้ cookie)
+  withCredentials: true, // ส่ง cookie ไปด้วย
   headers: { "Content-Type": "application/json" },
-});
-
-// เติม Authorization header อัตโนมัติถ้ามี userToken ใน localStorage
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("userToken");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
 });
 
 const colorMap = {
@@ -31,38 +24,23 @@ const colorMap = {
   gray: "bg-gray-400",
 };
 
-const ReportPage = () => {
+const ReportPageCaddy = () => {
   const navigate = useNavigate();
   const [confirmData, setConfirmData] = useState(null);
   const [popup, setPopup] = useState(null);
   const [holeStatuses, setHoleStatuses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // กันกดซ้ำ
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAdminClick = () => navigate("/starter");
+  const handleAdminClick = () => navigate("/caddy/process");
 
-  // แปลงข้อมูลสถานะจากหลังบ้าน -> สำหรับหน้าบ้าน
   const normalizeHoles = (raw) => {
-    // รองรับทั้ง array ตรง ๆ หรือ object ที่มี fields หลายแบบ
-    const list = Array.isArray(raw)
-      ? raw
-      : Array.isArray(raw?.holes)
-      ? raw.holes
-      : Array.isArray(raw?.holeStatuses)
-      ? raw.holeStatuses
-      : [];
-
+    const list = Array.isArray(raw) ? raw : [];
     return list.map((h) => {
-      const holeNumber =
-        h.holeNumber ?? h.number ?? h.hole ?? 0;
-
-      // สถานะที่หลังบ้านใช้กัน: "open" | "close" | "editing" | "help_car" | "go_help_car"
-      const currentStatus =
-        h.status ?? h.currentStatus ?? "open";
-
-      const description =
-        h.description ?? h.activeIssue?.description ?? "";
+      const holeNumber = h.holeNumber ?? 0;
+      const currentStatus = h.status ?? "open";
+      const description = h.description ?? "";
 
       let color = "green";
       let statusText = "ใช้งานได้";
@@ -85,17 +63,16 @@ const ReportPage = () => {
         number: Number(holeNumber),
         color,
         status: statusText,
-        issueId: h.activeIssue?._id || null,
+        _id: h._id || null,
       };
     });
   };
 
-  // ดึงสถานะหลุม
   const fetchHoleStatuses = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await http.get("/hole/gethole");
+      const res = await http.get("/hole/gethole"); // ✅ ใช้ http แทน
       setHoleStatuses(normalizeHoles(res.data));
     } catch (err) {
       console.error("fetchHoleStatuses:", err.response?.data || err.message);
@@ -110,24 +87,24 @@ const ReportPage = () => {
   };
 
   useEffect(() => {
+    console.log("[HTTP baseURL]", http?.defaults?.baseURL);
+    if (!http?.defaults?.baseURL) {
+      console.warn("VITE_API_BASE_URL ไม่ถูกตั้งค่า หรือว่าง");
+    }
     fetchHoleStatuses();
   }, []);
 
-  // เมื่อกด “ยืนยัน” ใน Card → เก็บข้อมูลก่อนโชว์ popup
   const handleSubmit = (title, data) => {
     const required = ["hole"];
-    if (title === "แจ้งสถานะกำลังแก้ไข") required.push("name");
-    if (title === "แจ้งปิดหลุม") required.push("issue");
+    if (data.requireName) required.push("name");
+    if (data.requireIssue) required.push("issue");
 
     const ok = required.every((k) => data[k] && String(data[k]).trim() !== "");
-    if (!ok) {
-      return setPopup({ title: "กรุณากรอกข้อมูลให้ครบถ้วน", isError: true });
-    }
+    if (!ok) return setPopup({ title: "กรุณากรอกข้อมูลให้ครบถ้วน", isError: true });
 
     setConfirmData({ title, ...data });
   };
 
-  // ยิง API ตามปุ่มที่เลือก
   const handleConfirm = async () => {
     if (!confirmData) return;
     if (isSubmitting) return;
@@ -137,28 +114,20 @@ const ReportPage = () => {
 
     let endpoint = "";
     let payload = {};
-    let successMsg = "";
 
     if (title === "แจ้งปิดหลุม") {
       endpoint = "/hole/close";
       payload = { holeNumber: Number(hole), description: issue };
-      successMsg = "แจ้งปิดหลุมสำเร็จ";
-    } else if (title === "แจ้งสถานะกำลังแก้ไข") {
-      endpoint = "/hole/report";
-      payload = { holeNumber: Number(hole), personInCharge: name || "greenkeeper" };
-      successMsg = "แจ้งสถานะกำลังแก้ไขสำเร็จ";
     } else if (title === "แจ้งเปิดใช้งานหลุม") {
       endpoint = "/hole/open";
       payload = { holeNumber: Number(hole) };
-      successMsg = "แจ้งเปิดใช้งานหลุมสำเร็จ";
     } else if (title === "ส่งรถกอล์ฟ") {
       endpoint = "/hole/help-car";
       payload = {
         holeNumber: Number(hole),
-        description: `ขอรถกอล์ฟโดย ${name || "starter_user"}`,
+        description: `ขอรถกอล์ฟโดย ${name || "แคดดี้"}`,
         bookingId: null,
       };
-      successMsg = "ส่งรถกอล์ฟสำเร็จ";
     }
 
     if (!endpoint) {
@@ -168,18 +137,20 @@ const ReportPage = () => {
     }
 
     try {
-      await http.put(endpoint, payload); // ไม่ต้องส่ง header เพิ่ม (interceptor จัดให้)
+      console.log("[PUT]", endpoint, payload);
+      const res = await http.put(endpoint, payload); // ✅ ใช้ http แทน
+      console.log("[PUT:OK]", res.status, res.data);
+
       await fetchHoleStatuses();
-      setPopup({ title: successMsg, isError: false });
+      setPopup({ title: "ดำเนินการสำเร็จ", isError: false });
       setConfirmData(null);
     } catch (err) {
-      console.error("handleConfirm:", err.response?.data || err.message);
+      console.error("[PUT:ERR]", err?.response?.status, err?.response?.data, err?.message);
       let msg =
         err?.response?.data?.message ||
         err.message ||
         `เกิดข้อผิดพลาดในการ ${title}`;
       if (err?.response?.status === 401) {
-        // เผื่อกรณี token หมดอายุ
         msg = "การเข้าถึงไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่";
       }
       setPopup({ title: msg, isError: true });
@@ -295,7 +266,7 @@ const ReportPage = () => {
             <select
               value={issue}
               onChange={(e) => setIssue(e.target.value)}
-              className="w-full mb-3 px-2 py-1 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+              className="w-full mb-3 px-2 py-1 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text_sm"
             >
               <option value="" disabled>-- กรุณาเลือกปัญหา --</option>
               <option value="ระบายน้ำ แฟร์เวย์">ระบายน้ำ แฟร์เวย์</option>
@@ -312,7 +283,13 @@ const ReportPage = () => {
           <button
             type="button"
             onClick={() =>
-              handleSubmit(title, { hole, name: showName ? name : "", issue })
+              handleSubmit(title, {
+                hole,
+                name: showName ? name : "",
+                issue,
+                requireName: !!showName,
+                requireIssue: !!showIssue,
+              })
             }
             className={`text-white text-sm px-4 py-1 rounded-full transition-colors
               ${isValid() ? "bg-green-600 hover:bg-green-700" : "bg-slate-600 cursor-not-allowed"}`}
@@ -344,7 +321,6 @@ const ReportPage = () => {
         <div className="border-2 border-gray-600 rounded-xl p-4 max-w-6xl mx-auto shadow-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 justify-items-center sm:justify-items-stretch">
             <Card title="แจ้งปิดหลุม" color="red" showName={false} showIssue={true} />
-            <Card title="แจ้งสถานะกำลังแก้ไข" color="blue" showName={true} showIssue={false} />
             <Card title="แจ้งเปิดใช้งานหลุม" color="green" showName={false} showIssue={false} />
             <Card title="ส่งรถกอล์ฟ" color="orange" showName={true} showIssue={false} />
           </div>
@@ -363,7 +339,7 @@ const ReportPage = () => {
                 holeStatuses.map((hole) => (
                   <div
                     key={hole.number}
-                    className="border rounded-lg p-2 bg-white shadow-sm text-center transform hover:scale-105 transition-transform duration-200"
+                    className="border rounded-lg p-2 bg-white shadow_sm text-center transform hover:scale-105 transition-transform duration-200"
                   >
                     <div
                       className={`text-xs font-semibold px-2 py-0.5 mb-2 rounded-full text-white ${colorMap[hole.color] || colorMap.gray}`}
@@ -389,4 +365,4 @@ const ReportPage = () => {
   );
 };
 
-export default ReportPage;
+export default ReportPageCaddy;

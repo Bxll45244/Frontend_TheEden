@@ -15,6 +15,7 @@ import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
 import LandingPage from "../pages/Caddy/LandingPage";
 import HistoryPage from "../pages/Caddy/HistoryPage";
 import CaddyProfile from "../pages/Caddy/CaddyProfile";
+import ReportPageCaddy from "../pages/Caddy/ReportPageCaddy";
 
 // Starter Pages
 import Dashboard from "../pages/Starter/Dashboard";
@@ -55,6 +56,7 @@ export default function AppRouter() {
         <Route path="process" element={<ProcessGolfPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="profile" element={<CaddyProfile />} />
+        <Route path="report" element={<ReportPageCaddy />} />
       </Route>
 
       {/* Starter Routes */}

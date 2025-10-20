@@ -26,7 +26,7 @@ export const Header = ({ currentDate }) => {
 
   // ตรวจสอบว่าเป็นหน้าสถานะหรือหน้าแจ้งปัญหาหรือไม่ เพื่อเปลี่ยนสไตล์ปุ่ม
   const isStatusPage = pathname === "/caddy";
-  const isReportPage = pathname === "/caddy/booking";
+  const isReportPage = pathname === "/caddy/report";
 
   // คืนค่า JSX ของ header
   return (
@@ -49,7 +49,7 @@ export const Header = ({ currentDate }) => {
         </button>
         {/* ปุ่ม แจ้งปัญหา — ถ้าหน้านี้คือ /caddy/booking ให้เป็น active */}
         <button
-          onClick={() => navigate("/caddy/booking")}
+          onClick={() => navigate("/caddy/report")}
           className={`px-3 py-1.5 rounded-full font-semibold border transition ${
             isReportPage
               ? "bg-gray-700 text-white border-gray-700"
@@ -128,7 +128,7 @@ export const Header = ({ currentDate }) => {
           {/* ปุ่มแจ้งปัญหาในเมนูมือถือ — กดแล้วพาไป /caddy/booking และปิดเมนู */}
           <button
             onClick={() => {
-              navigate("/caddy/booking");
+              navigate("/caddy/report");
               setMenuOpen(false);
             }}
             className={`w-full text-left px-3 py-2 rounded font-semibold border transition text-sm ${
