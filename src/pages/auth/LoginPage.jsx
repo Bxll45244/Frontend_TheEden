@@ -1,140 +1,117 @@
-// src/pages/LoginPage.jsx
-import React, { useState } from "react";
-import { HiOutlineDotsHorizontal } from "react-icons/hi";
-import { Link, useNavigate } from "react-router-dom";
-import { login as apiLogin } from "../../service/authService"; 
-import { useAuth } from "../../context/useAuth"; 
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom"; 
+import userService from "../../service/golfer/userService";
+import { useAuthContext } from "../../context/AuthContext";
+import Swal from "sweetalert2";
 
-export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+const Login = () => {
+  // เก็บค่าฟอร์มแบบโครง restaurant (username/password)
+  // backend email > จะ map ใน userService
+  const [login, setLogin] = useState({ username: "", password: "" });
+
   const navigate = useNavigate();
-  const { login: authLogin } = useAuth(); 
+  const { login: loginFn, signIn, user } = useAuthContext();
+  const doLoginToContext = signIn ?? loginFn; // รองรับทั้งชื่อ signIn หรือ login
+
+  // ถ้าเข้าสู่ระบบอยู่แล้ว ให้กลับหน้าแรก
+  useEffect(() => {
+    if (user) navigate("/");
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setLogin((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setSuccess(null);
+  const handleSubmit = async () => {
+    try {
+      // เรียก userService แบบเดิม (username,password) แต่ข้างในจะส่งเป็น email,password
+      const res = await userService.login(login.username, login.password);
 
-  // ✅ client-side validation
-  if (!/\S+@\S+\.\S+/.test(formData.email)) {
-    setError("กรุณากรอกอีเมลที่ถูกต้อง");
-    return;
-  }
-  if (formData.password.length < 8) {
-    setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
-    return;
-  }
+      // axios response: { status, data }
+      if (res.status === 200) {
+        // อัปเดต Context ด้วยข้อมูลผู้ใช้ที่ backend ส่งกลับมา
+        await doLoginToContext(res.data);
 
-  setLoading(true);
-  try {
-    const result = await apiLogin(formData); // axios/fetch ต้องมี withCredentials: true
-
-    if (result.success) {
-      setSuccess(result.message || "เข้าสู่ระบบสำเร็จ!");
-      authLogin(result.user);
-      setFormData(prev => ({ ...prev, password: "" })); // ✅ ล้าง password
-
-      setTimeout(() => navigate('/'), 1500);
-    } else {
-      setError(result.message || "Email หรือรหัสผ่านไม่ถูกต้อง"); // ✅ ปลอดภัย
-      setFormData(prev => ({ ...prev, password: "" })); // ล้าง password
+        // แจ้งสำเร็จและกลับหน้าแรก
+        await Swal.fire({
+          title: "User Login",
+          text: "Login successfully!",
+          icon: "success",
+        });
+        navigate("/");
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "User Login",
+        text: error?.response?.data?.message || error.message,
+        icon: "error",
+      });
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
-    setFormData(prev => ({ ...prev, password: "" })); // ล้าง password
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            เข้าสู่ระบบ
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            หรือ <Link to="/register" className="font-medium text-green-600 hover:text-green-500">ลงทะเบียนบัญชีใหม่</Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                ที่อยู่อีเมล
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="ที่อยู่อีเมล"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                รหัสผ่าน
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="รหัสผ่าน"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-700 to-green-300 p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-6">
+        <h2 className="text-3xl font-bold text-center text-black mb-2">Welcome</h2>
+        <p className="text-center text-gray-500 mb-4">Login to your account</p>
+
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
+          {/* ช่อง username (จะใช้เป็น email) */}
+          <label className="input input-bordered flex items-center gap-2">
+            <input
+              type="text"
+              className="grow w-full"
+              value={login.username}
+              name="username"
+              placeholder="Username (your email)"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          {/* ช่อง password */}
+          <label className="input input-bordered flex items-center gap-2">
+            <input
+              type="password"
+              className="grow w-full"
+              name="password"
+              value={login.password}
+              placeholder="Password"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <div className="flex justify-between items-center text-sm">
+            <Link className="text-green-600 hover:underline" to="#">
+              Forgot password?
+            </Link>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
-          {success && (
-            <div className="text-green-600 text-sm text-center">{success}</div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out ${
-                loading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={loading}
-            >
-              {loading ? (
-                <HiOutlineDotsHorizontal className="animate-pulse h-5 w-5" />
-              ) : (
-                "เข้าสู่ระบบ"
-              )}
-            </button>
-            
-          </div>
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-all mt-2"
+            type="submit"
+          >
+            Login
+          </button>
         </form>
+
+        <p className="text-center text-sm text-gray-500 mt-2">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-green-600 hover:underline">
+            Register
+          </Link>
+        </p>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

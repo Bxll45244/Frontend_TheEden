@@ -1,22 +1,20 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+// จุดเริ่มต้นของแอป
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom"; // ใช้ react-router-dom
 import "./index.css";
-import axios from 'axios';
-import App from "./App";
-import AppRouter from "./routes/AppRouter";
-import { AuthProvider } from './context/AuthContext';
-import { BrowserRouter } from 'react-router-dom';
+import golferRouter from "./routes/golfer/golferRouter"; 
+import Navbar from "./components/golfer/Navbar";
+import { AuthProvider } from "./context/AuthContext";
 
-axios.defaults.withCredentials = true;
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App>
-          <AppRouter />
-        </App>
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    {/* แชร์สถานะผู้ใช้ทั่วทั้งแอป (cookie-based auth) */}
+    <AuthProvider>
+      {/* แสดง Navbar ทุกหน้า */}
+      <Navbar />
+      {/* ใช้เส้นทางทั้งหมดจากไฟล์ router */}
+      <RouterProvider router={golferRouter} />
+    </AuthProvider>
+  </StrictMode>
 );

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Step1 from '../../components/booking/Step1';
-import Step2 from '../../components/booking/Step2';
-import Step3 from '../../components/booking/Step3';
-import Step4 from '../../components/booking/Step4';
-import Step5 from '../../components/booking/Step5';
-import { calculateTotalPrice, createBooking } from '../../service/bookingService';
+import Step1 from '../../components/golfer/booking/Step1';
+import Step2 from '../../components/golfer/booking/Step2';
+import Step3 from '../../components/golfer/booking/Step3';
+import Step4 from '../../components/golfer/booking/Step4';
+import { calculateTotalPrice } from '../../service/golfer/calculatePrice';
+import { createBooking } from '../../service/golfer/bookingService';
+
+
+// อาจจะต้องแก้ฟังชันเปลี่ยนไปสร้างฟังชัน คิดเงินจาก backend  อาจารย์ให้แก้ไข
 
 const formatDate = (date) => {
   const d = new Date(date);
@@ -74,3 +77,5 @@ export default function GolferBookingPage() {
     </div>
   );
 }
+
+// { calculateTotalPrice } , { createBooking } มาจากชื่อฟังก์ชันใน service ที่ตั้งไว้

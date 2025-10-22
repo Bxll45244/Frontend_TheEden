@@ -1,150 +1,180 @@
-// src/pages/RegisterPage.jsx
-import React, { useState } from "react";
-import { HiOutlineDotsHorizontal } from "react-icons/hi";
-import { Link, useNavigate } from "react-router-dom";
-import { register as apiRegister } from "../../service/authService";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import Swal from "sweetalert2";
+import userService from "../../service/golfer/userService"; 
 
-const Notification = ({ type, message }) => {
-  const bgColor = type === "success" ? "bg-green-600" : "bg-red-600";
+const Register = () => {
+  // ปรับฟิลด์ให้ตรง backend ต้องมี name, phone, email, password
+  const [user, setUser] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    password: "",
+  });
+  const navigate = useNavigate();
+
+  // อัปเดตค่าแต่ละช่อง
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUser((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ส่งข้อมูลสมัครสมาชิก
+  const handleSubmit = async () => {
+    try {
+      // ตรวจสอบอย่างง่าย
+      if (!/\S+@\S+\.\S+/.test(user.email)) {
+        Swal.fire("User Registration", "กรุณากรอกอีเมลให้ถูกต้อง", "error");
+        return;
+      }
+      if (!/^\d{9,}$/.test(user.phone)) {
+        // เบอร์โทรศัพท์ต้องมีอย่างน้อย 9 หลัก 
+        Swal.fire("User Registration", "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง", "error");
+        return;
+      }
+      if (user.password.length < 6) {
+        Swal.fire("User Registration", "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร", "error");
+        return;
+      }
+
+      const res = await userService.register(
+        user.name,
+        user.phone,
+        user.email,
+        user.password
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        Swal.fire({
+          title: "User Registration",
+          text: res.data?.message || "ลงทะเบียนสำเร็จ!",
+          icon: "success",
+        }).then(() => {
+          setUser({ name: "", phone: "", email: "", password: "" });
+          navigate("/login");
+        });
+      } else {
+        Swal.fire({
+          title: "User Registration",
+          text: res.data?.message || "ลงทะเบียนไม่สำเร็จ",
+          icon: "error",
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "User Registration",
+        text: error?.response?.data?.message || error.message,
+        icon: "error",
+      });
+    }
+  };
+
+  // ยกเลิกและกลับหน้าแรก
+  const handleCancel = () => {
+    setUser({ name: "", phone: "", email: "", password: "" });
+    navigate("/");
+  };
+
   return (
-    <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50">
-      <div className={`${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 opacity-90 animate-fadeInOut`}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          {type === "success" ? (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          )}
-        </svg>
-        <span>{message}</span>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-700 to-green-300 p-4">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg flex overflow-hidden">
+        {/* รูปประกอบ (เอาออกได้ถ้าไม่ใช้) */}
+        <div className="w-3/5 hidden md:block">
+          <img
+            src="/images/Grab_register.jpg"
+            alt="Register Illustration"
+            className="object-cover w-full h-full"
+          />
+        </div>
+
+        {/* ฟอร์มสมัคร */}
+        <div className="w-full md:w-1/2 p-8 flex flex-col gap-6">
+          <h2 className="text-3xl font-bold text-center text-black-700 mb-2">
+            Create Account
+          </h2>
+          <p className="text-center text-gray-500 mb-4">
+            Sign up to get started!
+          </p>
+
+          {/* Email */}
+          <label className="input input-bordered flex items-center gap-2 w-full">
+            <input
+              type="email"
+              className="grow w-full"
+              placeholder="Email"
+              name="email"
+              value={user.email}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          {/* Phone */}
+          <label className="input input-bordered flex items-center gap-2 w-full">
+            <input
+              type="tel"
+              className="grow w-full"
+              placeholder="Phone"
+              name="phone"
+              value={user.phone}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          {/* Name */}
+          <label className="input input-bordered flex items-center gap-2 w-full">
+            <input
+              type="text"
+              className="grow w-full"
+              placeholder="Name"
+              name="name"
+              value={user.name}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          {/* Password */}
+          <label className="input input-bordered flex items-center gap-2 w-full">
+            <input
+              type="password"
+              value={user.password}
+              className="grow w/full"
+              placeholder="Password"
+              name="password"
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          {/* ปุ่ม */}
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-all"
+            onClick={handleSubmit}
+            type="button"
+          >
+            Register
+          </button>
+
+          <button
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg transition-all"
+            type="button"
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+
+          <p className="text-center text-sm text-gray-500 mt-2">
+            Already have an account?{" "}
+            <Link to="/login" className="text-green-600 hover:underline">
+              Login
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default function RegisterPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "", 
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "user",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-
-  const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (formData.password !== formData.confirmPassword) return setError("รหัสผ่านไม่ตรงกัน");
-    if (!passwordPattern.test(formData.password)) return setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร, ตัวใหญ่, ตัวเล็ก และตัวเลข");
-
-    setLoading(true);
-    try {
-      const result = await apiRegister(formData);
-      if (result.success) {
-        setSuccess(result.message || "ลงทะเบียนสำเร็จ!");
-        setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
-        setTimeout(() => navigate("/login"), 1500);
-      } else {
-        setError(result.message || "ลงทะเบียนไม่สำเร็จ");
-      }
-    } catch (err) {
-      console.error("Registration error:", err);
-      setError("เกิดข้อผิดพลาดในการลงทะเบียน");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      {error && <Notification type="error" message={error} />}
-      {success && <Notification type="success" message={success} />}
-
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">ลงทะเบียนบัญชีใหม่</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            หรือ <Link to="/login" className="font-medium text-green-600 hover:text-green-500">เข้าสู่ระบบ</Link>
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            {["name", "phone", "email", "password", "confirmPassword"].map((field, idx, arr) => {
-              const isPassword = field.includes("password");
-              const placeholderMap = {
-                name: "ชื่อ",
-                phone: "เบอร์โทรศัพท์",
-                email: "ที่อยู่อีเมล",
-                password: "รหัสผ่าน",
-                confirmPassword: "ยืนยันรหัสผ่าน",
-              };
-              return (
-                <div key={field}>
-                  <label htmlFor={field} className="sr-only">{placeholderMap[field]}</label>
-                  <input
-                    id={field}
-                    name={field}
-                    type={
-                      isPassword
-                        ? "password"
-                        : field === "email"
-                        ? "email"
-                        : field === "phone"
-                        ? "tel"
-                        : "text"
-                    }
-                    autoComplete={
-                      isPassword
-                        ? "new-password"
-                        : field === "email"
-                        ? "email"
-                        : field === "phone"
-                        ? "tel"
-                        : undefined
-                    }
-                    required
-                    className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm 
-                      ${idx === 0 ? "rounded-t-md" : idx === arr.length - 1 ? "rounded-b-md" : ""}`}
-                    placeholder={placeholderMap[field]}
-                    value={formData[field]}
-                    onChange={handleChange}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            {loading ? <HiOutlineDotsHorizontal className="animate-pulse h-5 w-5" /> : "ลงทะเบียน"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
+export default Register;

@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { useContext, useState } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../../../context/AuthContext";
 import { CircleUser } from "lucide-react";
-import { Button } from "../components/Button";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -80,3 +79,6 @@ export default function Navbar() {
     </header>
   );
 }
+
+// <a> รีโหลดหน้าใหม่ทั้งหมด
+// <Link> จะเปลี่ยนหน้า (ภายในเว็บ) โดยไม่รีเฟรชทั้งเว็บเหมือนเปลี่ยนแค่เนื้อหาข้างใน ไม่ต้องโหลด CSS, JS ใหม่

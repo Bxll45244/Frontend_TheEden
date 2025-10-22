@@ -1,6 +1,7 @@
 import React from "react";
-import Navbar from "../../components/Navbar";
-import HeroSection from "../../components/HeroSection";
+import Navbar from "../../components/golfer/Navbar";
+import HeroSection from "../../components/golfer/Home/HeroSection";
+import Footer from "../../components/golfer/Footer";
 
 
 export default function GolferHomePage() {
@@ -8,6 +9,7 @@ export default function GolferHomePage() {
     <>
       <Navbar />
       <HeroSection />
+      <Footer />
     </>
   );
 }
