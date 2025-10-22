@@ -1,4 +1,4 @@
-// ฟังก์ชันคำนวณราคารวมสำหรับระบบจองกอล์ฟ 
+// ฟังก์ชันคำนวณราคารวมสำหรับระบบจองกอล์ฟ
 
 // กำหนดราคาพื้นฐานของสนามกอล์ฟ
 const PRICE = {
@@ -52,6 +52,9 @@ export function calculatePriceBreakdown(booking = {}) {
 export function calculateTotalPrice(booking = {}) {
   return calculatePriceBreakdown(booking).total;
 }
+
+
+
 
 // แยกไฟล์ service ไว้ใช้เผื่อ backend จะแก้ไข // แยกเพื่อแก้ได้สะดวก
 // ฟังชันคิดเงินไม่มีใน api ของ backend = จะไม่ปนฟังชันที่เพื่อนทำมา

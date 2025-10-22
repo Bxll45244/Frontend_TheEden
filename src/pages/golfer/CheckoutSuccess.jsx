@@ -1,6 +1,5 @@
-// CheckoutSuccess.jsx
 import { useEffect, useState } from "react";
-import stripeService from "../../service/golfer/stripeService";
+import stripeService from "../../service/stripeService";
 
 
 export default function CheckoutSuccess() {

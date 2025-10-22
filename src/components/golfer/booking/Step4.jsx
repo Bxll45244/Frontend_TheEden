@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import LoadingAnimation from "../animations/LoadingAnimation";
-import { createBooking } from "../../../service/golfer/bookingService";
-import { calculatePriceBreakdown } from "../../../service/golfer/calculatePrice";
+import BookingService from "../../../service/bookingService";
+import { calculatePriceBreakdown } from "../../../service/calculatePrice";
 
 // แปลง Date เป็น "YYYY-MM-DD" ให้ backend parse เป็น Date ได้เสถียร
 function formatDate(dateInput) {
@@ -70,7 +70,7 @@ export default function Step4({ bookingData, onPrev, onSubmit, isLoading: isLoad
     }
 
       // service เดิมคืนค่าแบบ Axios response => ต้องอ่านจาก .data
-      const result = await createBooking(payload);
+      const result = await BookingService.createBooking(payload);
       const data = result?.data;
 
       // backend ฝั่งคุณจะส่ง { success, booking, paymentUrl } (จาก createCheckoutFromDetails)

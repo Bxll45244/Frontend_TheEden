@@ -4,8 +4,8 @@ import Step1 from '../../components/golfer/booking/Step1';
 import Step2 from '../../components/golfer/booking/Step2';
 import Step3 from '../../components/golfer/booking/Step3';
 import Step4 from '../../components/golfer/booking/Step4';
-import { calculateTotalPrice } from '../../service/golfer/calculatePrice';
-import { createBooking } from '../../service/golfer/bookingService';
+import { calculateTotalPrice } from "../../service/calculatePrice";
+import BookingService from "../../service/bookingService";
 
 
 // อาจจะต้องแก้ฟังชันเปลี่ยนไปสร้างฟังชัน คิดเงินจาก backend  อาจารย์ให้แก้ไข
@@ -48,7 +48,7 @@ export default function GolferBookingPage() {
   const handleSubmitBooking = async () => {
     setIsLoading(true);
     const payload = { ...bookingData, totalPrice: calculateTotalPrice(bookingData), date: formatDate(bookingData.date) };
-    const result = await createBooking(payload);
+    const result = await BookingService.createBooking(payload);
     setBookingResult(result);
     setCurrentStep(5);
     setIsLoading(false);

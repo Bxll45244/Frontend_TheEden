@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getBookingToday } from "../../../service/golfer/bookingService";
+import BookingService from "../../../service/bookingService";
 
 export default function Step1({ bookingData, handleChange, onNext }) {
   const { courseType, date, timeSlot } = bookingData;
@@ -30,7 +30,7 @@ export default function Step1({ bookingData, handleChange, onNext }) {
     (async () => {
       setIsLoadingReserved(true);
       try {
-        const resp = await getBookingToday(date);
+        const resp = await BookingService.getTodayBookings(date);
 
         // กันคิวเฉพาะ: ชำระเงินแล้ว หรือสถานะเข้ากลุ่มยืนยันแล้ว
         const CONFIRMED_STATUSES = ["booked", "confirmed", "paid"];

@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../../components/golfer/Navbar";
 import { useAuthContext } from "../../context/AuthContext";
 import { isStaffRole } from "../auth/roles";
 
-// map role -> path ของฝั่งผู้ใช้ทั่วไป (จริง ๆ ก็วิ่งแค่หน้าแรก)
-const roleToPathUser = () => "/";
+// map role -> path สำหรับ staff
+const roleToPathStaff = (role) => {
+  const r = String(role || "").toLowerCase();
+  if (r === "admin") return "/admin";
+  if (r === "starter") return "/starter";
+  if (r === "caddy") return "/caddy";
+  return "/notallowed";
+};
 
-// inline notification เรียบ ๆ
 function Notification({ type, message }) {
   if (!message) return null;
   const bg = type === "success" ? "bg-green-500" : "bg-red-500";
@@ -21,7 +25,7 @@ function Notification({ type, message }) {
   );
 }
 
-export default function LoginPage() {
+export default function StaffLoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [notif, setNotif] = useState({ type: "", message: "" });
@@ -49,28 +53,25 @@ export default function LoginPage() {
     setNotif({ type: "", message: "" });
 
     try {
-      // เรียก login จาก context (context จะ setUser ให้)
       const res = await login({
         email: formData.email,
         password: formData.password,
       });
       const user = res?.user || res;
 
-      // กันกรณี role ของพนักงาน/ผู้ดูแล เข้ามาที่หน้า golfer
-      if (isStaffRole(user?.role)) {
-        await logout(); // เคลียร์ session ที่ context เพิ่งตั้งไว้
+      // อนุญาตเฉพาะ staff
+      if (!isStaffRole(user?.role)) {
+        await logout();
         setNotif({
           type: "error",
-          message:
-            "บัญชีนี้เป็นพนักงาน/ผู้ดูแล โปรดเข้าสู่ระบบที่หน้าสำหรับพนักงาน/ผู้ดูแล",
+          message: "บัญชีนี้ไม่ใช่พนักงาน/ผู้ดูแล โปรดเข้าสู่ระบบที่หน้าผู้ใช้ทั่วไป",
         });
         return;
       }
 
-      // ผ่าน: ผู้ใช้ทั่วไป
       setNotif({ type: "success", message: "เข้าสู่ระบบสำเร็จ!" });
-      setTimeout(() => navigate(roleToPathUser(), { replace: true }), 800);
-    } catch (err) {
+      setTimeout(() => navigate(roleToPathStaff(user.role), { replace: true }), 700);
+    } catch {
       setNotif({ type: "error", message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     } finally {
       setLoading(false);
@@ -80,23 +81,17 @@ export default function LoginPage() {
 
   return (
     <>
-      <Navbar />
-
       <Notification type={notif.type} message={notif.message} />
 
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4">
         <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-2xl">
           <div className="text-center">
-            <h2 className="text-3xl font-semibold text-gray-800">เข้าสู่ระบบผู้ใช้ทั่วไป</h2>
-            <p className="mt-2 text-sm text-gray-500">
-              ยังไม่มีบัญชี?{" "}
-              <Link to="/register" className="text-green-700 hover:text-green-900">
-                ลงทะเบียน
-              </Link>
-            </p>
-            <p className="mt-1 text-xs text-gray-500">
-              สำหรับพนักงาน/ผู้ดูแล{" "}
-              <Link to="/staff/login" className="text-emerald-700 hover:text-emerald-900">
+            <h2 className="text-3xl font-semibold text-gray-800">
+              เข้าสู่ระบบพนักงาน/ผู้ดูแล
+            </h2>
+            <p className="mt-2 text-xs text-gray-500">
+              สำหรับผู้ใช้ทั่วไป{" "}
+              <Link to="/login" className="text-emerald-700 hover:text-emerald-900">
                 เข้าสู่ระบบที่นี่
               </Link>
             </p>

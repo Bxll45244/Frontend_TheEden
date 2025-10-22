@@ -1,8 +1,8 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 
-// import หน้าเพจทั้งหมดที่ golfer จะใช้
 import GolferHomePage from "../../pages/golfer/GolferHomePage";
 import GolferBookingPage from "../../pages/golfer/GolferBookingPage";
+import StaffLoginPage from "../../pages/auth/StaffLoginPage";
 import ProfilePage from "../../pages/golfer/ProfilePage";
 import CheckoutSuccess from "../../pages/golfer/CheckoutSuccess";
 import LoginPage from "../../pages/auth/LoginPage";
@@ -30,6 +30,10 @@ const golferRouter = createBrowserRouter([
   {
     path: "/login",         // หน้าเข้าสู่ระบบ
     element: <LoginPage />,
+  },
+  {
+    path: "/staff/login",   // หน้าเข้าสู่ระบบพนักงาน/ผู้ดูแล
+    element: <StaffLoginPage />,
   },
   {
     path: "/register",      // หน้าสมัครสมาชิก

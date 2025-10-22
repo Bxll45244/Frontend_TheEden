@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useContext, useState } from "react";
-import { AuthContext } from "../../../context/AuthContext";
+import { AuthContext } from "../../context/AuthContext"; 
 import { CircleUser } from "lucide-react";
 
 export default function Navbar() {
@@ -10,8 +10,6 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-
-        {/* Logo */}
         <Link to="/">
           <img
             src="/images/eden-Logo.png"
@@ -20,23 +18,18 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Navigation */}
         <div className="hidden md:flex items-center space-x-6 relative">
-
-          {/* register button */}
-          {!user && (
-            <Button
+          {!user ? (
+            <Link
               to="/register"
-              variant="primary"
-              className="text-lg"
+              className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-lg"
             >
               Join Us
-            </Button>
-          )}
-          {user && (
+            </Link>
+          ) : (
             <div className="relative">
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => setDropdownOpen((v) => !v)}
                 className="flex items-center text-gray-800 hover:text-green-600 transition focus:outline-none"
               >
                 <CircleUser className="w-6 h-6" />
@@ -44,9 +37,8 @@ export default function Navbar() {
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  {/* แสดงชื่อใน dropdown */}
                   <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-md font-semibold">{user.name}</p>
+                    <p className="text-md font-semibold">{user?.name || "ผู้ใช้"}</p>
                   </div>
                   <ul className="py-1">
                     <li>
@@ -79,6 +71,3 @@ export default function Navbar() {
     </header>
   );
 }
-
-// <a> รีโหลดหน้าใหม่ทั้งหมด
-// <Link> จะเปลี่ยนหน้า (ภายในเว็บ) โดยไม่รีเฟรชทั้งเว็บเหมือนเปลี่ยนแค่เนื้อหาข้างใน ไม่ต้องโหลด CSS, JS ใหม่

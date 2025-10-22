@@ -1,53 +1,55 @@
-import { useState, useContext, createContext, useEffect } from "react";
-import UserService from "../service/golfer/userService"; // เรียก API ที่เกี่ยวกับผู้ใช้ทั้งหมด
+import { createContext, useContext, useEffect, useState } from "react";
+import UserService from "../service/userService";
 
-// สร้าง context เอาไว้แชร์ข้อมูลผู้ใช้ทั่วทั้งเว็บ
-const AuthContext = createContext(null);
+// สร้าง context สำหรับแชร์สถานะผู้ใช้
+export const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  // เก็บข้อมูลของผู้ใช้ที่ล็อกอินอยู่
+export function AuthProvider({ children }) {
+  // เก็บสถานะผู้ใช้และสถานะกำลังเช็ก session
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // ฟังก์ชันเข้าสู่ระบบ
-  // ส่ง email, password ไปให้ backend ตรวจสอบ
-  // ถ้าสำเร็จ backend จะส่งข้อมูลผู้ใช้กลับมาและตั้ง cookie JWT ให้เอง
+  // เข้าสู่ระบบ
   const login = async ({ email, password }) => {
-    const data = await UserService.loginUser({ email, password });
-    setUser(data?.user || data); // ถ้ามีข้อมูล user ก็เก็บไว้ใน state
-    return data; // ส่งข้อมูลกลับไปให้หน้า login ใช้งานต่อ
+    const res = await UserService.loginUser({ email, password });
+    // รองรับทั้งกรณี {data: {...}} และ object ตรง ๆ
+    const data = res?.data ?? res;
+    setUser(data?.user || data);
+    return data;
   };
 
-  // ฟังก์ชันออกจากระบบ
-  // เรียก API /user/logout เพื่อให้ backend ลบ cookie ออก
+  // ออกจากระบบ
   const logout = async () => {
     await UserService.logoutUser();
-    setUser(null); // เคลียร์ข้อมูลผู้ใช้ใน state ออก
+    setUser(null);
   };
 
-  // ตอนเปิดเว็บครั้งแรก ให้ลองเช็กว่าเคยล็อกอินอยู่ไหม
-  // โดยเรียก /user/profile จาก cookie ที่ browser เก็บไว้ 
+  // เปิดเว็บมาเช็กว่าเคยล็อกอินจาก cookie อยู่ไหม
   useEffect(() => {
-    let isMounted = true; // ป้องกัน error ถ้า component ถูก unmount ระหว่างรอ
+    let active = true;
     (async () => {
       try {
-        const me = await UserService.getUserProfile(); // ถ้ามี cookie อยู่จะได้ข้อมูลผู้ใช้กลับมา
-        if (isMounted) setUser(me);
+        const res = await UserService.getUserProfile();
+        const me = res?.data ?? res;
+        if (active) setUser(me);
       } catch {
-        if (isMounted) setUser(null); // ถ้า cookie หมดอายุ หรือยังไม่เคยล็อกอิน
+        if (active) setUser(null);
+      } finally {
+        if (active) setLoading(false);
       }
     })();
-    return () => {
-      isMounted = false; // cleanup function 
-    };
+    return () => { active = false; };
   }, []);
 
-  // แชร์ข้อมูล user, login, logout ให้ component อื่นใช้
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-// ฟังก์ชันช่วยให้ component อื่นเรียกใช้ AuthContext ได้ง่ายขึ้น
+// hook ช่วยเรียกใช้ context ได้ง่าย
 export const useAuthContext = () => useContext(AuthContext);
+
+// เผื่ออยาก import แบบ default
+export default AuthContext;
