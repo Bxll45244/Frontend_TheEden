@@ -3,8 +3,7 @@ import { FaLock } from "react-icons/fa";
 import bookingService from "../../../service/bookingService";
 
 
-// TimelineBar — แสดงช่วงเวลาที่ถูกจองแล้วในวันนั้น
-// ดึงข้อมูลจาก backend ผ่าน bookingService.getBookingToday(date)
+
 
 
 // เวลาจบโดยประมาณ (ชั่วโมง)
@@ -58,9 +57,10 @@ export default function TimelineBar({
   // โหลดข้อมูลเวลาที่ถูกจองแล้ว
   const loadLockedTimeSlots = useCallback(
     async (abortSignal) => {
-      if (typeof bookingService?.getBookingToday !== "function") {
+      // getTodayBookings มาจาก service api ที่กำหนดไว้
+      if (typeof bookingService?.getTodayBookings !== "function") {
         setBookedTimeSlots([]);
-        setErrorMessage("ไม่พบ service getBookingToday");
+        setErrorMessage("ไม่พบ service getTodayBookings");
         return;
       }
 
@@ -68,7 +68,7 @@ export default function TimelineBar({
       setErrorMessage("");
 
       try {
-        const resp = await bookingService.getBookingToday(date);
+        const resp = await bookingService.getTodayBookings(date);
         if (abortSignal.aborted) return;
         const allBookings = extractBookingsFromResponse(resp);
 

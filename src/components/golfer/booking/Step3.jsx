@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import LoadingAnimation from "../animations/LoadingAnimation";
-// import { getAvailableCaddies } from "../../service/caddyService.js"; //ต้องสร้าง service จำลองใช้มาก่อน
+import CaddyService from "../../../service/caddy.Route";
 
 const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
   const {
@@ -9,7 +9,7 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
     caddy = [],
     caddySelectionEnabled = false,
     players = 1,
-    date,
+    date = "",
     timeSlot = "",
   } = bookingData;
 
@@ -25,20 +25,26 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
       return;
     }
 
-    // ถ้ายังไม่เลือกวันที่ ให้ไม่โหลดข้อมูล และแจ้งผู้ใช้เล็กน้อย
-    if (!date) {
-      setAvailableCaddies([]);
-      setError("โปรดเลือกวันที่ก่อนเพื่อดูรายชื่อแคดดี้ที่ว่าง");
-      return;
-    }
+    // // ถ้ายังไม่เลือกวันที่ ให้ไม่โหลดข้อมูล และแจ้งผู้ใช้เล็กน้อย
+    // if (!date) {
+    //   setAvailableCaddies([]);
+    //   setError("โปรดเลือกวันที่ก่อนเพื่อดูรายชื่อแคดดี้ที่ว่าง");
+    //   return;
+    // }
 
     const ac = new AbortController();
     (async () => {
       try {
         setIsLoading(true);
         setError("");
-        const data = await getAvailableCaddies({ date, timeSlot });
+        // const data = await getAvailableCaddies({ date, timeSlot });
+        // if (!ac.signal.aborted) setAvailableCaddies(data);
+
+        // service ฝั่ง backend ตอนนี้ยังไม่รับ query -> เรียกเปล่า ๆ
+        const res = await CaddyService.getAvailableCaddies();
+        const data = res?.data ?? res ?? [];
         if (!ac.signal.aborted) setAvailableCaddies(data);
+        
       } catch (e) {
         if (!ac.signal.aborted) setError(e.message || "โหลดรายชื่อแคดดี้ไม่สำเร็จ");
       } finally {
@@ -46,8 +52,11 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
       }
     })();
 
-    return () => ac.abort();
-  }, [caddySelectionEnabled, date, timeSlot]);
+  //   return () => ac.abort();
+  // }, [caddySelectionEnabled, date, timeSlot]);
+  
+  return () => ac.abort();
+  }, [caddySelectionEnabled]); 
 
   const filteredCaddies = useMemo(
     () =>
@@ -190,18 +199,26 @@ const Step3 = ({ bookingData, handleChange, onNext, onPrev }) => {
               <p className="text-center text-red-500">{error}</p>
             ) : (
               <div className="grid grid-cols-2 gap-4">
+
+                {/* {filteredCaddies.length > 0 ? (
+                  filteredCaddies.map((c) => {
+                    const picked = caddy.includes(c.caddy_id); */}
+
                 {filteredCaddies.length > 0 ? (
                   filteredCaddies.map((c) => {
-                    const picked = caddy.includes(c.caddy_id);
+                    const cid = c.caddy_id ?? c._id ?? c.id; // รองรับหลายชื่อ
+                    const picked = caddy.includes(cid);
                     return (
                       <div
-                        key={c.caddy_id}
+                        // key={c.caddy_id}
+                        key={cid}
                         className={`flex flex-col items-center p-4 rounded-xl shadow-md transition-all duration-200 transform ${
                           picked
                             ? "bg-green-50 border-2 border-green-400 shadow-lg scale-105"
                             : "bg-white border border-gray-200 hover:shadow-lg hover:scale-105"
                         }`}
-                        onClick={() => handleCaddySelection(c.caddy_id)}
+                        // onClick={() => handleCaddySelection(c.caddy_id)}
+                        onClick={() => handleCaddySelection(cid)}
                       >
                         <div className="relative w-24 h-24 rounded-full overflow-hidden mb-3">
                           <img

@@ -12,7 +12,7 @@ export default function Navbar() {
       <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/">
           <img
-            src="/images/eden-Logo.png"
+            src="/images/golfer/eden-Logo.png"
             alt="The Eden Golf Club Logo"
             className="h-12 sm:h-14"
           />
