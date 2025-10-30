@@ -5,23 +5,45 @@ import StaffLoginPage from "../pages/auth/StaffLoginPage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 
+// ===== Caddie (ของเรา) =====
+import CaddieLayout from "../layout/caddieLayout";
+import LandingPage from "../pages/Caddy/LandingPage";
+import BookingPage from "../pages/Caddy/BookingPage";
+import CaddyProfile from "../pages/Caddy/CaddyProfile";
+import HistoryPage from "../pages/Caddy/HistoryPage";
+import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
+
 const authRouter = createBrowserRouter([
-    {
-        path: "/",              // หน้าแรกของระบบ
-        element: <GolferHomePage />,
-    },
-    {
-        path: "/staff/login",   // หน้าเข้าสู่ระบบพนักงาน/ผู้ดูแล
-        element: <StaffLoginPage />,
-    },
-    {
-        path: "/login",         // หน้าเข้าสู่ระบบ
-        element: <LoginPage />,
-    },
-    {
-        path: "/register",      // หน้าสมัครสมาชิก
-        element: <RegisterPage />,
-    }
+  // ===== ของเพื่อน (เดิม) =====
+  {
+    path: "/",
+    element: <GolferHomePage />,
+  },
+  {
+    path: "/staff/login",
+    element: <StaffLoginPage />,
+  },
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+
+  // ===== ของเรา: Caddie routes (เพิ่มใหม่ ไม่ทับของเดิม) =====
+  {
+    element: <CaddieLayout />,
+    children: [
+      { path: "/landing", element: <LandingPage /> },
+      { path: "/caddy", element: <BookingPage /> },
+      { path: "/caddy/booking", element: <BookingPage /> },
+      { path: "/caddy/profile", element: <CaddyProfile /> },
+      { path: "/caddy/history", element: <HistoryPage /> },
+      { path: "/caddy/process", element: <ProcessGolfPage /> },
+    ],
+  },
 ]);
 
 export default authRouter;
