@@ -10,7 +10,7 @@ const roleToPathStaff = (role) => {
   if (r === "admin") return "/admin";
   if (r === "starter") return "/starter";
   if (r === "caddy") return "/caddy";
-  return "/notallowed";
+  return "/unauthorized";
 };
 
 function Notification({ type, message }) {

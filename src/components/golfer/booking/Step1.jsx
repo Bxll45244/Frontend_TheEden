@@ -19,71 +19,119 @@ export default function Step1({ bookingData, handleChange, onNext }) {
   ];
   const availableTimeSlots = courseType === "18" ? availableTimeSlots18 : availableTimeSlots9;
 
-  const dailyPrice   = courseType === "18" ? 2200 : 1500;
+  const dailyPrice = courseType === "18" ? 2200 : 1500;
   const holidayPrice = courseType === "18" ? 4000 : 2500;
   const isNextDisabled = !date || !timeSlot || !courseType;
 
   useEffect(() => {
-    if (!date) return;
-    let alive = true;
+    // ไม่มีวันที่หรือยังไม่เลือกจำนวนหลุม -> ล้าง state ทันที
+    if (!date || !courseType) {
+      setReservedTimeSlots([]);
+      return;
+    }
 
+    let cancelled = false;
     (async () => {
       setIsLoadingReserved(true);
       try {
-        const resp = await BookingService.getTodayBookings(date);
+        let reserved = [];
 
-        // กันคิวเฉพาะ: ชำระเงินแล้ว หรือสถานะเข้ากลุ่มยืนยันแล้ว
-        const CONFIRMED_STATUSES = ["booked", "confirmed", "paid"];
-        const slots = (resp?.bookings || [])
-          .filter(b => String(b.courseType) === String(courseType))
-          .filter(b => Boolean(b.timeSlot))
-          .filter(b => b.isPaid === true || CONFIRMED_STATUSES.includes(String(b.status || "").toLowerCase()))
-          .map(b => b.timeSlot);
+        // 1) ถ้า service มีเมธอดเฉพาะ ให้ใช้ก่อน
+        if (typeof BookingService.getAvailableTimeslots === "function") {
+          const res = await BookingService.getAvailableTimeslots({ date, courseType });
+          reserved = res?.data?.reservedTimeSlots ?? res?.reservedTimeSlots ?? [];
+        }
+        // 2) ชื่ออื่นที่ทีมอาจตั้งไว้
+        else if (typeof BookingService.availableTimeSlots === "function") {
+          const res = await BookingService.availableTimeSlots({ date, courseType });
+          reserved = res?.data?.reservedTimeSlots ?? res?.reservedTimeSlots ?? [];
+        }
+        // 3) fallback: ดึงทั้งวันแล้วคัดเอง (เผื่อของเดิม)
+        else if (typeof BookingService.getTodayBookings === "function") {
+          const res = await BookingService.getTodayBookings(date);
+          const list = res?.data?.bookings || res?.bookings || [];
+          // ล็อกเฉพาะที่ชนประเภทหลุมเดียวกันและมี timeSlot
+          reserved = list
+            .filter(b => String(b.courseType) === String(courseType))
+            .filter(b => !!b.timeSlot)
+            .map(b => b.timeSlot);
+        }
 
-        if (alive) setReservedTimeSlots(slots);
-      } catch {
-        if (alive) setReservedTimeSlots([]);
+        if (cancelled) return;
+        setReservedTimeSlots(Array.from(new Set(reserved)));
+
+        // ถ้าเวลาที่เลือกไว้ไปทับช่องที่ถูกจอง ให้เคลียร์ทิ้งเพื่อกันหลุด
+        if (reserved.includes(timeSlot)) {
+          handleChange({ target: { name: "timeSlot", value: "" } });
+        }
+      } catch (err) {
+        if (!cancelled) setReservedTimeSlots([]);
+        console.error("fetch available-timeslots error:", err?.response?.data || err?.message);
       } finally {
-        if (alive) setIsLoadingReserved(false);
+        if (!cancelled) setIsLoadingReserved(false);
       }
     })();
 
-    return () => { alive = false; };
-  }, [date, courseType]);
+    return () => { cancelled = true; };
+  }, [date, courseType]); // ← เปลี่ยนวันที่/หลุม ค่อยยิงใหม่
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-lg max-w-md mx-auto">
-      <h2 className="text-2xl font-mono mb-6 text-center text-gray-800">
+    <div
+      className="
+        max-w-md mx-auto p-6
+        rounded-3xl
+        bg-white/60 backdrop-blur-lg
+        border border-neutral-200/40 ring-1 ring-white/30 shadow-md
+      "
+    >
+      <h2 className="text-[22px] font-th text-neutral-900 text-center tracking-tight mb-6">
         Step 1: เลือกเวลาและจำนวนหลุม
       </h2>
 
       <div className="mb-6">
-        <label className="block text-gray-700 text-sm font-medium mb-2">วันที่จอง:</label>
+        <label className="block text-neutral-700 text-sm font-th mb-2">วันที่จอง</label>
         <input
           type="date"
           name="date"
           value={date}
           min={new Date().toISOString().split("T")[0]}
           onChange={(e) => handleChange({ target: { name: "date", value: e.target.value } })}
-          className="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+          className="
+            w-full px-4 py-2 rounded-2xl
+            bg-white/80
+            border border-neutral-200
+            text-neutral-800
+            shadow-sm
+            outline-none
+            focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-600
+            transition
+          "
         />
       </div>
 
-      <div className="mb-6 flex justify-center gap-4">
-        {["9","18"].map(ct => (
+      <div className="mb-6 flex justify-center gap-3">
+        {["9", "18"].map((ct) => (
           <button
             key={ct}
             type="button"
-            className={`px-5 py-2 rounded-lg font-semibold ${courseType === ct ? "bg-green-700 text-white shadow-lg" : "bg-gray-200 text-gray-800 hover:bg-gray-300"}`}
             onClick={() => handleChange({ target: { name: "courseType", value: ct } })}
+            className={[
+              "px-4 py-2 rounded-full font-th text-sm",
+              "transition-all",
+              courseType === ct
+                ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
+                : "bg-neutral-100 text-neutral-900 hover:bg-neutral-200"
+            ].join(" ")}
           >
             {ct} หลุม
           </button>
         ))}
       </div>
 
-      <h3 className="text-center font-semibold text-gray-700 mb-3">เวลาที่สามารถจองได้</h3>
-      {isLoadingReserved && <div className="text-center text-gray-500 mb-4">กำลังโหลดเวลาที่ว่าง...</div>}
+      <h3 className="text-center font-th text-neutral-700 mb-3">เวลาที่สามารถจองได้</h3>
+      {isLoadingReserved && (
+        <div className="text-center text-neutral-500 mb-4">กำลังโหลดเวลาที่ว่าง…</div>
+      )}
 
       <div className="grid grid-cols-4 gap-2 mb-6">
         {availableTimeSlots.map((t) => {
@@ -93,15 +141,19 @@ export default function Step1({ bookingData, handleChange, onNext }) {
             <button
               key={t}
               type="button"
-              className={`px-3 py-1 text-sm rounded-full font-medium ${
-                isReserved
-                  ? "bg-red-500 text-white cursor-not-allowed"
-                  : isSelected
-                  ? "bg-green-700 text-white shadow-lg"
-                  : "bg-gray-200 text-gray-800 hover:bg-green-200"
-              }`}
-              onClick={() => !isReserved && handleChange({ target: { name: "timeSlot", value: t } })}
               disabled={isReserved || isLoadingReserved}
+              onClick={() =>
+                !isReserved && handleChange({ target: { name: "timeSlot", value: t } })
+              }
+              className={[
+                "px-3 py-1 text-[13px] rounded-full font-th",
+                "transition-all",
+                isReserved
+                  ? "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                  : isSelected
+                  ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
+                  : "bg-neutral-100 text-neutral-900 hover:bg-neutral-200"
+              ].join(" ")}
             >
               {t}
             </button>
@@ -109,19 +161,24 @@ export default function Step1({ bookingData, handleChange, onNext }) {
         })}
       </div>
 
-      <div className="text-center text-gray-700 mb-6">
-        <h3 className="font-bold mb-2">อัตราการให้บริการ Eden Golf Club</h3>
-        <p>วันธรรมดา: {dailyPrice} บาท ต่อท่าน</p>
-        <p>วันหยุด/นักขัตฤกษ์: {holidayPrice} บาท ต่อท่าน</p>
+      <div className="text-center text-neutral-700 mb-6">
+        <h3 className="font-th mb-1">อัตราการให้บริการ Eden Golf Club</h3>
+        <p className="text-sm text-neutral-600">วันธรรมดา: {dailyPrice} บาท ต่อท่าน</p>
+        <p className="text-sm text-neutral-600">วันหยุด/นักขัตฤกษ์: {holidayPrice} บาท ต่อท่าน</p>
       </div>
 
       <div className="flex justify-end">
         <button
           onClick={onNext}
           disabled={isNextDisabled}
-          className={`px-6 py-2 rounded-full font-bold ${
-            isNextDisabled ? "bg-gray-400 text-gray-200 cursor-not-allowed" : "bg-gray-800 text-white hover:bg-gray-700 shadow-lg"
-          }`}
+          className={[
+            "px-6 py-2 rounded-full font-th",
+            "transition-colors",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            isNextDisabled
+              ? "bg-neutral-300 text-neutral-500"
+              : "bg-emerald-600 text-white hover:bg-emerald-700"
+          ].join(" ")}
         >
           จองต่อ
         </button>

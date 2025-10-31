@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import GolferHomePage from "../../pages/golfer/GolferHomePage";
 import GolferBookingPage from "../../pages/golfer/GolferBookingPage";
@@ -24,7 +24,7 @@ const golferRouter = createBrowserRouter([
     element: <ProfilePage />,
   },
   {
-    path: "/checkout-success", // หน้าหลังจากจ่ายเงินเสร็จ
+    path: "/booking/success", // หน้าหลังจากจ่ายเงินเสร็จ
     element: <CheckoutSuccess />,
   },
   {
@@ -40,9 +40,20 @@ const golferRouter = createBrowserRouter([
     element: <RegisterPage />,
   },
   {
-    path: "/notallowed",    // หน้าสำหรับคนที่ไม่มีสิทธิ์เข้าถึง
+    path: "/unauthorized",    // หน้าสำหรับคนที่ไม่มีสิทธิ์เข้าถึง
     element: <UnauthorizedPage />,
   },
+
+  //  ถ้าใครกด path ของ staff บนแอปฝั่ง golfer → ส่งไป Unauthorized พร้อมเหตุผล
+  { path: "/starter", 
+    element: <Navigate to="/unauthorized" 
+    state={{ reason: "role" }} replace /> },
+  { path: "/admin",   
+    element: <Navigate to="/unauthorized" 
+    state={{ reason: "role" }} replace /> },
+  { path: "/caddy",   
+    element: <Navigate to="/unauthorized" 
+    state={{ reason: "role" }} replace /> },
 ]);
 
 export default golferRouter;

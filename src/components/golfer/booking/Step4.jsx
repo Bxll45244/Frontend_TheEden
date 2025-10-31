@@ -1,39 +1,25 @@
-import React, { useState } from "react";
-import LoadingAnimation from "../animations/LoadingAnimation";
-import BookingService from "../../../service/bookingService";
-import { calculatePriceBreakdown } from "../../../service/calculatePrice";
+import React, { useState, useMemo } from "react";
+import LoadingAnimation from "../animations/LoadingAnimation.jsx";
+import StripeService from "../../../service/stripeService.js";
+import { calculatePriceBreakdown } from "../../../service/calculatePrice.js";
 
-// แปลง Date เป็น "YYYY-MM-DD" ให้ backend parse เป็น Date ได้เสถียร
-function formatDate(dateInput) {
-  const d = new Date(dateInput);
+// คืน 'YYYY-MM-DD' โดยไม่เพี้ยน timezone
+function normalizeDateForServer(input) {
+  if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+  const d = new Date(input);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export default function Step4({ bookingData, onPrev, onSubmit, isLoading: isLoadingFromParent }) {
+export default function Step4({
+  bookingData,
+  onPrev,
+  isLoading: isLoadingFromParent = false, // alias + default
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // ป้องกัน key ชื่อไม่ตรงด้วยการ normalize ให้ฟังก์ชันคำนวณราคาเข้าใจ
-  const priceInput = {
-    courseType: bookingData?.courseType,
-    players: bookingData?.players,
-    caddies: Array.isArray(bookingData?.caddy) ? bookingData.caddy : [],
-    cartCount: Number(bookingData?.golfCartQty ?? 0),
-    bagCount: Number(bookingData?.golfBagQty ?? 0),
-    date: bookingData?.date,
-  };
-
-  // ดึง breakdown แบบเซฟค่าเริ่มต้นกัน undefined
-  const {
-    greenFee = 0,
-    caddyFee = 0,
-    cartFee = 0,
-    bagFee = 0,
-    total = 0,
-  } = calculatePriceBreakdown(priceInput);
 
   const {
     courseType = "-",
@@ -41,54 +27,61 @@ export default function Step4({ bookingData, onPrev, onSubmit, isLoading: isLoad
     timeSlot = "-",
     players = 0,
     groupName = "",
-    caddy = [],
-    golfCartQty = 0,
-    golfBagQty = 0,
+    caddy: rawCaddy = [],
+    golfCartQty: rawCart = 0,
+    golfBagQty: rawBag = 0,
   } = bookingData || {};
+
+  const caddy = Array.isArray(rawCaddy) ? rawCaddy : [];
+  const golfCartQty = Number(rawCart ?? 0);
+  const golfBagQty = Number(rawBag ?? 0);
+
+  const { greenFee, caddyFee, cartFee, bagFee, total } = useMemo(
+    () =>
+      calculatePriceBreakdown({
+        courseType,
+        players: Number(players ?? 0),
+        caddy,
+        golfCartQty,
+        golfBagQty,
+        date,
+      }),
+    [courseType, players, caddy, golfCartQty, golfBagQty, date]
+  );
 
   async function handleProceedToPayment() {
     try {
       setIsLoading(true);
       setError("");
 
-      // payload ต้อง “ตรงกับ backend”
+      if (!date || !timeSlot || !players) throw new Error("ข้อมูลไม่ครบ กรุณากรอกให้ครบถ้วน");
+      if (!total || Number(total) <= 0) throw new Error("ยอดชำระไม่ถูกต้อง");
+
       const payload = {
-        courseType,
-        date: formatDate(date),
+        courseType: String(courseType),
+        date: normalizeDateForServer(date),
         timeSlot,
-        players,
+        players: Number(players),
         groupName,
-        caddy,                   // backend รองรับ array ของ caddy id
-        totalPrice: total,       // ส่งยอดรวมที่คำนวณแล้ว
-        golfCar: golfCartQty || 0,
-        golfBag: golfBagQty || 0,
+        caddy,
+        golfCar: Number(golfCartQty || 0),
+        golfBag: Number(golfBagQty || 0),
+        totalPrice: Number(total),
       };
 
-      if (typeof onSubmit === "function") {
-      await onSubmit(payload);       // เรียกของพาเรนต์
-      return;
-    }
+      // เก็บ preview ให้หน้า success แสดงได้ทันที
+      const preview = { ...payload, price: { greenFee, caddyFee, cartFee, bagFee, total } };
+      sessionStorage.setItem("bookingPreview", JSON.stringify(preview));
 
-      // service เดิมคืนค่าแบบ Axios response => ต้องอ่านจาก .data
-      const result = await BookingService.createBooking(payload);
-      const data = result?.data;
+      // POST ไปสร้าง checkout
+      const resp = await StripeService.createCheckout(payload);
+      const data = resp?.data ?? resp;
+      const paymentUrl = data?.paymentUrl || data?.url;
+      if (!paymentUrl) throw new Error(data?.message || "ไม่พบลิงก์ชำระเงิน");
 
-      // backend ฝั่งคุณจะส่ง { success, booking, paymentUrl } (จาก createCheckoutFromDetails)
-      const paymentUrl = data?.paymentUrl || data?.url; // กันเคสชื่อ field ต่างกัน
-      if (paymentUrl) {
-        // เก็บ booking เผื่อใช้แสดงผลบนหน้าถัดไป
-        if (data?.booking) {
-          sessionStorage.setItem("bookingResult", JSON.stringify(data.booking));
-        }
-        // ไป Stripe เลย
-        window.location.assign(paymentUrl);
-        return;
-      }
-
-      // ถ้าไม่มี paymentUrl ให้โยน error เพื่อแจ้งผู้ใช้
-      throw new Error(data?.message || "ไม่พบลิงก์ชำระเงินจากเซิร์ฟเวอร์");
+      window.location.assign(paymentUrl);
     } catch (err) {
-      setError(err?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+      setError(err?.response?.data?.message || err?.message || "เกิดข้อผิดพลาด");
     } finally {
       setIsLoading(false);
     }
@@ -97,69 +90,58 @@ export default function Step4({ bookingData, onPrev, onSubmit, isLoading: isLoad
   const disabled = isLoading || isLoadingFromParent;
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
-      <h2 className="text-xl font-semibold mb-4 text-center">
-        Step 4: สรุปและตรวจสอบ
-      </h2>
+    <div className="max-w-md mx-auto p-6 bg-white/60 backdrop-blur-lg rounded-3xl border border-neutral-200/40 ring-1 ring-white/30 shadow-md">
+      <h2 className="text-[22px] font-th text-neutral-900 text-center mb-6">Step 4: สรุปและตรวจสอบ</h2>
 
-      <div className="text-gray-700 space-y-2 mb-6">
-        <p><strong>ประเภทคอร์ส:</strong> {courseType} หลุม</p>
-        <p><strong>วันที่:</strong> {date ? new Date(date).toLocaleDateString("th-TH") : "-"}</p>
-        <p><strong>เวลา:</strong> {timeSlot}</p>
-        <p><strong>จำนวนผู้เล่น:</strong> {players} คน</p>
-        <p><strong>ชื่อกลุ่ม:</strong> {groupName || "-"}</p>
-        <p>
-          <strong>แคดดี้:</strong>{" "}
-          {Array.isArray(caddy) && caddy.length > 0
-            ? `${caddy.length} คน (${caddy.join(", ")})`
-            : "-"}
-        </p>
-        <p><strong>รถกอล์ฟ:</strong> {golfCartQty} คัน</p>
-        <p><strong>ถุงกอล์ฟ:</strong> {golfBagQty} ถุง</p>
+      <div className="text-neutral-800 space-y-1.5 mb-6 text-[15px]">
+        <p><span className="text-neutral-500">ประเภทคอร์ส:</span> {courseType} หลุม</p>
+        <p><span className="text-neutral-500">วันที่:</span> {date ? new Date(date).toLocaleDateString("th-TH") : "-"}</p>
+        <p><span className="text-neutral-500">เวลา:</span> {timeSlot}</p>
+        <p><span className="text-neutral-500">จำนวนผู้เล่น:</span> {players} คน</p>
+        <p><span className="text-neutral-500">ชื่อกลุ่ม:</span> {groupName || "-"}</p>
+        <p><span className="text-neutral-500">แคดดี้:</span> {Array.isArray(caddy) && caddy.length > 0 ? `${caddy.length} คน` : "-"}</p>
+        <p><span className="text-neutral-500">รถกอล์ฟ:</span> {golfCartQty} คัน</p>
+        <p><span className="text-neutral-500">ถุงกอล์ฟ:</span> {golfBagQty} ถุง</p>
       </div>
 
-      <div className="bg-gray-100 p-4 rounded-lg mb-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-2">รายละเอียดค่าใช้จ่าย</h3>
-        <ul className="text-gray-700 space-y-1">
+      <div className="rounded-2xl bg-white/70 border border-neutral-200 p-4 mb-6">
+        <h3 className="text-[16px] font-th text-neutral-900 mb-2">รายละเอียดค่าใช้จ่าย</h3>
+        <ul className="text-neutral-800 text-[15px] space-y-1">
           <li>• Green Fee: {Number(greenFee).toLocaleString()} บาท</li>
           <li>• Caddy: {Number(caddyFee).toLocaleString()} บาท</li>
           <li>• Cart: {Number(cartFee).toLocaleString()} บาท</li>
           <li>• Golf Bag: {Number(bagFee).toLocaleString()} บาท</li>
         </ul>
-        <hr className="my-3" />
-        <h3 className="text-xl font-bold text-gray-900">
-          รวมทั้งหมด: {Number(total).toLocaleString()} บาท
-        </h3>
+        <div className="h-px bg-neutral-200 my-3" />
+        <h3 className="text-xl font-th text-emerald-700">รวมทั้งหมด: {Number(total).toLocaleString()} บาท</h3>
       </div>
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-          <p className="text-sm text-red-800">
-            <strong>❌ เกิดข้อผิดพลาด:</strong> {error}
-          </p>
+        <div className="rounded-xl bg-red-50 border border-red-200 p-3 mb-4">
+          <p className="text-sm text-red-700"><span className="font-medium">เกิดข้อผิดพลาด:</span> {error}</p>
         </div>
       )}
-
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-        <p className="text-sm text-blue-800">
-          <strong>ℹ️ หมายเหตุ:</strong> กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนดำเนินการชำระเงิน
-        </p>
+      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 mb-4">
+        <p className="text-sm text-emerald-800">โปรดตรวจสอบข้อมูลให้ถูกต้องก่อนดำเนินการชำระเงิน</p>
       </div>
 
       <div className="flex justify-between mt-6">
         <button
           onClick={onPrev}
           disabled={disabled}
-          className="bg-gray-600 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          className="px-6 py-2 rounded-full font-th bg-neutral-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           ย้อนกลับ
         </button>
+
         <button
           onClick={handleProceedToPayment}
           disabled={disabled}
-          className={`bg-blue-600 text-white px-6 py-2 rounded-full font-bold ${
-            disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
-          } transition-colors flex items-center gap-2`}
+          className={[
+            "px-6 py-2 rounded-full font-th flex items-center gap-2 transition-colors",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            disabled ? "bg-neutral-300 text-neutral-600" : "bg-emerald-600 text-white hover:bg-emerald-700",
+          ].join(" ")}
         >
           {disabled ? (
             <>

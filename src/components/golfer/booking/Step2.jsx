@@ -5,72 +5,115 @@ const Step2 = ({ bookingData, handleChange, onNext, onPrev }) => {
   const isNextDisabled = players < 1 || players > 4 || !groupName.trim();
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
-      <h2 className="text-xl font-semibold mb-4 text-center">
+    <div
+      className="
+        max-w-md mx-auto p-6
+        rounded-3xl
+        bg-white/60 backdrop-blur-lg
+        border border-neutral-200/40 ring-1 ring-white/30 shadow-md
+      "
+    >
+      <h2 className="text-[22px] font-th text-neutral-900 text-center tracking-tight mb-6">
         Step 2: จำนวนผู้เล่นและชื่อกลุ่ม
       </h2>
 
-      <div className="mb-4 text-center">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          จำนวนผู้เล่น (สูงสุด 4 คน):
+      {/* Players */}
+      <div className="mb-6 text-center">
+        <label className="block text-neutral-700 text-sm font-th mb-2">
+          จำนวนผู้เล่น (สูงสุด 4 คน)
         </label>
-        <div className="flex items-center justify-center space-x-2">
+
+        <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-lg"
             onClick={() =>
               handleChange({
                 target: { name: "players", value: Math.max(1, players - 1) },
               })
             }
             disabled={players <= 1}
+            className="
+              px-4 py-2 rounded-full text-lg
+              bg-neutral-100 text-neutral-900
+              hover:bg-neutral-200
+              disabled:opacity-40 disabled:cursor-not-allowed
+              transition-all
+            "
           >
-            -
+            –
           </button>
-          <span className="text-2xl font-bold">{players}</span>
+
+          <span className="text-2xl font-th text-neutral-900 tabular-nums">{players}</span>
+
           <button
             type="button"
-            className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-lg"
             onClick={() =>
               handleChange({
                 target: { name: "players", value: players + 1 },
               })
             }
             disabled={players >= 4}
+            className="
+              px-4 py-2 rounded-full text-lg
+              bg-neutral-100 text-neutral-900
+              hover:bg-neutral-200
+              disabled:opacity-40 disabled:cursor-not-allowed
+              transition-all
+            "
           >
             +
           </button>
         </div>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          ชื่อกลุ่ม:
+      {/* Group name */}
+      <div className="mb-6">
+        <label className="block text-neutral-700 text-sm font-th mb-2">
+          ชื่อกลุ่ม
         </label>
         <input
           type="text"
           name="groupName"
           value={groupName}
           onChange={handleChange}
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           placeholder="กรุณาระบุชื่อกลุ่ม"
           required
+          className="
+            w-full px-4 py-2 rounded-2xl
+            bg-white/80
+            border border-neutral-200
+            text-neutral-800
+            shadow-sm outline-none
+            focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-600
+            transition
+          "
         />
       </div>
 
+      {/* Actions */}
       <div className="flex justify-between mt-6">
         <button
           onClick={onPrev}
-          className="bg-gray-600 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-700"
+          type="button"
+          className="
+            px-6 py-2 rounded-full font-th
+            bg-neutral-900 text-white hover:bg-black
+            transition-colors
+          "
         >
           ย้อนกลับ
         </button>
+
         <button
           onClick={onNext}
           disabled={isNextDisabled}
-          className={`bg-gray-800 text-white px-6 py-2 rounded-full font-bold ${
-            isNextDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-700"
-          }`}
+          className={[
+            "px-6 py-2 rounded-full font-th transition-colors",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            isNextDisabled
+              ? "bg-neutral-300 text-neutral-500"
+              : "bg-emerald-600 text-white hover:bg-emerald-700",
+          ].join(" ")}
         >
           จองต่อ
         </button>
