@@ -7,6 +7,7 @@ import BookingPage from "../pages/Caddy/BookingPage";
 import CaddyProfile from "../pages/Caddy/CaddyProfile";
 import HistoryPage from "../pages/Caddy/HistoryPage";
 import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
+import CaddieDashboard from "../pages/Caddy/Dashboard"; // ✅ เพิ่มใหม่
 
 // ✅ ส่งเป็น "route objects" ที่พร้อมเอาไป merge กับของเพื่อน
 export const caddieRoutes = [
@@ -30,6 +31,9 @@ export const caddieRoutes = [
 
       // หน้าดำเนินการ 3 ขั้น (เริ่ม-จบ-เปลี่ยนแบต)
       { path: "/caddy/process", element: <ProcessGolfPage /> },
+
+      // ✅ เพิ่ม Dashboard ของ Caddie
+      { path: "/caddy/dashboard", element: <CaddieDashboard /> },
     ],
   },
 ];

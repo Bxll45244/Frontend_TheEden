@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 
+// ===== ของเพื่อน (เดิม) =====
 import GolferHomePage from "../pages/golfer/GolferHomePage";
 import StaffLoginPage from "../pages/auth/StaffLoginPage";
 import LoginPage from "../pages/auth/LoginPage";
@@ -12,6 +13,7 @@ import BookingPage from "../pages/Caddy/BookingPage";
 import CaddyProfile from "../pages/Caddy/CaddyProfile";
 import HistoryPage from "../pages/Caddy/HistoryPage";
 import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
+import CaddieDashboard from "../pages/Caddy/Dashboard"; // ✅ เพิ่มไฟล์ใหม่
 
 const authRouter = createBrowserRouter([
   // ===== ของเพื่อน (เดิม) =====
@@ -42,6 +44,7 @@ const authRouter = createBrowserRouter([
       { path: "/caddy/profile", element: <CaddyProfile /> },
       { path: "/caddy/history", element: <HistoryPage /> },
       { path: "/caddy/process", element: <ProcessGolfPage /> },
+      { path: "/caddy/dashboard", element: <CaddieDashboard /> }, // ✅ เพิ่มบรรทัดนี้
     ],
   },
 ]);

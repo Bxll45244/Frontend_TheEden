@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import th from "date-fns/locale/th";
+import api from "../../service/api"; // ✅ ใช้ API เดิมของโปรเจกต์คุณ
 
 registerLocale("th", th);
 
@@ -21,9 +22,8 @@ const BookingPage = () => {
   const location = useLocation();
   const profileRef = useRef(null);
 
-  const [selectedDate, setSelectedDate] = useState(new Date(2025, 1, 1));
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const golfTimes = ["06.00", "17.00"];
-
   const [completed, setCompleted] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [popup, setPopup] = useState(null);
@@ -40,7 +40,7 @@ const BookingPage = () => {
   }, []);
 
   const hasWorkOnThisDate = (date) => {
-    const workDates = [1, 8, 15, 22];
+    const workDates = [1, 8, 15, 22, 29];
     return workDates.includes(date.getDate()) && date.getMonth() === 1 && date.getFullYear() === 2025;
   };
 
@@ -82,10 +82,20 @@ const BookingPage = () => {
     }
   };
 
-  const handleConfirm = () => {
-    const newItem = { date: formatDateThai(selectedDate), time: "06.00" };
-    setCompleted((prev) => [...prev, newItem]);
-    setPopup({ type: "success", title: "เวลา 06.00" });
+  // ✅ เพิ่มเฉพาะการยิง API เข้า backend
+  const handleConfirm = async () => {
+    try {
+      const bookingId = "672d1f58f93f9008d6cabc00"; // 🔹 แทนด้วย ID จริงที่ส่งมาจาก backend
+      await api.put(`/caddy/start/${bookingId}`);
+
+      const newItem = { date: formatDateThai(selectedDate), time: "06.00" };
+      setCompleted((prev) => [...prev, newItem]);
+      setPopup({ type: "success", title: "เวลา 06.00" });
+    } catch (error) {
+      console.error("❌ เริ่มงานไม่สำเร็จ:", error);
+      alert("ไม่สามารถเริ่มงานได้ กรุณาลองใหม่อีกครั้ง");
+      setPopup(null);
+    }
   };
 
   const closePopup = () => setPopup(null);
@@ -104,13 +114,14 @@ const BookingPage = () => {
   const handleMenuClick = (menu) => {
     if (menu === "โปรไฟล์") navigate("/caddy/profile");
     else if (menu === "ประวัติการทำงาน") navigate("/caddy/history");
+    else if (menu === "แจ้งปัญหา") navigate("/caddy/dashboard");
     else if (menu === "ออกจากระบบ") navigate("/landing");
     setIsMenuOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 font-sans relative">
-      {/* Header mini (เฉพาะหน้านี้) */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex-1 text-center space-y-2">
           <img src="/images/caddy/eden-Logo.png" alt="logo" className="mx-auto h-24" />
@@ -118,10 +129,7 @@ const BookingPage = () => {
         </div>
 
         <div className="relative z-10 self-start" ref={profileRef}>
-          <div
-            className="avatar avatar-online avatar-placeholder cursor-pointer"
-            onClick={() => setIsMenuOpen((v) => !v)}
-          >
+          <div className="avatar avatar-online avatar-placeholder cursor-pointer" onClick={() => setIsMenuOpen((v) => !v)}>
             <div className="bg-[#324441] text-white w-12 h-12 rounded-full flex items-center justify-center">
               <span className="text-lg">AI</span>
             </div>
@@ -135,6 +143,12 @@ const BookingPage = () => {
               <button onClick={() => handleMenuClick("ประวัติการทำงาน")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                 ประวัติการทำงาน
               </button>
+              <button
+      onClick={() => handleMenuClick("แจ้งปัญหา")} // ✅ ปุ่มใหม่
+      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
+    >
+      แจ้งปัญหา
+    </button>
               <button onClick={() => handleMenuClick("ออกจากระบบ")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                 ออกจากระบบ
               </button>
@@ -143,18 +157,19 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* Date picker */}
+      {/* DatePicker (เลือกได้เฉพาะวันปัจจุบันและวันถัดไป) */}
       <div className="flex justify-center mb-6">
         <DatePicker
           selected={selectedDate}
           onChange={(date) => setSelectedDate(date)}
           dateFormat="d MMM ปี yyyy"
           locale="th"
+          minDate={new Date()} // ✅ ป้องกันการเลือกวันย้อนหลัง
           className="bg-[#324441] text-white rounded-full px-4 py-2 text-sm cursor-pointer text-center"
         />
       </div>
 
-      {/* Times */}
+      {/* เวลา */}
       <div className="bg-[#3B6B5D] text-white text-center rounded-2xl shadow-lg py-6 px-6 mx-auto w-full max-w-sm space-y-4 mb-6">
         <h2 className="text-base font-bold">เวลาออกรอบกอล์ฟ</h2>
         <div className="flex justify-center gap-6">
@@ -178,7 +193,7 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* Weekly table */}
+      {/* ตาราง */}
       <div className="bg-[#E3F1EB] mx-auto w-full max-w-sm rounded-2xl shadow-lg overflow-hidden mb-6">
         <div className="bg-[#3B6B5D] text-white text-center py-4">
           <h2 className="text-xl font-bold">การทำงานรายสัปดาห์</h2>
@@ -203,7 +218,7 @@ const BookingPage = () => {
         </table>
       </div>
 
-      {/* Popups */}
+      {/* Popup */}
       {popup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-3xl shadow-xl border-2 border-black text-center w-[70%] max-w-xs space-y-4">
@@ -212,8 +227,12 @@ const BookingPage = () => {
                 <FontAwesomeIcon icon={faExclamation} className="text-yellow-400 text-5xl mx-auto" />
                 <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
                 <div className="flex justify-center gap-4">
-                  <button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">ตกลง</button>
-                  <button onClick={closePopup} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">ยกเลิก</button>
+                  <button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
+                    ตกลง
+                  </button>
+                  <button onClick={closePopup} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">
+                    ยกเลิก
+                  </button>
                 </div>
               </>
             )}
@@ -222,7 +241,9 @@ const BookingPage = () => {
               <>
                 <FontAwesomeIcon icon={faExclamation} className="text-red-500 text-5xl mx-auto" />
                 <h3 className="text-lg font-semibold mb-4">ยังไม่ถึงเวลาเริ่มงาน</h3>
-                <button onClick={closePopup} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">ตกลง</button>
+                <button onClick={closePopup} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
+                  ตกลง
+                </button>
               </>
             )}
 
