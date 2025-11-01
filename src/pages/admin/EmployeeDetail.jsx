@@ -13,17 +13,26 @@ export default function EmployeeDetail() {
 
   // ✅ โหลดข้อมูลพนักงานตาม ID
   useEffect(() => {
-    const loadEmployee = async () => {
-      try {
-        const res = await UserService.getUserById(id);
-        const userData = res.data?.data || res.data;
+  const loadEmployee = async () => {
+    try {
+      const res = await UserService.getUserById(id);
+      // รองรับทั้งกรณีมี data ซ้อน และส่ง object ตรง
+      const userData = res.data?.data || res.data;
+
+      if (userData && userData._id) {
         setFormData(userData);
-      } catch (err) {
-        console.error("Load employee failed:", err);
+      } else {
+        console.error("ไม่พบข้อมูลพนักงาน:", res.data);
+        setFormData(null);
       }
-    };
-    loadEmployee();
-  }, [id]);
+    } catch (err) {
+      console.error("Load employee failed:", err);
+      setFormData(null);
+    }
+  };
+  loadEmployee();
+}, [id]);
+
 
   if (!formData) return <div className="p-5">Loading...</div>;
 
