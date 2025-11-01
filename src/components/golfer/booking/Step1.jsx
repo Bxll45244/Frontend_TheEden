@@ -37,8 +37,8 @@ export default function Step1({ bookingData, handleChange, onNext }) {
         let reserved = [];
 
         // 1) ถ้า service มีเมธอดเฉพาะ ให้ใช้ก่อน
-        if (typeof BookingService.getAvailableTimeslots === "function") {
-          const res = await BookingService.getAvailableTimeslots({ date, courseType });
+        if (typeof BookingService.getAvailableTimeSlots === "function") {
+          const res = await BookingService.getAvailableTimeSlots({ date, courseType });
           reserved = res?.data?.reservedTimeSlots ?? res?.reservedTimeSlots ?? [];
         }
         // 2) ชื่ออื่นที่ทีมอาจตั้งไว้

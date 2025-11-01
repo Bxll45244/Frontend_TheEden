@@ -64,8 +64,8 @@ export default function Step4({
         players: Number(players),
         groupName,
         caddy,
-        golfCar: Number(golfCartQty || 0),
-        golfBag: Number(golfBagQty || 0),
+        golfCartQty: Number(golfCartQty || 0),
+        golfBagQty: Number(golfBagQty || 0),
         totalPrice: Number(total),
       };
 
