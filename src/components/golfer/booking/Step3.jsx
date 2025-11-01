@@ -1,23 +1,31 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import LoadingAnimation from "../../golfer/animations/LoadingAnimation";
-import CaddyService from "../../../service/caddy.Route";
+import CaddyService from "../../../service/caddyService";
 
 /* ---------- helpers ---------- */
 const HOLD_KEY = (d, t, ct) => `caddy-holds:${d || "none"}:${t || "none"}:${ct || "none"}`;
 
 const idOf = (c = {}) => String(c.caddy_id || c._id || c.id || "");
 const sameSlot = (a = {}, b = {}) => {
-  const ad = a.date || a.d, at = a.timeSlot || a.t, ac = String(a.courseType ?? a.ct ?? "");
-  const bd = b.date || b.d, bt = b.timeSlot || b.t, bc = String(b.courseType ?? b.ct ?? "");
+  const ad = a.date || a.d,
+    at = a.timeSlot || a.t,
+    ac = String(a.courseType ?? a.ct ?? "");
+  const bd = b.date || b.d,
+    bt = b.timeSlot || b.t,
+    bc = String(b.courseType ?? b.ct ?? "");
   return String(ad) === String(bd) && String(at) === String(bt) && String(ac) === String(bc);
 };
 const readHolds = (d, t, ct) => {
-  try { const v = JSON.parse(sessionStorage.getItem(HOLD_KEY(d,t,ct)) || "[]"); return Array.isArray(v) ? v.map(String) : []; }
-  catch { return []; }
+  try {
+    const v = JSON.parse(sessionStorage.getItem(HOLD_KEY(d, t, ct)) || "[]");
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
 };
 const writeHolds = (d, t, ct, ids = []) => {
   const set = Array.from(new Set(ids.map(String)));
-  sessionStorage.setItem(HOLD_KEY(d,t,ct), JSON.stringify(set));
+  sessionStorage.setItem(HOLD_KEY(d, t, ct), JSON.stringify(set));
 };
 
 export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
@@ -29,7 +37,7 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
     players = 1,
     date = "",
     timeSlot = "",
-    courseType = ""
+    courseType = "",
   } = bookingData;
 
   const [caddySearchTerm, setCaddySearchTerm] = useState("");
@@ -40,7 +48,7 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
 
   const pollRef = useRef(null);
 
-  /* ---------- load available caddies ---------- */
+  /* ---------- load available caddies (call service: date only) ---------- */
   useEffect(() => {
     // ปิดการเลือก หรือยังไม่เลือกวันที่ -> เคลียร์
     if (!caddySelectionEnabled || !date) {
@@ -56,31 +64,27 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
         setIsLoading(true);
         setError("");
 
-        // เรียกด้วย params ให้ backend กรองฝั่งเซิร์ฟเวอร์
-        const resp = await CaddyService.getAvailableCaddies({
-          date, timeSlot, courseType, players,
-          // กัน cache proxy บางตัว
-          _t: Date.now()
-        });
-
+        // 🔸 service ใหม่: รับแค่ date (string)
+        const resp = await CaddyService.getAvailableCaddies(date);
         const raw = resp?.data ?? resp ?? [];
-        const list = Array.isArray(raw) ? raw : (raw.list || raw.items || raw.data || []);
+        const list = Array.isArray(raw) ? raw : raw.list || raw.items || raw.data || [];
 
+        // 🔸 normalize + กรองให้ว่างจริงใน slot เดียวกันฝั่ง FE
         const normalized = (list || [])
           .filter(Boolean)
-          // 1) ต้องเป็น available ตามสถานะใน DB
-          .filter(c => (c.caddyStatus || c.status || "available").toLowerCase() === "available")
-          // 2) ไม่ติดงานใน slot นี้ (รองรับหลายสกีมา)
-          .filter(c => {
+          // 1) ต้อง available
+          .filter((c) => (c.caddyStatus || c.status || "available").toLowerCase() === "available")
+          // 2) ไม่ชน busy ใน slot นี้ (รองรับหลายชื่อฟิลด์)
+          .filter((c) => {
             const busy = c.busySlots || c.unavailable || c.bookings || c.slots || [];
             if (!Array.isArray(busy) || busy.length === 0) return true;
-            return !busy.some(s => sameSlot(s, { date, timeSlot, courseType }));
+            return !busy.some((s) => sameSlot(s, { date, timeSlot, courseType }));
           })
-          // 3) map ให้อยู่ในรูปเดียวกัน
-          .map(c => ({
+          // 3) map เป็นรูปเดียวกัน
+          .map((c) => ({
             id: idOf(c),
             name: c.name || c.fullName || `Caddy ${c.code || ""}`.trim(),
-            profilePic: c.profilePic || c.avatar || ""
+            profilePic: c.profilePic || c.avatar || "",
           }));
 
         if (!ac.signal.aborted) setAvailableCaddies(normalized);
@@ -97,12 +101,12 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
     // โหลดทันที
     load();
 
-    // ตั้ง poll ทุก 15s
+    // โพลล์ทุก 15 วิ
     clearInterval(pollRef.current);
     pollRef.current = setInterval(load, 15000);
 
-    // รีโหลดเมื่อกลับโฟกัส
-    const onFocus = () => (document.visibilityState === "visible") && load();
+    // รีโหลดเมื่อกลับมาโฟกัส
+    const onFocus = () => document.visibilityState === "visible" && load();
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
 
@@ -122,8 +126,8 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
   const filteredCaddies = useMemo(() => {
     const kw = caddySearchTerm.trim().toLowerCase();
     return availableCaddies
-      .filter(c => !softHolds.includes(String(c.id)))
-      .filter(c => (c.name || "").toLowerCase().includes(kw));
+      .filter((c) => !softHolds.includes(String(c.id)))
+      .filter((c) => (c.name || "").toLowerCase().includes(kw));
   }, [availableCaddies, softHolds, caddySearchTerm]);
 
   const handleCaddySelection = (caddyIdRaw) => {
@@ -132,8 +136,13 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
 
     if (updated.includes(caddyId)) {
       // ยกเลิกเลือก -> ถอน hold
-      updated = updated.filter(id => id !== caddyId);
-      writeHolds(date, timeSlot, courseType, readHolds(date, timeSlot, courseType).filter(id => id !== caddyId));
+      updated = updated.filter((id) => id !== caddyId);
+      writeHolds(
+        date,
+        timeSlot,
+        courseType,
+        readHolds(date, timeSlot, courseType).filter((id) => id !== caddyId)
+      );
     } else {
       if (updated.length >= Number(players || 0)) {
         setError(`สามารถเลือกแคดดี้ได้สูงสุด ${players} คน`);
@@ -161,13 +170,29 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
       <div className="mb-6 text-center">
         <label className="block text-neutral-700 text-sm font-th mb-2">จำนวนกระเป๋าไม้กอล์ฟ</label>
         <div className="flex items-center justify-center gap-3">
-          <button type="button"
-            onClick={() => handleChange({ target: { name: "golfBagQty", value: Math.max(0, Number(golfBagQty) - 1) } })}
-            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition">–</button>
+          <button
+            type="button"
+            onClick={() =>
+              handleChange({
+                target: { name: "golfBagQty", value: Math.max(0, Number(golfBagQty) - 1) },
+              })
+            }
+            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition"
+          >
+            –
+          </button>
           <span className="text-2xl font-th text-neutral-900 tabular-nums">{golfBagQty}</span>
-          <button type="button"
-            onClick={() => handleChange({ target: { name: "golfBagQty", value: Number(golfBagQty) + 1 } })}
-            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition">+</button>
+          <button
+            type="button"
+            onClick={() =>
+              handleChange({
+                target: { name: "golfBagQty", value: Number(golfBagQty) + 1 },
+              })
+            }
+            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition"
+          >
+            +
+          </button>
         </div>
         <p className="text-xs text-neutral-500 mt-1">*ค่าบริการกระเป๋าไม้กอล์ฟ/ท่าน 300 บาท</p>
       </div>
@@ -176,13 +201,29 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
       <div className="mb-6 text-center">
         <label className="block text-neutral-700 text-sm font-th mb-2">จำนวนรถกอล์ฟ</label>
         <div className="flex items-center justify-center gap-3">
-          <button type="button"
-            onClick={() => handleChange({ target: { name: "golfCartQty", value: Math.max(0, Number(golfCartQty) - 1) } })}
-            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition">–</button>
+          <button
+            type="button"
+            onClick={() =>
+              handleChange({
+                target: { name: "golfCartQty", value: Math.max(0, Number(golfCartQty) - 1) },
+              })
+            }
+            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition"
+          >
+            –
+          </button>
           <span className="text-2xl font-th text-neutral-900 tabular-nums">{golfCartQty}</span>
-          <button type="button"
-            onClick={() => handleChange({ target: { name: "golfCartQty", value: Number(golfCartQty) + 1 } })}
-            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition">+</button>
+          <button
+            type="button"
+            onClick={() =>
+              handleChange({
+                target: { name: "golfCartQty", value: Number(golfCartQty) + 1 },
+              })
+            }
+            className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition"
+          >
+            +
+          </button>
         </div>
         <p className="text-xs text-neutral-500 mt-1">*ค่าบริการรถกอล์ฟ/คัน 500 บาท</p>
       </div>
@@ -199,7 +240,9 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
                 handleChange({ target: { name: "caddy", value: [] } });
                 writeHolds(date, timeSlot, courseType, []); // clear holds
               }
-              handleChange({ target: { name: "caddySelectionEnabled", value: !caddySelectionEnabled } });
+              handleChange({
+                target: { name: "caddySelectionEnabled", value: !caddySelectionEnabled },
+              });
               setError("");
             }}
             className="mr-2 h-4 w-4 text-emerald-600 border-neutral-300 rounded focus:ring-emerald-500"
@@ -224,7 +267,9 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
             </p>
 
             {isLoading ? (
-              <div className="flex justify-center py-3"><LoadingAnimation /></div>
+              <div className="flex justify-center py-3">
+                <LoadingAnimation />
+              </div>
             ) : error ? (
               <p className="text-center text-red-500 text-sm">{error}</p>
             ) : (
@@ -241,7 +286,7 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
                           "flex flex-col items-center p-4 rounded-2xl cursor-pointer transition-all",
                           picked
                             ? "bg-emerald-50 border border-emerald-300 scale-[1.02]"
-                            : "bg-white/70 border border-neutral-200 hover:bg-neutral-50 hover:scale-[1.01]"
+                            : "bg-white/70 border border-neutral-200 hover:bg-neutral-50 hover:scale-[1.01]",
                         ].join(" ")}
                       >
                         <div className="relative w-20 h-20 rounded-full overflow-hidden mb-2">
@@ -249,7 +294,10 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
                             src={c.profilePic || "https://placehold.co/96x96/cccccc/ffffff?text=Caddy"}
                             alt={c.name}
                             className="w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.src = "https://placehold.co/96x96/cccccc/ffffff?text=Caddy"; }}
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://placehold.co/96x96/cccccc/ffffff?text=Caddy";
+                            }}
                           />
                           {picked && (
                             <span className="absolute bottom-1 right-1 bg-emerald-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
@@ -263,7 +311,9 @@ export default function Step3({ bookingData, handleChange, onNext, onPrev }) {
                     );
                   })
                 ) : (
-                  <p className="col-span-2 text-center text-neutral-500 text-sm">ไม่พบแคดดี้ที่ค้นหา</p>
+                  <p className="col-span-2 text-center text-neutral-500 text-sm">
+                    ไม่พบแคดดี้ที่ค้นหา
+                  </p>
                 )}
               </div>
             )}
