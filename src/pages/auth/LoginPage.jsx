@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
+import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/golfer/Navbar";
 import { useAuthContext } from "../../context/AuthContext";
 import { isStaffRole } from "../auth/roles";
+import { toastBlack } from "../../components/golfer/Swal";
+
 
 // map role -> path ของฝั่งผู้ใช้ทั่วไป (จริง ๆ ก็วิ่งแค่หน้าแรก)
 const roleToPathUser = () => "/";
@@ -25,6 +28,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [notif, setNotif] = useState({ type: "", message: "" });
+  const [showPwd, setShowPwd] = useState(false);
   const navigate = useNavigate();
   const { login, logout } = useAuthContext();
 
@@ -68,8 +72,9 @@ export default function LoginPage() {
       }
 
       // ผ่าน: ผู้ใช้ทั่วไป
-      setNotif({ type: "success", message: "เข้าสู่ระบบสำเร็จ!" });
-      setTimeout(() => navigate(roleToPathUser(), { replace: true }), 800);
+      await toastBlack("เข้าสู่ระบบสำเร็จ!", "success");
+      navigate(roleToPathUser(), { replace: true });
+
     } catch (err) {
       setNotif({ type: "error", message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     } finally {
@@ -114,24 +119,35 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
             />
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-emerald-600 focus:border-emerald-600"
-              placeholder="รหัสผ่าน"
-              value={formData.password}
-              onChange={handleChange}
-            />
+
+             <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPwd ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                className="w-full pr-12 pl-4 py-3 border border-gray-300 rounded-lg focus:ring-emerald-600 focus:border-emerald-600"
+                placeholder="รหัสผ่าน"
+                value={formData.password}
+                onChange={handleChange}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                aria-label={showPwd ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+              >
+                {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
 
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition ${
-                loading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className={`w-full py-3 rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition ${loading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">

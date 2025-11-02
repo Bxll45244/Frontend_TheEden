@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import Swal from "sweetalert2"; // ⬅️ เพิ่ม
+import { confirmBlack, toastBlack } from "../../components/golfer/Swal"
 import { CircleUser } from "lucide-react";
 
 export default function Navbar() {
@@ -16,40 +16,19 @@ export default function Navbar() {
 
   // ⬇️ ฟังก์ชันยืนยันก่อนออกจากระบบ
   async function confirmLogout() {
-    const res = await Swal.fire({
+    const res = await confirmBlack({
       title: "ออกจากระบบ?",
       text: "คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบตอนนี้",
       icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "ใช่, ออกจากระบบ",
-      cancelButtonText: "ยกเลิก",
+      confirmText: "ใช่, ออกจากระบบ",
+      cancelText: "ยกเลิก",
       reverseButtons: true,
-      focusCancel: true,
-      // โทนเรียบ ๆ แบบ Apple-ish
-      background: "#ffffffee",
-      color: "#0f172a",
-      showCloseButton: true,
-      customClass: {
-        popup: "rounded-2xl",
-        confirmButton:
-          "swal2-confirm !rounded-full !px-5 !py-2.5 !bg-red-600 hover:!bg-red-700 !text-white !font-medium",
-        cancelButton:
-          "swal2-cancel !rounded-full !px-5 !py-2.5 !bg-gray-100 hover:!bg-gray-200 !text-gray-800 !font-medium",
-      },
-      buttonsStyling: false,
     });
 
     if (res.isConfirmed) {
       await logout();
       setDropdownOpen(false);
-      await Swal.fire({
-        icon: "success",
-        title: "ออกจากระบบแล้ว",
-        timer: 1200,
-        showConfirmButton: false,
-        background: "#ffffffee",
-        color: "#0f172a",
-      });
+      await toastBlack("ออกจากระบบแล้ว", "success");
     }
   }
 

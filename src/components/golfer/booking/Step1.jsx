@@ -23,6 +23,16 @@ export default function Step1({ bookingData, handleChange, onNext }) {
   const holidayPrice = courseType === "18" ? 4000 : 2500;
   const isNextDisabled = !date || !timeSlot || !courseType;
 
+  // helper สำหรับเทียบวันแบบ local (กัน timezone เคลื่อน)
+  const toYMD = (d) => {
+    if (!d) return "";
+    const dt = new Date(d);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const day = String(dt.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
   useEffect(() => {
     // ไม่มีวันที่หรือยังไม่เลือกจำนวนหลุม -> ล้าง state ทันที
     if (!date || !courseType) {
@@ -36,32 +46,40 @@ export default function Step1({ bookingData, handleChange, onNext }) {
       try {
         let reserved = [];
 
-        // 1) ถ้า service มีเมธอดเฉพาะ ให้ใช้ก่อน
-        if (typeof BookingService.getAvailableTimeSlots === "function") {
-          const res = await BookingService.getAvailableTimeSlots({ date, courseType });
-          reserved = res?.data?.reservedTimeSlots ?? res?.reservedTimeSlots ?? [];
-        }
-        // 2) ชื่ออื่นที่ทีมอาจตั้งไว้
-        else if (typeof BookingService.availableTimeSlots === "function") {
-          const res = await BookingService.availableTimeSlots({ date, courseType });
-          reserved = res?.data?.reservedTimeSlots ?? res?.reservedTimeSlots ?? [];
-        }
-        // 3) fallback: ดึงทั้งวันแล้วคัดเอง (เผื่อของเดิม)
-        else if (typeof BookingService.getTodayBookings === "function") {
+        // ✅ ใช้แหล่งข้อมูลที่บอกสถานะได้ เพื่อปิดเฉพาะ 'booked'
+        if (typeof BookingService.getTodayBookings === "function") {
           const res = await BookingService.getTodayBookings(date);
           const list = res?.data?.bookings || res?.bookings || [];
-          // ล็อกเฉพาะที่ชนประเภทหลุมเดียวกันและมี timeSlot
+
+          const selectedYMD = date; // จาก <input type="date" /> เป็น YYYY-MM-DD อยู่แล้ว
+
           reserved = list
+            // เฉพาะวันเดียวกับที่เลือก (รองรับทั้ง b.date, b.bookingDate, b.date_thai)
+            .filter(b => {
+              const by = toYMD(b?.date) || toYMD(b?.bookingDate) || toYMD(b?.date_thai);
+              return by === selectedYMD;
+            })
+            // เฉพาะประเภทหลุมเดียวกัน
             .filter(b => String(b.courseType) === String(courseType))
-            .filter(b => !!b.timeSlot)
-            .map(b => b.timeSlot);
+            // ⬇️ เฉพาะสถานะ 'booked' เท่านั้น (ไม่รวม pending)
+            .filter(b => String(b.status).toLowerCase() === "booked")
+            // map เป็น timeSlot
+            .map(b => b.timeSlot)
+            .filter(Boolean);
         }
+        // ถ้าไม่มี API ที่ให้สถานะได้จริง ๆ (เช่น getAvailableTimeSlots) งดใช้
+        // เพื่อไม่ให้ไปปิด pending โดยไม่ตั้งใจ
+
+        // กันข้อมูลเพี้ยน: เอาเฉพาะช่วงเวลาที่มีอยู่จริงในชุดปัจจุบัน
+        const normalized = Array.from(
+          new Set((reserved || []).filter(t => typeof t === "string" && availableTimeSlots.includes(t)))
+        );
 
         if (cancelled) return;
-        setReservedTimeSlots(Array.from(new Set(reserved)));
+        setReservedTimeSlots(normalized);
 
-        // ถ้าเวลาที่เลือกไว้ไปทับช่องที่ถูกจอง ให้เคลียร์ทิ้งเพื่อกันหลุด
-        if (reserved.includes(timeSlot)) {
+        // ถ้าเวลาที่เลือกไว้ไปทับช่อง 'booked' -> เคลียร์
+        if (normalized.includes(timeSlot)) {
           handleChange({ target: { name: "timeSlot", value: "" } });
         }
       } catch (err) {
@@ -135,7 +153,7 @@ export default function Step1({ bookingData, handleChange, onNext }) {
 
       <div className="grid grid-cols-4 gap-2 mb-6">
         {availableTimeSlots.map((t) => {
-          const isReserved = reservedTimeSlots.includes(t);
+          const isReserved = reservedTimeSlots.includes(t); // มีเฉพาะ 'booked'
           const isSelected = timeSlot === t;
           return (
             <button

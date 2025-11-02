@@ -31,10 +31,50 @@ function isLocked(b) {
   return b?.isPaid || LOCKED_STATUSES.includes(s);
 }
 
-export default function TimelineBar({
-  date = new Date().toISOString().split("T")[0],
-  className = "",
-}) {
+// export default function TimelineBar({ date, className = "" }) {
+//   // ถ้า parent ไม่ส่ง date มา → ใช้ today-mode และอัปเดตอัตโนมัติที่เที่ยงคืน
+//   const [todayStr, setTodayStr] = useState(() =>
+//     new Date().toISOString().slice(0, 10)
+//   );
+
+const localYMD = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;   // YYYY-MM-DD (เขตเวลาเครื่องผู้ใช้)
+};
+
+export default function TimelineBar({ date, className = "" }) {
+  // ถ้า parent ไม่ส่ง date มา → ใช้ today-mode (local) และอัปเดตอัตโนมัติที่เที่ยงคืน
+  const [todayStr, setTodayStr] = useState(() => localYMD());
+
+  useEffect(() => {
+    if (date) return; // ถ้าถูกบังคับด้วย prop date ไม่ต้องทำโหมดนี้
+    const now = new Date();
+    const nextMidnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0, 0, 0, 0
+    );
+
+    const msToMidnight = nextMidnight.getTime() - now.getTime();
+    const t1 = setTimeout(() => {
+      setTodayStr(localYMD());
+      // หลังจากเด้งครั้งแรก ตั้ง interval ทุก 24 ชม.
+      const t2 = setInterval(() => {
+        setTodayStr(localYMD());
+      }, 24 * 60 * 60 * 1000);
+      window.__timelineDailyTick = t2;
+    }, msToMidnight);
+    return () => {
+      clearTimeout(t1);
+      if (window.__timelineDailyTick) clearInterval(window.__timelineDailyTick);
+    };
+  }, [date]);
+
+  const effectiveDate = date || todayStr;
+
   const [locked9, setLocked9] = useState([]);
   const [locked18, setLocked18] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -52,10 +92,26 @@ export default function TimelineBar({
     setLoading(true);
     setErr("");
     try {
-      const res = await bookingService.getTodayBookings(date);
+      const res = await bookingService.getTodayBookings(date ? effectiveDate : undefined);
       if (signal.aborted) return;
 
-      const all = extractBookings(res).filter(isLocked);
+      // const all = extractBookings(res).filter(isLocked);
+      let all = extractBookings(res).filter(isLocked);
+      // เผื่อ backend คืนหลายวัน: ถ้ามีวันที่ระบุ ให้กรองวันนั้นเท่านั้น
+      if (date) {
+        const toYMD = (d) => {
+          if (!d) return "";
+          const dt = new Date(d);
+          return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+ 
+      };
+      all = all.filter(b =>
+        [b?.date, b?.bookingDate, b?.date_thai].some(x => toYMD(x) === effectiveDate)
+      );
+    }
+
+
+
       const uniq = (arr) =>
         Array.from(new Set(arr.filter(Boolean))).sort((a, b) => a.localeCompare(b));
 
@@ -90,7 +146,7 @@ export default function TimelineBar({
       if (!signal.aborted) setLoading(false);
     }
   },
-  [date]
+  [date, effectiveDate]
 );
 
 
@@ -122,7 +178,7 @@ export default function TimelineBar({
             <h3 className="text-base font-semibold text-gray-800 tracking-tight">
               Booked Slots (9 & 18 Holes)
             </h3>
-            {date && <p className="text-xs text-gray-500 mt-0.5">Date: {date}</p>}
+            <p className="text-xs text-gray-500 mt-0.5">Date: {effectiveDate}</p>
           </div>
           {loading && <span className="text-gray-400 text-xs animate-pulse">Loading…</span>}
           {!loading && err && <span className="text-red-500 text-xs">{err}</span>}
