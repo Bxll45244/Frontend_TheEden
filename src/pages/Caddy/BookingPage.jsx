@@ -17,19 +17,77 @@ const formatDateThai = (date) => {
   return `${day} ${month} ${year}`;
 };
 
+const dateKey = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const toLocalDate = (isoStr) => {
+  const d = new Date(isoStr);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+};
+
 const BookingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const profileRef = useRef(null);
 
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const golfTimes = ["06.00", "17.00"];
-  const [completed, setCompleted] = useState([]);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [popup, setPopup] = useState(null);
-  const [clicked, setClicked] = useState(false);
+  const [golfTimes, setGolfTimes] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [timesByDate, setTimesByDate] = useState({});
+  const [weeklySchedule, setWeeklySchedule] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [completedKeySet, setCompletedKeySet] = useState(new Set());
 
+  // โหลดข้อมูล
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await CaddyService.getCaddyBookings();
+        const data = Array.isArray(res?.data) ? res.data : [];
+        if (!mounted) return;
+
+        const map = {};
+        const completedKeys = new Set();
+
+        for (const b of data) {
+          if (!b?.date || !b?.timeSlot) continue;
+          const dk = dateKey(toLocalDate(b.date));
+          if (!map[dk]) map[dk] = [];
+          map[dk].push(b.timeSlot);
+
+          if (String(b.status).toLowerCase() === "completed") {
+            completedKeys.add(`${dk}|${String(b.timeSlot)}`);
+          }
+        }
+
+        Object.keys(map).forEach((k) => {
+          map[k].sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+        });
+
+        setBookings(data);
+        setTimesByDate(map);
+        setCompletedKeySet(completedKeys);
+        setCheckingAuth(false);
+      } catch (e) {
+        const status = e?.response?.status;
+        if (status === 401) {
+          const from = location.pathname + location.search;
+          navigate(`/login?from=${encodeURIComponent(from)}`, { replace: true });
+          return;
+        }
+        setCheckingAuth(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [navigate, location]);
+
+  // ปิดเมนูเมื่อคลิกนอก
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsMenuOpen(false);
@@ -38,52 +96,69 @@ const BookingPage = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const hasWorkOnThisDate = (date) => {
-    const workDates = [1, 8, 15, 22, 29];
-    return workDates.includes(date.getDate()) && date.getMonth() === 1 && date.getFullYear() === 2025;
+  // ตารางรายสัปดาห์
+  useEffect(() => {
+    const days = [];
+    const startOfWeek = new Date(selectedDate);
+    for (let i = 0; i < 7; i++) {
+      const currentDate = new Date(startOfWeek);
+      currentDate.setDate(startOfWeek.getDate() + i);
+      const key = dateKey(currentDate);
+      const times = timesByDate[key] || [];
+      days.push({
+        date: formatDateThai(currentDate),
+        rawDate: currentDate,
+        times,
+      });
+    }
+    setWeeklySchedule(days);
+  }, [selectedDate, timesByDate]);
+
+  // อัปเดตปุ่มเวลาตามวันที่ที่เลือก
+  useEffect(() => {
+    const key = dateKey(selectedDate);
+    setGolfTimes(timesByDate[key] || []);
+  }, [selectedDate, timesByDate]);
+
+  // === ช่วยเช็กเวลาปัจจุบันขึ้นไป ===
+  const parseTime = (str) => {
+    if (!str) return { h: 0, m: 0 };
+    const s = String(str).trim();
+    const [hh, mm = "0"] = s.includes(":") ? s.split(":") : s.split(".");
+    return { h: Number(hh), m: Number(mm) };
   };
 
-  useEffect(() => {
-    if (location.state?.completedSchedules) {
-      setCompleted(location.state.completedSchedules);
-    }
-  }, [location.state]);
+  const isPastTimeSlot = (dateObj, timeStr) => {
+    const now = new Date();
+    const daySel = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const dayNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (daySel.getTime() < dayNow.getTime()) return true;
+    if (daySel.getTime() > dayNow.getTime()) return false;
+
+    const { h, m } = parseTime(timeStr);
+    const slot = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+    return slot.getTime() < now.getTime();
+  };
 
   const handleTimeClick = (time) => {
-    if (time === "06.00") setPopup({ type: "confirm" });
-    else if (time === "17.00") setPopup({ type: "notTime" });
-    else {
-      setSelectedTime(time);
-      setPopup(null);
-    }
+    const keySel = dateKey(selectedDate);
+    const found = bookings.find(
+      (b) => dateKey(toLocalDate(b.date)) === keySel && String(b.timeSlot) === String(time)
+    );
+
+    if (found && String(found.status).toLowerCase() === "completed") return;
+
+    const bookingId = found?._id || null;
+
+    navigate("/caddy/process", {
+      state: {
+        selectedDate: formatDateThai(selectedDate),
+        selectedTime: time,
+        bookingId,
+      },
+    });
   };
-
-  // ✅ ใช้ Service ของ Caddy แทนการยิง api.put ตรง ๆ
-  const handleConfirm = async () => {
-    try {
-      const bookingId = "672d1f58f93f9008d6cabc00"; // 🔹 แทนด้วย ID จริงที่ส่งมาจาก backend
-      await CaddyService.startRound(bookingId);
-
-      const newItem = { date: formatDateThai(selectedDate), time: "06.00" };
-      setCompleted((prev) => [...prev, newItem]);
-      setPopup({ type: "success", title: "เวลา 06.00" });
-    } catch (error) {
-      console.error("❌ เริ่มงานไม่สำเร็จ:", error);
-      alert("ไม่สามารถเริ่มงานได้ กรุณาลองใหม่อีกครั้ง");
-      setPopup(null);
-    }
-  };
-
-  const closePopup = () => setPopup(null);
-
-  useEffect(() => {
-    if (popup?.type === "success") {
-      const timer = setTimeout(() => {
-        navigate("/caddy/booking", { state: { completedSchedules: [...completed] } });
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [popup, navigate, completed]);
 
   const handleMenuClick = (menu) => {
     if (menu === "โปรไฟล์") navigate("/caddy/profile");
@@ -92,6 +167,14 @@ const BookingPage = () => {
     else if (menu === "ออกจากระบบ") navigate("/landing");
     setIsMenuOpen(false);
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="loading loading-spinner loading-lg text-gray-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 font-sans relative">
@@ -103,7 +186,10 @@ const BookingPage = () => {
         </div>
 
         <div className="relative z-10 self-start" ref={profileRef}>
-          <div className="avatar avatar-online avatar-placeholder cursor-pointer" onClick={() => setIsMenuOpen((v) => !v)}>
+          <div
+            className="avatar avatar-online avatar-placeholder cursor-pointer"
+            onClick={() => setIsMenuOpen((v) => !v)}
+          >
             <div className="bg-[#324441] text-white w-12 h-12 rounded-full flex items-center justify-center">
               <span className="text-lg">AI</span>
             </div>
@@ -111,21 +197,10 @@ const BookingPage = () => {
 
           {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1">
-              <button onClick={() => handleMenuClick("โปรไฟล์")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                โปรไฟล์
-              </button>
-              <button onClick={() => handleMenuClick("ประวัติการทำงาน")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                ประวัติการทำงาน
-              </button>
-              <button
-                onClick={() => handleMenuClick("แจ้งปัญหา")}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                แจ้งปัญหา
-              </button>
-              <button onClick={() => handleMenuClick("ออกจากระบบ")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                ออกจากระบบ
-              </button>
+              <button onClick={() => handleMenuClick("โปรไฟล์")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">โปรไฟล์</button>
+              <button onClick={() => handleMenuClick("ประวัติการทำงาน")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">ประวัติการทำงาน</button>
+              <button onClick={() => handleMenuClick("แจ้งปัญหา")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">แจ้งปัญหา</button>
+              <button onClick={() => handleMenuClick("ออกจากระบบ")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">ออกจากระบบ</button>
             </div>
           )}
         </div>
@@ -143,82 +218,62 @@ const BookingPage = () => {
         />
       </div>
 
-      {/* Times */}
-      <div className="bg-[#3B6B5D] text-white text-center rounded-2xl shadow-lg py-6 px-6 mx-auto w-full max-w-sm space-y-4 mb-6">
+      {/* เวลาออกรอบกอล์ฟ */}
+      <div className="bg-[#3B6B5D] text-white text-center rounded-2xl shadow-lg py-6 px-6 mx-auto w/full max-w-sm space-y-4 mb-6">
         <h2 className="text-base font-bold">เวลาออกรอบกอล์ฟ</h2>
-        <div className="flex justify-center gap-6">
-          {hasWorkOnThisDate(selectedDate) ? (
-            golfTimes.map((time) => (
-              <button
-                key={time}
-                onClick={() => handleTimeClick(time)}
-                className={`rounded-full px-4 py-1 text-sm font-semibold transition-colors duration-200 ${
-                  selectedTime === time
-                    ? "bg-white text-[#324441] shadow-inner"
-                    : "border border-white text-white hover:bg-white hover:text-[#324441]"
-                }`}
-              >
-                {time}
-              </button>
-            ))
+        <div className="flex justify-center gap-6 flex-wrap">
+          {golfTimes.length > 0 ? (
+            golfTimes.map((time) => {
+              const isCompleted = completedKeySet.has(`${dateKey(selectedDate)}|${String(time)}`);
+              const isPast = isPastTimeSlot(selectedDate, time);
+              const disabled = isCompleted || isPast;
+
+              return (
+                <button
+                  key={time}
+                  onClick={() => !disabled && handleTimeClick(time)}
+                  disabled={disabled}
+                  className={`rounded-full px-4 py-1 text-sm font-semibold border border-white transition-colors ${
+                    disabled
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : "text-white hover:bg-white hover:text-[#324441]"
+                  }`}
+                >
+                  {isCompleted ? "คุณจบรอบแล้ว" : time}
+                </button>
+              );
+            })
           ) : (
-            <p className="text-gray-200 font-normal">ไม่มีรอบการทำงาน</p>
+            <span className="text-sm opacity-80">— ไม่มีเวลางานสำหรับวันนี้ —</span>
           )}
         </div>
       </div>
 
-      {/* Popup */}
-      {popup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-3xl shadow-xl border-2 border-black text-center w-[70%] max-w-xs space-y-4">
-            {popup.type === "confirm" && (
-              <>
-                <FontAwesomeIcon icon={faExclamation} className="text-yellow-400 text-5xl mx-auto" />
-                <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
-                <div className="flex justify-center gap-4">
-                  <button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
-                    ตกลง
-                  </button>
-                  <button onClick={() => setPopup(null)} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">
-                    ยกเลิก
-                  </button>
-                </div>
-              </>
-            )}
-
-            {popup.type === "notTime" && (
-              <>
-                <FontAwesomeIcon icon={faExclamation} className="text-red-500 text-5xl mx-auto" />
-                <h3 className="text-lg font-semibold mb-4">ยังไม่ถึงเวลาเริ่มงาน</h3>
-                <button onClick={() => setPopup(null)} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
-                  ตกลง
-                </button>
-              </>
-            )}
-
-            {popup.type === "success" && (
-              <>
-                <FontAwesomeIcon icon={faCircleCheck} className="text-green-500 text-5xl mx-auto" />
-                <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
-                <h3 className="text-base font-normal text-gray-800">{`เริ่มงาน${popup.title} สำเร็จ`}</h3>
-                <button
-                  disabled={clicked}
-                  onClick={() => {
-                    if (clicked) return;
-                    setClicked(true);
-                    navigate("/caddy/booking", { state: { completedSchedules: [...completed] } });
-                  }}
-                  className={`mt-4 px-6 py-2 rounded-full text-white ${
-                    clicked ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-                  }`}
-                >
-                  {clicked ? "กำลังเปลี่ยนหน้า..." : "ตกลง"}
-                </button>
-              </>
-            )}
-          </div>
+      {/* ตารางรายสัปดาห์ */}
+      <div className="bg-[#E3F1EB] mx-auto w-full max-w-sm rounded-2xl shadow-lg overflow-hidden mb-6">
+        <div className="bg-[#3B6B5D] text-white text-center py-4">
+          <h2 className="text-xl font-bold">การทำงานรายสัปดาห์</h2>
         </div>
-      )}
+        <table className="w-full text-center text-sm">
+          <thead className="bg-gray-300">
+            <tr>
+              <th className="p-2 w-1/2">วันที่</th>
+              <th className="p-2 w-1/2">เวลาเริ่มงาน</th>
+            </tr>
+          </thead>
+          <tbody>
+            {weeklySchedule.map((day) => {
+              const timesText = (day.times && day.times.length > 0) ? day.times.join(", ") : "-";
+              return (
+                <tr key={day.date} className="border-t border-gray-400">
+                  <td className="p-2 w-1/2">{day.date}</td>
+                  <td className="p-2 w-1/2">{timesText}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

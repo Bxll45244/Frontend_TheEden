@@ -1,49 +1,41 @@
-// CaddyProfile.jsx (แทนที่ไฟล์เดิมได้เลย)
-import React, { useState, useEffect } from "react";
-import { FaGolfBall } from "react-icons/fa";
-import { BsGraphUp } from "react-icons/bs";
+// src/pages/Caddy/CaddyProfile.jsx
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CaddyService from "../../service/CaddyService";
+import UserService from "../../service/UserService";
 
 const CaddyProfile = () => {
-  const [profile, setProfile] = useState({
-    profilePicture: "",
-    firstName: "",
-    lastName: "",
-    caddyId: "",
-    email: "",
-    phone: "",
-    address: "",
-    province: "",
-    postalCode: "",
-    dateHired: "",
-    employmentStatus: "",
-    completedRoundsByYear: {}, // ✅ สถิติเริ่มว่าง
-  });
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [loading, setLoading] = useState(false); // 🧘 ไม่มีโหลดตั้งต้น
   const navigate = useNavigate();
-
-  // helper: นับรอบต่อปี
-  const buildYearCounts = (bookings = []) => {
-    const counts = {};
-    for (const b of bookings) {
-      const d = new Date(b?.date);
-      if (!isNaN(d)) counts[d.getFullYear()] = (counts[d.getFullYear()] || 0) + 1;
-    }
-    return counts;
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [profile, setProfile] = useState({
+    _id: "",
+    name: "",
+    phone: "",
+    email: "",
+    role: "",
+    img: null,
+  });
 
   useEffect(() => {
-    // ลองดึงเฉพาะเมื่อพร้อม (เมิร์จ/ล็อกอินแล้ว endpoint จะตอบ 200 เอง)
     const load = async () => {
       try {
         setLoading(true);
-        const { data } = await CaddyService.getCaddyBookings();
-        const stats = buildYearCounts(Array.isArray(data) ? data : []);
-        setProfile((p) => ({ ...p, completedRoundsByYear: stats }));
-      } catch {
-        // ❌ ถ้า 401 หรือ error อื่น ๆ: ไม่ใส่ม็อค, ปล่อยว่าง
+        setError("");
+        const { data } = await UserService.getUserProfile(); // ✅ ถูกเส้น /api/user/profile
+        // คาดว่า data เป็นอ็อบเจกต์เดียวตามรูป Postman
+        setProfile({
+          _id: data?._id ?? "",
+          name: data?.name ?? "",
+          phone: data?.phone ?? "",
+          email: data?.email ?? "",
+          role: data?.role ?? "",
+          img: data?.img ?? null,
+        });
+      } catch (e) {
+        setError(
+          e?.response?.data?.message ||
+            "ไม่สามารถดึงข้อมูลโปรไฟล์ได้ กรุณาลองใหม่อีกครั้ง"
+        );
       } finally {
         setLoading(false);
       }
@@ -51,101 +43,80 @@ const CaddyProfile = () => {
     load();
   }, []);
 
-  const years = Object.keys(profile.completedRoundsByYear).sort((a, b) => b - a);
-  const hasStats = years.length > 0;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        กำลังโหลดข้อมูล...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 text-gray-700 hover:text-gray-900"
+        >
+          &lt; ย้อนกลับ
+        </button>
+        <div className="bg-red-50 text-red-700 p-4 rounded-xl">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-gray-700 hover:text-gray-900 font-semibold transition-colors"
+          className="text-gray-700 hover:text-gray-900 font-semibold"
         >
           &lt; ย้อนกลับ
         </button>
       </div>
 
-      <div className="flex justify-center">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden p-8">
-          <div className="flex flex-col items-center mb-8">
-            <div className="avatar mb-4">
-              <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-indigo-500 ring-offset-2">
-                {profile.profilePicture ? (
-                  <img src={profile.profilePicture} alt="Profile" className="object-cover w-full h-full" />
-                ) : (
-                  <div className="w-full h-full bg-gray-200" />
-                )}
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800">
-              {(profile.firstName || "")} {(profile.lastName || "")}
-            </h2>
-            <span className="text-indigo-500 font-medium mt-1">
-              {profile.caddyId ? `รหัสแคดดี้: ${profile.caddyId}` : ""}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 text-gray-700">
-            <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
-              <span className="font-semibold text-gray-600">อีเมล</span>
-              <p className="text-gray-900 mt-1">{profile.email || "-"}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
-              <span className="font-semibold text-gray-600">เบอร์โทรศัพท์</span>
-              <p className="text-gray-900 mt-1">{profile.phone || "-"}</p>
-            </div>
-            <div className="sm:col-span-2 bg-gray-50 p-4 rounded-xl shadow-sm">
-              <span className="font-semibold text-gray-600">ที่อยู่</span>
-              <p className="text-gray-900 mt-1">
-                {profile.address || "-"}{profile.province ? `, ${profile.province}` : ""}{profile.postalCode ? `, ${profile.postalCode}` : ""}
-              </p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
-              <span className="font-semibold text-gray-600">วันที่เข้าทำงาน</span>
-              <p className="text-gray-900 mt-1">{profile.dateHired || "-"}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl shadow-sm">
-              <span className="font-semibold text-gray-600">สถานะการทำงาน</span>
-              <p className="text-gray-900 mt-1">{profile.employmentStatus || "-"}</p>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-              <FaGolfBall className="mr-2 text-indigo-500" />
-              สถิติการทำงาน
-            </h3>
-
-            {loading ? (
-              <div className="bg-indigo-50 p-4 rounded-xl text-gray-600">กำลังโหลด...</div>
-            ) : !hasStats ? (
-              <div className="bg-indigo-50 p-4 rounded-xl text-gray-600">ยังไม่มีข้อมูลสถิติ</div>
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-indigo-500 ring-offset-2 bg-gray-100">
+            {profile.img ? (
+              <img
+                src={profile.img}
+                alt="profile"
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <>
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="font-semibold text-gray-600">เลือกปี:</span>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-1 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
-                  >
-                    {years.map((year) => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center space-x-3 bg-indigo-50 p-4 rounded-xl shadow-sm">
-                  <BsGraphUp className="text-indigo-600 text-2xl" />
-                  <span className="font-semibold text-gray-700">
-                    จำนวนรอบที่ทำสำเร็จในปี {selectedYear}:
-                  </span>
-                  <span className="text-xl font-bold text-indigo-700">
-                    {profile.completedRoundsByYear[selectedYear] || 0} รอบ
-                  </span>
-                </div>
-              </>
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                ไม่มีรูป
+              </div>
             )}
+          </div>
+          <h2 className="mt-4 text-2xl font-bold text-gray-800">
+            {profile.name || "-"}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">ID: {profile._id || "-"}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 text-gray-700">
+          <div className="bg-gray-50 p-4 rounded-xl">
+            <div className="text-sm text-gray-600">อีเมล</div>
+            <div className="font-semibold text-gray-900">
+              {profile.email || "-"}
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-xl">
+            <div className="text-sm text-gray-600">เบอร์โทรศัพท์</div>
+            <div className="font-semibold text-gray-900">
+              {profile.phone || "-"}
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-xl">
+            <div className="text-sm text-gray-600">บทบาท (role)</div>
+            <div className="font-semibold text-gray-900">
+              {profile.role || "-"}
+            </div>
           </div>
         </div>
       </div>

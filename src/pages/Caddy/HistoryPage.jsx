@@ -9,7 +9,7 @@ import {
   faChevronDown,
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
-import CaddyService from "../../service/CaddyService"; // ✅ ใช้ Service ที่ล็อกไว้
+import CaddyService from "../../service/CaddyService";
 
 const toThaiDate = (iso) => {
   try {
@@ -39,18 +39,29 @@ const HistoryPage = () => {
     const load = async () => {
       try {
         const { data } = await CaddyService.getCaddyBookings();
-        const rows = (Array.isArray(data) ? data : []).map((b) => ({
-          id: b._id,
-          date: toThaiDate(b.date),
-          time: b.timeSlot || "-",
-          customer: b.groupName || "-",
-          status: "completed", // 🔸 ค่าเริ่มต้นชั่วคราว (ไม่มี field จาก backend)
-          isRepeatCustomer: false, // 🔸 ยังไม่ทราบจาก service
-          holes: b.courseType ? parseInt(b.courseType) : undefined,
-          cancellationReason: "",
-        }));
+        const rows = (Array.isArray(data) ? data : []).map((b) => {
+          // อ่านสถานะจาก backend
+          const backendStatus = String(b?.status || "").toLowerCase();
+          // จะนับเป็น "completed" ก็ต่อเมื่อมี flag ที่ตั้งหลังสเต็ป 3 เท่านั้น
+          const finalized = localStorage.getItem(`finalized:${b?._id}`) === "1";
+
+          let status = "pending"; // ค่าเริ่มต้น = ยังไม่จัดเป็นรอบสำเร็จ
+          if (backendStatus === "canceled") status = "canceled";
+          else if (backendStatus === "completed" && finalized) status = "completed";
+
+          return {
+            id: b._id,
+            date: toThaiDate(b.date),
+            time: b.timeSlot || "-",
+            customer: b.groupName || "-",
+            status,                    // <- ใช้สถานะตามเงื่อนไขด้านบน
+            isRepeatCustomer: false,   // ยังไม่มีข้อมูลจาก service
+            holes: b.courseType ? parseInt(b.courseType) : undefined,
+            cancellationReason: "",
+          };
+        });
         setHistory(rows);
-      } catch (e) {
+      } catch {
         setHistory([]);
       } finally {
         setLoading(false);
@@ -314,7 +325,11 @@ const HistoryPage = () => {
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <span className="font-semibold text-gray-700">
-                    {h.status === "completed" ? "สถานะ: สำเร็จ" : "สถานะ: ยกเลิก"}
+                    {h.status === "completed"
+                      ? "สถานะ: สำเร็จ"
+                      : h.status === "canceled"
+                      ? "สถานะ: ยกเลิก"
+                      : "สถานะ: กำลังดำเนินการ"}
                   </span>
                   <div className="flex items-center space-x-2">
                     {h.holes && (
@@ -325,9 +340,9 @@ const HistoryPage = () => {
                     )}
                     {h.status === "completed" ? (
                       <FontAwesomeIcon icon={faCircleCheck} className="text-green-500 text-xl" />
-                    ) : (
+                    ) : h.status === "canceled" ? (
                       <FontAwesomeIcon icon={faCircleXmark} className="text-red-500 text-xl" />
-                    )}
+                    ) : null}
                   </div>
                 </div>
                 {h.status === "canceled" && h.cancellationReason && (

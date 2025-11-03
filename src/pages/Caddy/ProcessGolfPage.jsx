@@ -11,9 +11,17 @@ const ProcessGolfPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { selectedDate: stateDate, selectedTime: stateTime, bookingId: stateBookingId } = location.state || {};
-  const [selectedDate, setSelectedDate] = useState(stateDate || localStorage.getItem("selectedDate") || "8 ก.พ ปี 2568");
-  const [selectedTime, setSelectedTime] = useState(stateTime || localStorage.getItem("selectedTime") || "06.00");
+  const {
+    selectedDate: stateDate,
+    selectedTime: stateTime,
+    bookingId: stateBookingId,
+  } = location.state || {};
+  const [selectedDate, setSelectedDate] = useState(
+    stateDate || localStorage.getItem("selectedDate") || "8 ก.พ ปี 2568"
+  );
+  const [selectedTime, setSelectedTime] = useState(
+    stateTime || localStorage.getItem("selectedTime") || "06.00"
+  );
   const [bookingId, setBookingId] = useState(stateBookingId || null);
   const [working, setWorking] = useState(false);
 
@@ -61,13 +69,24 @@ const ProcessGolfPage = () => {
         } else {
           console.warn("ไม่มี bookingId: ข้ามการเรียก endRound แต่ยังไปสเต็ปถัดไป");
         }
+      } else if (step === 3) {
+        // ✅ สเต็ปสุดท้าย: ตั้งธง finalized ไว้ให้ HistoryPage รู้ว่า “รอบสำเร็จ”
+        if (bookingId) {
+          try {
+            localStorage.setItem(`finalized:${bookingId}`, "1");
+          } catch (e) {
+            console.warn("ตั้งค่า finalized ใน localStorage ไม่สำเร็จ:", e);
+          }
+        }
+        // แล้วค่อยกลับหน้า /caddy พร้อม state เดิม
+        navigate("/caddy", {
+          state: { completedSchedule: { date: selectedDate, time: selectedTime } },
+        });
+        return; // ออกเลย ไม่ต้องไป setStep ต่อ
       }
-      // สเต็ป 3 ไม่มีการเรียก API (เปลี่ยนแบตเสร็จ - UI เท่านั้น)
 
       if (step < 3) {
         setStep((s) => s + 1);
-      } else {
-        navigate("/caddy", { state: { completedSchedule: { date: selectedDate, time: selectedTime } } });
       }
     } catch (err) {
       console.error("ดำเนินการไม่สำเร็จ:", err);
@@ -88,6 +107,16 @@ const ProcessGolfPage = () => {
     <div className="min-h-screen bg-white flex flex-col px-4 py-6 relative">
       <Header />
 
+      {/* ✅ ปุ่ม “แจ้งปัญหา” ด้านขวาบน */}
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={() => navigate("/caddy/dashboard/start")}
+          className="bg-black hover:bg-black text-white px-5 py-2 rounded-full shadow-md transition"
+        >
+          แจ้งปัญหา
+        </button>
+      </div>
+
       <div className="mt-6 flex justify-center">
         <div className="flex items-center gap-4">
           {[1, 2, 3].map((i) => (
@@ -103,7 +132,11 @@ const ProcessGolfPage = () => {
               >
                 {step > i ? <FontAwesomeIcon icon={faCheckCircle} /> : i}
               </div>
-              {i < 3 && <div className={`w-10 h-[2px] ${step > i ? "bg-green-500" : "bg-gray-300"}`} />}
+              {i < 3 && (
+                <div
+                  className={`w-10 h-[2px] ${step > i ? "bg-green-500" : "bg-gray-300"}`}
+                />
+              )}
             </React.Fragment>
           ))}
         </div>
@@ -139,7 +172,10 @@ const ProcessGolfPage = () => {
             <p className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</p>
             <div className="flex justify-center gap-4">
               <button
-                onClick={() => { setShowCancelConfirm(false); navigate("/caddy"); }}
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  navigate("/caddy");
+                }}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
               >
                 ตกลง

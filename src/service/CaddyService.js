@@ -16,7 +16,7 @@ const markCaddyAsAvailable = (bookingId) =>
 const cancelStart = (bookingId) =>
   api.put(`${CADDY_API}/cancel-start/${bookingId}`);
 
-// ยกเลกระหว่างรอบ
+// ยกเลิกระหว่างรอบ
 const cancelDuringRound = (bookingId) =>
   api.put(`${CADDY_API}/cancel-during-round/${bookingId}`);
 

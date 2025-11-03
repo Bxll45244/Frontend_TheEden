@@ -13,7 +13,8 @@ import BookingPage from "../pages/Caddy/BookingPage";
 import CaddyProfile from "../pages/Caddy/CaddyProfile";
 import HistoryPage from "../pages/Caddy/HistoryPage";
 import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
-import CaddieDashboard from "../pages/Caddy/Dashboard"; // ✅ เพิ่มไฟล์ใหม่
+import CaddieDashboard from "../pages/Caddy/Dashboard";
+import DashboardStart from "../pages/Caddy/DashboardStart"; // ✅ เพิ่ม import
 
 const authRouter = createBrowserRouter([
   // ===== ของเพื่อน (เดิม) =====
@@ -44,7 +45,8 @@ const authRouter = createBrowserRouter([
       { path: "/caddy/profile", element: <CaddyProfile /> },
       { path: "/caddy/history", element: <HistoryPage /> },
       { path: "/caddy/process", element: <ProcessGolfPage /> },
-      { path: "/caddy/dashboard", element: <CaddieDashboard /> }, // ✅ เพิ่มบรรทัดนี้
+      { path: "/caddy/dashboard", element: <CaddieDashboard /> },
+      { path: "/caddy/dashboard/start", element: <DashboardStart /> }, // ✅ เพิ่มเส้นใหม่
     ],
   },
 ]);

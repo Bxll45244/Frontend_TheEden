@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ ใช้ useNavigate
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamation } from "@fortawesome/free-solid-svg-icons";
 import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
@@ -13,13 +13,11 @@ const colorMap = {
   yellow: "bg-yellow-400",
 };
 
-const Dashboard = () => {
+const DashboardStart = () => {
   const navigate = useNavigate();
-
   const [holeStatuses, setHoleStatuses] = useState([]);
   const [loadingHoles, setLoadingHoles] = useState(true);
   const [holesError, setHolesError] = useState(null);
-
   const [confirmData, setConfirmData] = useState(null);
   const [popup, setPopup] = useState(null);
 
@@ -64,11 +62,7 @@ const Dashboard = () => {
   }, []);
 
   const askHoleAction = (title, payload) => {
-    setConfirmData({
-      scope: "hole",
-      title,
-      payload,
-    });
+    setConfirmData({ title, payload });
   };
 
   const handleConfirm = async () => {
@@ -95,46 +89,6 @@ const Dashboard = () => {
     } finally {
       setConfirmData(null);
     }
-  };
-
-  const renderPopup = () => {
-    if (confirmData) {
-      return (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[60%] max-w-xs">
-            <FontAwesomeIcon icon={faExclamation} className="text-yellow-400 mb-4" style={{ fontSize: 48 }} />
-            <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
-            <div className="flex justify-center gap-4">
-              <button onClick={handleConfirm} className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700">
-                ตกลง
-              </button>
-              <button onClick={() => setConfirmData(null)} className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700">
-                ยกเลิก
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    if (popup) {
-      return (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
-            <FontAwesomeIcon
-              icon={popup.isError ? faExclamation : faCircleCheck}
-              className={popup.isError ? "text-red-500 mx-auto" : "text-green-500 mx-auto"}
-              style={{ fontSize: 48 }}
-            />
-            <h2 className="text-3xl font-extrabold">{popup.isError ? "เกิดข้อผิดพลาด!" : "สำเร็จ!"}</h2>
-            <h3 className="text-base font-normal text-gray-800">{popup.title}</h3>
-            <button onClick={() => setPopup(null)} className="mt-4 bg-gray-500 text-white px-6 py-2 rounded-full hover:bg-green-600">
-              ตกลง
-            </button>
-          </div>
-        </div>
-      );
-    }
-    return null;
   };
 
   const HoleCard = ({ color, title, ask, showName, showIssue }) => {
@@ -199,15 +153,10 @@ const Dashboard = () => {
 
         <div className="text-center">
           <button
-            onClick={() =>
-              ask(title, {
-                holeNumber,
-                description: issue || "",
-                name: showName ? name : "",
-              })
-            }
-            className={`text-white text-sm px-4 py-1 rounded-full transition-colors
-              ${isValid() ? "bg-green-600 hover:bg-green-700" : "bg-slate-600 cursor-not-allowed"}`}
+            onClick={() => ask(title, { holeNumber, description: issue || "", name: showName ? name : "" })}
+            className={`text-white text-sm px-4 py-1 rounded-full transition-colors ${
+              isValid() ? "bg-green-600 hover:bg-green-700" : "bg-slate-600 cursor-not-allowed"
+            }`}
             disabled={!isValid()}
           >
             ยืนยัน
@@ -229,7 +178,7 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* แจ้งปัญหาหลุม */}
+      {/* หัวข้อ */}
       <section className="max-w-6xl mx-auto">
         <div className="flex justify-center mt-2 mb-6">
           <div className="inline-block bg-black text-white text-lg font-bold py-2 px-6 rounded-lg shadow-md">
@@ -237,13 +186,14 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* แถวการ์ดแจ้งปัญหา */}
         <div className="border-2 border-gray-600 rounded-xl p-4 shadow-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 justify-items-center sm:justify-items-stretch">
-            <HoleCard title="แจ้งปิดหลุม" color="red" showName={false} showIssue={true} ask={askHoleAction} />
-            {/* ❌ ลบการ์ด 'แจ้งสถานะกำลังแก้ไข' ออก */}
-            <HoleCard title="แจ้งเปิดใช้งานหลุม" color="green" showName={false} showIssue={false} ask={askHoleAction} />
-            <HoleCard title="ขอรถกอล์ฟช่วย" color="orange" showName={true} showIssue={false} ask={askHoleAction} />
-            <HoleCard title="สลับรถกอล์ฟให้กลุ่มนี้" color="yellow"  showIssue={false} ask={askHoleAction} />
+            <HoleCard title="แจ้งปิดหลุม" color="red" showIssue={true} ask={askHoleAction} />
+            
+            <HoleCard title="แจ้งเปิดใช้งานหลุม" color="green" ask={askHoleAction} />
+            <HoleCard title="ขอรถกอล์ฟช่วย" color="orange" showName={true} ask={askHoleAction} />
+            <HoleCard title="สลับรถกอล์ฟให้กลุ่มนี้" color="yellow"  ask={askHoleAction} />
           </div>
         </div>
       </section>
@@ -259,7 +209,10 @@ const Dashboard = () => {
           <div className="border-2 border-gray-400 rounded-xl p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 shadow-md bg-white">
             {holeStatuses.filter(h => h.color !== "green").length > 0 ? (
               holeStatuses.filter(h => h.color !== "green").map((h) => (
-                <div key={h.number} className="border rounded-lg p-2 bg-white shadow-sm text-center transform hover:scale-105 transition-transform duration-200">
+                <div
+                  key={h.number}
+                  className="border rounded-lg p-2 bg-white shadow-sm text-center transform hover:scale-105 transition-transform duration-200"
+                >
                   <div className={`text-xs font-semibold px-2 py-0.5 mb-2 rounded-full text-white ${colorMap[h.color] || "bg-gray-400"}`}>
                     หลุมที่ {h.number}
                   </div>
@@ -276,9 +229,41 @@ const Dashboard = () => {
         )}
       </section>
 
-      {renderPopup()}
+      {confirmData && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[60%] max-w-xs">
+            <FontAwesomeIcon icon={faExclamation} className="text-yellow-400 mb-4" style={{ fontSize: 48 }} />
+            <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
+            <div className="flex justify-center gap-4">
+              <button onClick={handleConfirm} className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700">
+                ตกลง
+              </button>
+              <button onClick={() => setConfirmData(null)} className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700">
+                ยกเลิก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {popup && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-3xl shadow-md text-center w-[70%] max-w-xs space-y-4">
+            <FontAwesomeIcon
+              icon={popup.isError ? faExclamation : faCircleCheck}
+              className={popup.isError ? "text-red-500 mx-auto" : "text-green-500 mx-auto"}
+              style={{ fontSize: 48 }}
+            />
+            <h2 className="text-3xl font-extrabold">{popup.isError ? "เกิดข้อผิดพลาด!" : "สำเร็จ!"}</h2>
+            <h3 className="text-base font-normal text-gray-800">{popup.title}</h3>
+            <button onClick={() => setPopup(null)} className="mt-4 bg-gray-500 text-white px-6 py-2 rounded-full hover:bg-green-600">
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Dashboard;
+export default DashboardStart;
