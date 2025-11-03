@@ -5,7 +5,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import th from "date-fns/locale/th";
-import api from "../../service/api"; // ✅ ใช้ API เดิมของโปรเจกต์คุณ
+// ✅ ใช้ Service ที่ล็อกไว้
+import CaddyService from "../../service/CaddyService";
 
 registerLocale("th", th);
 
@@ -22,14 +23,43 @@ const BookingPage = () => {
   const location = useLocation();
   const profileRef = useRef(null);
 
+  // ✅ กันตั้งแต่หน้าแรก: ถ้ายังไม่ล็อกอิน ให้พาไป /login
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const golfTimes = ["06.00", "17.00"];
+
+  // ✅ ข้อมูลต้องว่างจนกว่าจะล็อกอิน + merge branch admin
   const [completed, setCompleted] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [popup, setPopup] = useState(null);
   const [clicked, setClicked] = useState(false);
   const [weeklySchedule, setWeeklySchedule] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // ---------- Auth Gate ----------
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // แค่เรียกเพื่อเช็คว่า session ใช้ได้ไหม
+        await CaddyService.getCaddyBookings();
+        if (!mounted) return;
+        setCheckingAuth(false);
+      } catch (e) {
+        const status = e?.response?.status;
+        // ถ้าไม่ได้ล็อกอิน → ไปหน้า /login
+        if (status === 401) {
+          const from = location.pathname + location.search;
+          navigate(`/login?from=${encodeURIComponent(from)}`, { replace: true });
+          return;
+        }
+        // error อื่น ๆ: แสดงหน้าแบบว่างได้ แต่ไม่โชว์ข้อมูล
+        setCheckingAuth(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [navigate, location]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -39,32 +69,20 @@ const BookingPage = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const hasWorkOnThisDate = (date) => {
-    const workDates = [1, 8, 15, 22, 29];
-    return workDates.includes(date.getDate()) && date.getMonth() === 1 && date.getFullYear() === 2025;
-  };
+  // ❗️ตอนนี้ยังไม่โชว์รอบทำงานจนกว่าจะมีข้อมูลจริงหลัง merge
+  const hasWorkOnThisDate = () => false;
 
+  // รับสถานะที่ส่งกลับมาหลังทำงานสำเร็จ (ถ้ามีในอนาคต)
   useEffect(() => {
     if (location.state?.completedSchedules) {
       setCompleted(location.state.completedSchedules);
     }
   }, [location.state]);
 
+  // ตาราง 7 วันถัดไป (UI อย่างเดียว ค่าช่องเป็น "-")
   useEffect(() => {
     const days = [];
-    const workDates = [1, 8, 15, 22, 29];
-    const selectedDay = selectedDate.getDate();
-
-    let startDay = workDates[0];
-    for (let i = workDates.length - 1; i >= 0; i--) {
-      if (selectedDay >= workDates[i]) {
-        startDay = workDates[i];
-        break;
-      }
-    }
-
-    const startOfWeek = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), startDay);
-
+    const startOfWeek = new Date(selectedDate);
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(startOfWeek);
       currentDate.setDate(startOfWeek.getDate() + i);
@@ -73,29 +91,14 @@ const BookingPage = () => {
     setWeeklySchedule(days);
   }, [selectedDate]);
 
-  const handleTimeClick = (time) => {
-    if (time === "06.00") setPopup({ type: "confirm" });
-    else if (time === "17.00") setPopup({ type: "notTime" });
-    else {
-      setSelectedTime(time);
-      setPopup(null);
-    }
+  // ตอนนี้ยังไม่อนุญาตให้เริ่มงาน/เลือกเวลา → แจ้ง "ยังไม่พร้อมใช้งาน"
+  const handleTimeClick = () => {
+    setPopup({ type: "notTime" });
   };
 
-  // ✅ เพิ่มเฉพาะการยิง API เข้า backend
+  // ยังไม่ยิง API ใด ๆ ในหน้านี้จนกว่าจะพร้อมจริง
   const handleConfirm = async () => {
-    try {
-      const bookingId = "672d1f58f93f9008d6cabc00"; // 🔹 แทนด้วย ID จริงที่ส่งมาจาก backend
-      await api.put(`/caddy/start/${bookingId}`);
-
-      const newItem = { date: formatDateThai(selectedDate), time: "06.00" };
-      setCompleted((prev) => [...prev, newItem]);
-      setPopup({ type: "success", title: "เวลา 06.00" });
-    } catch (error) {
-      console.error("❌ เริ่มงานไม่สำเร็จ:", error);
-      alert("ไม่สามารถเริ่มงานได้ กรุณาลองใหม่อีกครั้ง");
-      setPopup(null);
-    }
+    setPopup(null);
   };
 
   const closePopup = () => setPopup(null);
@@ -118,6 +121,15 @@ const BookingPage = () => {
     else if (menu === "ออกจากระบบ") navigate("/landing");
     setIsMenuOpen(false);
   };
+
+  // ระหว่างเช็คสิทธิ์ → spinner เฉย ๆ
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="loading loading-spinner loading-lg text-gray-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 font-sans relative">
@@ -143,12 +155,9 @@ const BookingPage = () => {
               <button onClick={() => handleMenuClick("ประวัติการทำงาน")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                 ประวัติการทำงาน
               </button>
-              <button
-      onClick={() => handleMenuClick("แจ้งปัญหา")} // ✅ ปุ่มใหม่
-      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
-    >
-      แจ้งปัญหา
-    </button>
+              <button onClick={() => handleMenuClick("แจ้งปัญหา")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+                แจ้งปัญหา
+              </button>
               <button onClick={() => handleMenuClick("ออกจากระบบ")} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                 ออกจากระบบ
               </button>
@@ -157,43 +166,35 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* DatePicker (เลือกได้เฉพาะวันปัจจุบันและวันถัดไป) */}
+      {/* DatePicker (เลือกได้เฉพาะวันนี้และอนาคต) */}
       <div className="flex justify-center mb-6">
         <DatePicker
           selected={selectedDate}
           onChange={(date) => setSelectedDate(date)}
           dateFormat="d MMM ปี yyyy"
           locale="th"
-          minDate={new Date()} // ✅ ป้องกันการเลือกวันย้อนหลัง
+          minDate={new Date()}
           className="bg-[#324441] text-white rounded-full px-4 py-2 text-sm cursor-pointer text-center"
         />
       </div>
 
-      {/* เวลา */}
-      <div className="bg-[#3B6B5D] text-white text-center rounded-2xl shadow-lg py-6 px-6 mx-auto w-full max-w-sm space-y-4 mb-6">
+      {/* เวลา (ตอนนี้เป็น UI อย่างเดียว) */}
+      <div className="bg-[#3B6B5D] text-white text-center rounded-2xl shadow-lg py-6 px-6 mx-auto w/full max-w-sm space-y-4 mb-6">
         <h2 className="text-base font-bold">เวลาออกรอบกอล์ฟ</h2>
         <div className="flex justify-center gap-6">
-          {hasWorkOnThisDate(selectedDate) ? (
-            golfTimes.map((time) => (
-              <button
-                key={time}
-                onClick={() => handleTimeClick(time)}
-                className={`rounded-full px-4 py-1 text-sm font-semibold transition-colors duration-200 ${
-                  selectedTime === time
-                    ? "bg-white text-[#324441] shadow-inner"
-                    : "border border-white text-white hover:bg-white hover:text-[#324441]"
-                }`}
-              >
-                {time}
-              </button>
-            ))
-          ) : (
-            <p className="text-gray-200 font-normal">ไม่มีรอบการทำงาน</p>
-          )}
+          {golfTimes.map((time) => (
+            <button
+              key={time}
+              onClick={handleTimeClick}
+              className="rounded-full px-4 py-1 text-sm font-semibold border border-white text-white hover:bg-white hover:text-[#324441] transition-colors"
+            >
+              {time}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ตาราง */}
+      {/* ตารางรายสัปดาห์ (ข้อมูลว่าง) */}
       <div className="bg-[#E3F1EB] mx-auto w-full max-w-sm rounded-2xl shadow-lg overflow-hidden mb-6">
         <div className="bg-[#3B6B5D] text-white text-center py-4">
           <h2 className="text-xl font-bold">การทำงานรายสัปดาห์</h2>
@@ -210,8 +211,8 @@ const BookingPage = () => {
             {weeklySchedule.map((day) => (
               <tr key={day.date} className="border-t border-gray-400">
                 <td className="p-2">{day.date}</td>
-                <td className="p-2">{isCompleted(day.date, "06.00") ? <span className="text-green-600 text-2xl font-bold">✓</span> : "-"}</td>
-                <td className="p-2">{isCompleted(day.date, "17.00") ? <span className="text-green-600 text-2xl font-bold">✓</span> : "-"}</td>
+                <td className="p-2">-</td>
+                <td className="p-2">-</td>
               </tr>
             ))}
           </tbody>
@@ -222,25 +223,10 @@ const BookingPage = () => {
       {popup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-3xl shadow-xl border-2 border-black text-center w-[70%] max-w-xs space-y-4">
-            {popup.type === "confirm" && (
-              <>
-                <FontAwesomeIcon icon={faExclamation} className="text-yellow-400 text-5xl mx-auto" />
-                <h3 className="text-lg font-semibold mb-4">คุณแน่ใจหรือไม่?</h3>
-                <div className="flex justify-center gap-4">
-                  <button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
-                    ตกลง
-                  </button>
-                  <button onClick={closePopup} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">
-                    ยกเลิก
-                  </button>
-                </div>
-              </>
-            )}
-
             {popup.type === "notTime" && (
               <>
                 <FontAwesomeIcon icon={faExclamation} className="text-red-500 text-5xl mx-auto" />
-                <h3 className="text-lg font-semibold mb-4">ยังไม่ถึงเวลาเริ่มงาน</h3>
+                <h3 className="text-lg font-semibold mb-4">ยังไม่พร้อมใช้งาน</h3>
                 <button onClick={closePopup} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
                   ตกลง
                 </button>
@@ -251,7 +237,7 @@ const BookingPage = () => {
               <>
                 <FontAwesomeIcon icon={faCircleCheck} className="text-green-500 text-5xl mx-auto" />
                 <h2 className="text-3xl font-extrabold">สำเร็จ!</h2>
-                <h3 className="text-base font-normal text-gray-800">{`เริ่มงาน${popup.title} สำเร็จ`}</h3>
+                <h3 className="text-base font-normal text-gray-800">{`ดำเนินการสำเร็จ`}</h3>
                 <button
                   disabled={clicked}
                   onClick={() => {

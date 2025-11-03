@@ -3,6 +3,7 @@ import Header from "../../components/Caddy/Header";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate, useLocation } from "react-router-dom";
+import CaddyService from "../../service/CaddyService"; // ✅ ใช้ Service ที่ล็อกไว้แล้ว
 
 const ProcessGolfPage = () => {
   const [step, setStep] = useState(1);
@@ -10,21 +11,76 @@ const ProcessGolfPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { selectedDate: stateDate, selectedTime: stateTime } = location.state || {};
+  const { selectedDate: stateDate, selectedTime: stateTime, bookingId: stateBookingId } = location.state || {};
   const [selectedDate, setSelectedDate] = useState(stateDate || localStorage.getItem("selectedDate") || "8 ก.พ ปี 2568");
   const [selectedTime, setSelectedTime] = useState(stateTime || localStorage.getItem("selectedTime") || "06.00");
+  const [bookingId, setBookingId] = useState(stateBookingId || null);
+  const [working, setWorking] = useState(false);
 
   useEffect(() => {
     if (stateDate) localStorage.setItem("selectedDate", stateDate);
     if (stateTime) localStorage.setItem("selectedTime", stateTime);
   }, [stateDate, stateTime]);
 
+  // ✅ พยายามหา bookingId ถ้าไม่ได้ส่งมาทาง state
+  useEffect(() => {
+    const fallbackFromMyBookings = async () => {
+      if (bookingId) return;
+      try {
+        const { data } = await CaddyService.getCaddyBookings();
+        if (Array.isArray(data) && data.length > 0) {
+          // ใช้รายการแรกเป็นค่าเริ่มต้น (fallback)
+          setBookingId(data[0]._id);
+        }
+      } catch (e) {
+        // ถ้าดึงไม่ได้ก็ปล่อยไป: จะข้ามการยิง API แต่ยังให้เดินสเต็ปได้
+        console.warn("ไม่พบ bookingId และไม่สามารถดึงรายการจองของแคดดี้ได้:", e);
+      }
+    };
+    fallbackFromMyBookings();
+  }, [bookingId]);
+
   const stepTexts = ["เริ่มออกรอบกอล์ฟ", "จบการเล่นกอล์ฟ", "เปลี่ยนแบตรถกอล์ฟสำเร็จ"];
 
-  const handleNextStep = () => {
-    if (step < 3) setStep((s) => s + 1);
-    else {
-      navigate("/caddy", { state: { completedSchedule: { date: selectedDate, time: selectedTime } } });
+  const handleNextStep = async () => {
+    // ยิง API ตามสเต็ป (ถ้ามี bookingId) ก่อนขยับสเต็ป
+    try {
+      setWorking(true);
+
+      if (step === 1) {
+        // เริ่มรอบ
+        if (bookingId) {
+          await CaddyService.startRound(bookingId);
+        } else {
+          console.warn("ไม่มี bookingId: ข้ามการเรียก startRound แต่ยังไปสเต็ปถัดไป");
+        }
+      } else if (step === 2) {
+        // จบรอบ
+        if (bookingId) {
+          await CaddyService.endRound(bookingId);
+        } else {
+          console.warn("ไม่มี bookingId: ข้ามการเรียก endRound แต่ยังไปสเต็ปถัดไป");
+        }
+      }
+      // สเต็ป 3 ไม่มีการเรียก API (เปลี่ยนแบตเสร็จ - UI เท่านั้น)
+
+      if (step < 3) {
+        setStep((s) => s + 1);
+      } else {
+        navigate("/caddy", { state: { completedSchedule: { date: selectedDate, time: selectedTime } } });
+      }
+    } catch (err) {
+      console.error("ดำเนินการไม่สำเร็จ:", err);
+      // คงรูปแบบง่าย ๆ ด้วย alert เพื่อไม่เปลี่ยน UI โครงสร้างเดิม
+      alert(
+        step === 1
+          ? "เริ่มออกรอบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"
+          : step === 2
+          ? "จบการเล่นไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"
+          : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"
+      );
+    } finally {
+      setWorking(false);
     }
   };
 
@@ -47,9 +103,7 @@ const ProcessGolfPage = () => {
               >
                 {step > i ? <FontAwesomeIcon icon={faCheckCircle} /> : i}
               </div>
-              {i < 3 && (
-                <div className={`w-10 h-[2px] ${step > i ? "bg-green-500" : "bg-gray-300"}`} />
-              )}
+              {i < 3 && <div className={`w-10 h-[2px] ${step > i ? "bg-green-500" : "bg-gray-300"}`} />}
             </React.Fragment>
           ))}
         </div>
@@ -59,10 +113,13 @@ const ProcessGolfPage = () => {
         <div className="bg-gradient-to-br from-green-700 to-green-800 text-white rounded-3xl w-full max-w-sm py-8 px-6 text-center shadow-lg">
           <p className="text-lg font-semibold">{stepTexts[step - 1]}</p>
           <button
-            className="mt-6 bg-white text-green-800 font-medium text-sm px-8 py-2 rounded-full shadow-md hover:bg-green-50 transition"
+            className={`mt-6 bg-white text-green-800 font-medium text-sm px-8 py-2 rounded-full shadow-md hover:bg-green-50 transition ${
+              working ? "opacity-70 cursor-not-allowed" : ""
+            }`}
             onClick={handleNextStep}
+            disabled={working}
           >
-            ยืนยัน
+            {working ? "กำลังดำเนินการ..." : "ยืนยัน"}
           </button>
         </div>
       </div>

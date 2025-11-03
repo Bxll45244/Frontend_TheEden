@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,30 +9,62 @@ import {
   faChevronDown,
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
+import CaddyService from "../../service/CaddyService"; // ✅ ใช้ Service ที่ล็อกไว้
 
-const mockWorkHistory = [
-  { id: 1, date: "1 ก.พ. 2568",  time: "06:00", customer: "คุณสมศักดิ์", status: "completed", isRepeatCustomer: true,  holes: 18 },
-  { id: 2, date: "1 ก.พ. 2568",  time: "17:00", customer: "คุณมานะ",     status: "completed", isRepeatCustomer: false, holes: 9  },
-  { id: 3, date: "31 ม.ค. 2568", time: "17:00", customer: "คุณวิชิต",    status: "canceled",  isRepeatCustomer: false, holes: 18, cancellationReason: "ลูกค้าไม่มา" },
-  { id: 4, date: "30 ม.ค. 2568", time: "06:00", customer: "คุณกฤษณะ",    status: "completed", isRepeatCustomer: true,  holes: 18 },
-  { id: 5, date: "29 ม.ค. 2568", time: "10:00", customer: "คุณปรีชา",    status: "completed", isRepeatCustomer: true,  holes: 9  },
-  { id: 6, date: "28 ม.ค. 2568", time: "14:00", customer: "คุณสมศรี",    status: "canceled",  isRepeatCustomer: false, holes: 9, cancellationReason: "ฝนตก" },
-];
+const toThaiDate = (iso) => {
+  try {
+    const d = new Date(iso);
+    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear() + 543;
+    return `${day} ${month} ${year}`;
+  } catch {
+    return iso;
+  }
+};
 
 const HistoryPage = () => {
   const navigate = useNavigate();
+  const [history, setHistory] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [holesFilter, setHolesFilter] = useState("all");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isHolesDropdownOpen, setIsHolesDropdownOpen] = useState(false);
   const [isRoundsDropdownOpen, setIsRoundsDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const filteredHistory = mockWorkHistory.filter((item) => {
-    const s = searchTerm.toLowerCase();
-    const matchSearch = item.date.toLowerCase().includes(s)
-      || item.customer.toLowerCase().includes(s)
-      || item.status.toLowerCase().includes(s);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await CaddyService.getCaddyBookings();
+        const rows = (Array.isArray(data) ? data : []).map((b) => ({
+          id: b._id,
+          date: toThaiDate(b.date),
+          time: b.timeSlot || "-",
+          customer: b.groupName || "-",
+          status: "completed", // 🔸 ค่าเริ่มต้นชั่วคราว (ไม่มี field จาก backend)
+          isRepeatCustomer: false, // 🔸 ยังไม่ทราบจาก service
+          holes: b.courseType ? parseInt(b.courseType) : undefined,
+          cancellationReason: "",
+        }));
+        setHistory(rows);
+      } catch (e) {
+        setHistory([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const filteredHistory = history.filter((item) => {
+    const s = (searchTerm || "").toLowerCase();
+    const matchSearch =
+      item.date.toLowerCase().includes(s) ||
+      item.customer.toLowerCase().includes(s) ||
+      item.status.toLowerCase().includes(s);
 
     let matchFilter = true;
     if (filter === "completed" && item.status !== "completed") matchFilter = false;
@@ -45,7 +77,7 @@ const HistoryPage = () => {
     return matchSearch && matchFilter && matchHoles;
   });
 
-  const completedRounds = mockWorkHistory.filter(i => i.status === "completed").length;
+  const completedRounds = history.filter((i) => i.status === "completed").length;
 
   const getFilterLabel = () => {
     switch (filter) {
@@ -63,7 +95,15 @@ const HistoryPage = () => {
     if (holesFilter === "9") return "9 หลุม";
     if (holesFilter === "18") return "18 หลุม";
     return "จำนวนหลุม";
-    };
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-gray-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans p-4">
@@ -82,7 +122,7 @@ const HistoryPage = () => {
           <h2 className="text-lg font-semibold text-[#324441]">สรุปผลการทำงาน</h2>
           <div className="flex justify-around mt-4">
             <div>
-              <p className="text-xl font-bold text-gray-800">{mockWorkHistory.length}</p>
+              <p className="text-xl font-bold text-gray-800">{history.length}</p>
               <p className="text-sm text-gray-500">รอบทั้งหมด</p>
             </div>
             <div>

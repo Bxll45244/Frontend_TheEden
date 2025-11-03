@@ -3,11 +3,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import th from "date-fns/locale/th";
+import { useNavigate } from "react-router-dom"; // ✅ เพิ่มบรรทัดนี้
 
 registerLocale("th", th);
 
 const LandingPage = () => {
   const selectedDate = new Date();
+  const navigate = useNavigate(); // ✅ ใช้งาน hook สำหรับนำทาง
+
   return (
     <div className="min-h-screen bg-white p-4 font-sans relative">
       <div className="flex justify-between items-start mb-4">
@@ -15,7 +18,12 @@ const LandingPage = () => {
           <img src="/images/caddy/eden-Logo.png" alt="logo" className="mx-auto h-24" />
           <h1 className="text-black text-lg font-bold uppercase">The Eden Golf Club</h1>
         </div>
-        <button className="bg-[#324441] text-white px-4 py-2 rounded-full font-bold text-sm hover:bg-opacity-90">
+
+        {/* ✅ ปุ่มเข้าสู่ระบบ เด้งไปหน้า /login */}
+        <button
+          onClick={() => navigate("/login")}
+          className="bg-[#324441] text-white px-4 py-2 rounded-full font-bold text-sm hover:bg-opacity-90"
+        >
           เข้าสู่ระบบ
         </button>
       </div>
