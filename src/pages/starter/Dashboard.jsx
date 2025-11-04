@@ -1,6 +1,5 @@
-// src/pages/starter/Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import ItemService from "../../service/item.Route"; // ✅ ใช้ service ที่มีอยู่
+import ItemService from "../../service/itemService"; // ✅ ใช้ service ที่มีอยู่
 
 // สีป้ายสั้น ๆ
 const colorClass = {
@@ -60,8 +59,8 @@ export default function Dashboard() {
           { count: bag.available || 0, label: "กระเป๋าว่าง",   color: "success" },
           { count: bag.inUse || 0,     label: "กำลังใช้งาน",   color: "info" },
           { count: bag.booked || 0,    label: "จองแล้ว",       color: "primary" },
-          { count: bag.spare || 0,     label: "กระเป๋าสำรอง", color: "warning" },
-          { count: bag.broken || 0,    label: "กระเป๋าเสีย",   color: "error" },
+         // { count: bag.spare || 0,     label: "กระเป๋าสำรอง", color: "warning" },
+          // { count: bag.broken || 0,    label: "กระเป๋าเสีย",   color: "error" },
         ];
 
         setAssetStatus({ golfCart: cartStatus, golfBag: bagStatus });

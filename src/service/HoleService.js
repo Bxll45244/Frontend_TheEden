@@ -21,7 +21,15 @@ const getAllHoles = () => api.get(`${HOLE_API}/gethole`);
 const getHoleById = (id) => api.get(`${HOLE_API}/gethole/${id}`);
 
 // แจ้งขอความช่วยเหลือจากรถ (PUT /hole/help-car)
-const reportHelpCar = (payload) => api.put(`${HOLE_API}/help-car`, payload);
+// const reportHelpCar = (payload) => api.put(`${HOLE_API}/help-car`, payload);
+const reportHelpCar = (payload) => {
+  const body = {
+    holeNumber: Number(payload.holeNumber),
+    description: payload.description || "",
+    helpCarCount: Number(payload.helpCarCount || 1),
+  };
+  return api.put(`${HOLE_API}/help-car`, body);
+};
 
 // แจ้งว่ารถกอล์ฟมาถึงแล้ว (PUT /hole/go-car)
 const resolveGoCar = (payload) => api.put(`${HOLE_API}/go-car`, payload);
@@ -38,3 +46,4 @@ const HoleService = {
 };
 
 export default HoleService;
+
