@@ -6,6 +6,7 @@ import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import th from "date-fns/locale/th";
 import CaddyService from "../../service/CaddyService";
+import UserService from "../../service/userService";
 
 registerLocale("th", th);
 
@@ -160,13 +161,28 @@ const BookingPage = () => {
     });
   };
 
-  const handleMenuClick = (menu) => {
-    if (menu === "โปรไฟล์") navigate("/caddy/profile");
-    else if (menu === "ประวัติการทำงาน") navigate("/caddy/history");
-    else if (menu === "แจ้งปัญหา") navigate("/caddy/dashboard");
-    else if (menu === "ออกจากระบบ") navigate("/landing");
-    setIsMenuOpen(false);
-  };
+const handleMenuClick = async (menu) => {
+  if (menu === "โปรไฟล์") {
+    navigate("/caddy/profile");
+  } else if (menu === "ประวัติการทำงาน") {
+    navigate("/caddy/history");
+  } else if (menu === "แจ้งปัญหา") {
+    navigate("/caddy/dashboard");
+  } else if (menu === "ออกจากระบบ") {
+    try {
+      await UserService.logoutUser();
+    } catch (err) {
+      console.warn("Logout error:", err);
+    }
+
+    // ✅ หน่วงเวลา 1 วินาทีก่อนรีเฟรช
+          localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.replace("/"); // <-- แก้เป็น 1500, 2000 ก็ได้ถ้าอยากหน่วงมากกว่านี้
+  }
+
+  setIsMenuOpen(false);
+};
 
   if (checkingAuth) {
     return (

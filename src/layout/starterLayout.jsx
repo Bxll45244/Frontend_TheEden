@@ -1,14 +1,28 @@
 import React from "react";
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 
 export default function StarterLayout() {
   const { user, logout } = useAuthContext();
+  const navigate = useNavigate();
 
   const navItem =
     "px-3 py-2 rounded-lg text-sm font-medium hover:bg-emerald-50 hover:text-emerald-700 transition";
   const navActive = ({ isActive }) =>
     `${navItem} ${isActive ? "bg-emerald-100 text-emerald-800" : "text-gray-700"}`;
+
+    const handleLogout = async () => {
+    try {
+      await logout();               // ถ้า logout เป็น async
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      window.location.replace("/"); // ไป "/" และ hard reload เคลียร์ state
+      // ถ้าอยากใช้ react-router:
+      // navigate("/", { replace: true });
+      // window.location.reload();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,7 +59,7 @@ export default function StarterLayout() {
 
             {user && (
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="px-3 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
               >
                 ออกจากระบบ
