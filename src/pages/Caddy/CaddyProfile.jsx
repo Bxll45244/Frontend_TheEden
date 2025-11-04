@@ -1,7 +1,7 @@
 // src/pages/Caddy/CaddyProfile.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import UserService from "../../service/UserService";
+import UserService from "../../service/userService";
 
 const CaddyProfile = () => {
   const navigate = useNavigate();
