@@ -1,3 +1,4 @@
+// src/routes/appRouter.jsx
 import React from "react";
 import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
@@ -9,25 +10,29 @@ import ProfilePage from "../pages/golfer/ProfilePage";
 import CheckoutSuccess from "../pages/golfer/CheckoutSuccess";
 import UnauthorizedPage from "../pages/golfer/UnauthorizedPage";
 
-//  Auth pages (both sides use)
+// Auth pages
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import StaffLoginPage from "../pages/auth/StaffLoginPage";
 
-// Admin pages 
+// Admin pages
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import BookingTable from "../pages/admin/BookingTable";
 import EmployeeDetail from "../pages/admin/EmployeeDetail";
 import EmployeeForm from "../pages/admin/EmployeeForm";
 import EmployeePage from "../components/admin/EmployeePage";
 
+// Starter pages (protected)
+import StarterLayout from "../layout/starterLayout";
+import StarterDashboard from "../pages/starter/Dashboard";
+import StarterReportPage from "../pages/starter/ReportPage";
+import ReportConfirmPage from "../pages/starter/ReportConfirmPage";
 
-// Small guard component for role
+// ---- Role guard (reusable) ----
 function RequireRole({ allowed = [], children }) {
   const { user } = useAuthContext();
   const location = useLocation();
 
-  // not logged in → go login
   if (!user) {
     return (
       <Navigate
@@ -38,51 +43,52 @@ function RequireRole({ allowed = [], children }) {
     );
   }
 
-  // logged in but wrong role → unauthorized
   if (!allowed.includes(user.role)) {
-    return (
-      <Navigate
-        to="/unauthorized"
-        replace
-        state={{ reason: "role" }}
-      />
-    );
+    return <Navigate to="/unauthorized" replace state={{ reason: "role" }} />;
   }
 
   return children;
 }
 
-// Unified Router
+// ---- Unified Router ----
 const Router = createBrowserRouter([
-  // Public / Golfer routes
+  // Public / Golfer
   { path: "/", element: <GolferHomePage /> },
   { path: "/booking", element: <GolferBookingPage /> },
   { path: "/booking/success", element: <CheckoutSuccess /> },
   { path: "/profile", element: <ProfilePage /> },
 
-  // Auth routes 
+  // Auth
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
   { path: "/staff/login", element: <StaffLoginPage /> },
 
-  // Unauthorized page 
+  // Unauthorized
   { path: "/unauthorized", element: <UnauthorizedPage /> },
 
-  //  Hard redirects for staff-only root paths accidentally hit by golfers 
+  // Starter (protected)
   {
     path: "/starter",
     element: (
-      <Navigate to="/unauthorized" replace state={{ reason: "role" }} />
+      <RequireRole allowed={["starter"]}>
+        <StarterLayout />
+      </RequireRole>
     ),
-  },
-  {
-    path: "/caddy",
-    element: (
-      <Navigate to="/unauthorized" replace state={{ reason: "role" }} />
-    ),
+    children: [
+      { index: true, element: <StarterDashboard /> },       // /starter
+      { path: "dashboard", element: <StarterDashboard /> }, // /starter/dashboard
+      { path: "report", element: <StarterReportPage /> },   // /starter/report
+      { path: "report/confirm", element: <ReportConfirmPage /> },
+    ],
   },
 
-  // Admin (protected by role) 
+  // Caddy root hit by golfers -> unauthorized (ปรับตามที่ต้องการทีหลังได้)
+  {
+    path: "/caddy",
+    element: <Navigate to="/unauthorized" replace state={{ reason: "role" }} />,
+  },
+
+  // Admin (protected)
   {
     path: "/admin",
     element: (
@@ -91,21 +97,14 @@ const Router = createBrowserRouter([
       </RequireRole>
     ),
     children: [
-      // GET /admin  -> EmployeePage (index)
       { index: true, element: <EmployeePage /> },
-
-      // GET /admin/booking
       { path: "booking", element: <BookingTable /> },
-
-      // GET /admin/add
       { path: "add", element: <EmployeeForm /> },
-
-      // GET /admin/detail/:id
       { path: "detail/:id", element: <EmployeeDetail /> },
     ],
   },
 
-  // Fallback: unknown paths -> home 
+  // Fallback
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
