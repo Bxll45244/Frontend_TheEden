@@ -1,13 +1,13 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import GolferHomePage from "../../pages/golfer/GolferHomePage";
-import GolferBookingPage from "../../pages/golfer/GolferBookingPage";
-import StaffLoginPage from "../../pages/auth/StaffLoginPage";
-import ProfilePage from "../../pages/golfer/ProfilePage";
-import CheckoutSuccess from "../../pages/golfer/CheckoutSuccess";
-import LoginPage from "../../pages/auth/LoginPage";
-import RegisterPage from "../../pages/auth/RegisterPage";
-import UnauthorizedPage from "../../pages/golfer/UnauthorizedPage";
+import GolferHomePage from "../pages/golfer/GolferHomePage";
+import GolferBookingPage from "../pages/golfer/GolferBookingPage";
+import StaffLoginPage from "../pages/auth/StaffLoginPage";
+import ProfilePage from "../pages/golfer/ProfilePage";
+import CheckoutSuccess from "../pages/golfer/CheckoutSuccess";
+import LoginPage from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import UnauthorizedPage from "../pages/golfer/UnauthorizedPage";
 
 // router สำหรับ golfer (ผู้ใช้งานทั่วไป)
 const golferRouter = createBrowserRouter([
