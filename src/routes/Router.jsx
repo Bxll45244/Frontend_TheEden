@@ -1,4 +1,3 @@
-// src/routes/appRouter.jsx
 import React from "react";
 import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
@@ -28,6 +27,16 @@ import StarterDashboard from "../pages/starter/Dashboard";
 import StarterReportPage from "../pages/starter/ReportPage";
 import ReportConfirmPage from "../pages/starter/ReportConfirmPage";
 
+// Caddie pages (protected)  ⬅️ เพิ่มจาก caddieRouter
+import CaddieLayout from "../layout/caddieLayout";
+import LandingPage from "../pages/Caddy/LandingPage";
+import BookingPage from "../pages/Caddy/BookingPage";
+import CaddyProfile from "../pages/Caddy/CaddyProfile";
+import HistoryPage from "../pages/Caddy/HistoryPage";
+import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
+import CaddieDashboard from "../pages/Caddy/Dashboard";
+import DashboardStart from "../pages/Caddy/DashboardStart";
+
 // ---- Role guard (reusable) ----
 function RequireRole({ allowed = [], children }) {
   const { user } = useAuthContext();
@@ -52,21 +61,21 @@ function RequireRole({ allowed = [], children }) {
 
 // ---- Unified Router ----
 const Router = createBrowserRouter([
-  // Public / Golfer
+  // Public / Golfer (เดิม)
   { path: "/", element: <GolferHomePage /> },
   { path: "/booking", element: <GolferBookingPage /> },
   { path: "/booking/success", element: <CheckoutSuccess /> },
   { path: "/profile", element: <ProfilePage /> },
 
-  // Auth
+  // Auth (เดิม)
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
   { path: "/staff/login", element: <StaffLoginPage /> },
 
-  // Unauthorized
+  // Unauthorized (เดิม)
   { path: "/unauthorized", element: <UnauthorizedPage /> },
 
-  // Starter (protected)
+  // Starter (protected) (เดิม)
   {
     path: "/starter",
     element: (
@@ -82,13 +91,26 @@ const Router = createBrowserRouter([
     ],
   },
 
-  // Caddy root hit by golfers -> unauthorized (ปรับตามที่ต้องการทีหลังได้)
+  // Caddie (protected)  ⬅️ นำมาจาก caddieRouter (แทนที่ redirect เดิม)
   {
-    path: "/caddy",
-    element: <Navigate to="/unauthorized" replace state={{ reason: "role" }} />,
+    element: (
+      <RequireRole allowed={["caddy"]}>
+        <CaddieLayout />
+      </RequireRole>
+    ),
+    children: [
+      { path: "/landing", element: <LandingPage /> },
+      { path: "/caddy", element: <BookingPage /> },
+      { path: "/caddy/booking", element: <BookingPage /> },
+      { path: "/caddy/profile", element: <CaddyProfile /> },
+      { path: "/caddy/history", element: <HistoryPage /> },
+      { path: "/caddy/process", element: <ProcessGolfPage /> },
+      { path: "/caddy/dashboard", element: <CaddieDashboard /> },
+      { path: "/caddy/dashboard/start", element: <DashboardStart /> },
+    ],
   },
 
-  // Admin (protected)
+  // Admin (protected) (เดิม)
   {
     path: "/admin",
     element: (
@@ -104,7 +126,7 @@ const Router = createBrowserRouter([
     ],
   },
 
-  // Fallback
+  // Fallback (เดิม)
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
