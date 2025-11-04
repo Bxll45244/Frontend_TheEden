@@ -17,7 +17,7 @@ export default function StarterLayout() {
         <div className="max-w-7xl mx-auto h-16 px-4 flex items-center justify-between">
           <Link to="/starter" className="flex items-center gap-3">
             <img src="/images/eden-Logo.png" alt="The Eden Golf Club Logo" className="h-10" />
-            <span className="font-semibold text-gray-800">Starter Console</span>
+            <span className="font-semibold text-gray-800">Starter</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-2">

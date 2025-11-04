@@ -228,6 +228,9 @@ const ReportPage = () => {
     );
   };
 
+  // ✅ กรองรายการเฉพาะที่ “ไม่ใช่สีเขียว (ใช้งานได้)”
+  const problemHoleStatuses = holeStatuses.filter((h) => h.color !== "green");
+
   return (
     <div className="min-h-screen bg-white font-inter px-4 py-6">
       {/* ปุ่มย้อนกลับ */}
@@ -240,11 +243,11 @@ const ReportPage = () => {
         </button>
       </div>
 
-      {/* แจ้งปัญหา/ขอความช่วยเหลือ */}
+      {/* แจ้งปัญหา */}
       <section className="max-w-6xl mx-auto">
         <div className="flex justify-center mt-2 mb-6">
           <div className="inline-block bg-black text-white text-lg font-bold py-2 px-6 rounded-lg shadow-md">
-            แจ้งปัญหาหลุม / ขอความช่วยเหลือ
+            แจ้งปัญหาหลุม
           </div>
         </div>
 
@@ -253,14 +256,14 @@ const ReportPage = () => {
             <HoleCard title="แจ้งปิดหลุม" color="red" showIssue={true} showCount={false} ask={askHoleAction} />
             <HoleCard title="แจ้งสถานะกำลังแก้ไข" color="blue" showIssue={false} showCount={false} ask={askHoleAction} />
             <HoleCard title="แจ้งเปิดใช้งานหลุม" color="green" showIssue={false} showCount={false} ask={askHoleAction} />
-            {/* ✅ ขอรถกอล์ฟช่วย: เพิ่มช่องจำนวนรถเสีย */}
+            {/* ✅ ขอรถกอล์ฟช่วย: ถ้าจะใช้งานให้เอา comment ออก */}
             {/* <HoleCard title="ขอรถกอล์ฟช่วย" color="orange" showIssue={false} showCount={true} ask={askHoleAction} /> */}
             <HoleCard title="สลับรถกอล์ฟให้กลุ่มนี้" color="yellow" showIssue={false} showCount={false} ask={askHoleAction} />
           </div>
         </div>
       </section>
 
-      {/* สถานะหลุม */}
+      {/* สถานะหลุม (แสดงเฉพาะหลุมที่มีปัญหา) */}
       <section className="max-w-[75rem] mx-auto mt-8 px-1 sm:px-6">
         <h2 className="text-2xl font-extrabold mb-4 text-center text-gray-800">สถานะหลุมกอล์ฟ</h2>
         {loadingHoles ? (
@@ -269,8 +272,8 @@ const ReportPage = () => {
           <div className="text-center text-lg text-red-600 py-10">{holesError}</div>
         ) : (
           <div className="border-2 border-gray-400 rounded-xl p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 shadow-md bg-white">
-            {holeStatuses.length > 0 ? (
-              holeStatuses.map((h) => (
+            {problemHoleStatuses.length > 0 ? (
+              problemHoleStatuses.map((h) => (
                 <div
                   key={h.number}
                   className="border rounded-lg p-2 bg-white shadow-sm text-center transform hover:scale-105 transition-transform duration-200"
@@ -289,7 +292,9 @@ const ReportPage = () => {
                 </div>
               ))
             ) : (
-              <div className="col-span-full text-center text-gray-500 py-10">ไม่พบข้อมูลสถานะหลุมกอล์ฟ</div>
+              <div className="col-span-full text-center text-gray-500 py-10">
+                ตอนนี้ไม่มีหลุมที่มีปัญหา 🎉
+              </div>
             )}
           </div>
         )}
