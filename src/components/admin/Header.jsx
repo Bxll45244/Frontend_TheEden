@@ -1,7 +1,7 @@
 import { HiClipboardList, HiUserAdd, HiUserGroup } from "react-icons/hi";
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import UserService from "../../service/UserService";
+import UserService from "../../service/userService";
 
 export default function HeaderCaddy({ activePage }) {
   const navigate = useNavigate();
