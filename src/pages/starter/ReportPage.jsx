@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamation } from "@fortawesome/free-solid-svg-icons";
 import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
-import HoleService from "../../service/HoleService";
+import HoleService from "../../service/้holeService";
 
 const colorMap = {
   red: "bg-red-500",
