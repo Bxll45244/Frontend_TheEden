@@ -13,4 +13,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  // ส่วนที่เพิ่มเข้ามาเพื่อแก้ไข Rollup Error
+  build: {
+    rollupOptions: {
+      external: [
+        // เพิ่มโมดูล Font Awesome ที่ Rollup หาไม่เจอเข้าไปใน External List
+        '@fortawesome/fontawesome-svg-core'
+      ],
+    },
+  },
 });
