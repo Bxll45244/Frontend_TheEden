@@ -1,43 +1,43 @@
+// src/routes/Router.jsx
 import React from "react";
 import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 
-// --- Golfer pages ---
-import GolferHomePage from "../pages/golfer/GolferHomePage";
-import GolferBookingPage from "../pages/golfer/GolferBookingPage";
-import ProfilePage from "../pages/golfer/ProfilePage";
-import CheckoutSuccess from "../pages/golfer/CheckoutSuccess";
-import UnauthorizedPage from "../pages/golfer/UnauthorizedPage";
+// Golfer
+import GolferHomePage from "../pages/golfer/GolferHomePage.jsx";
+import GolferBookingPage from "../pages/golfer/GolferBookingPage.jsx";
+import ProfilePage from "../pages/golfer/ProfilePage.jsx";
+import CheckoutSuccess from "../pages/golfer/CheckoutSuccess.jsx";
+import UnauthorizedPage from "../pages/golfer/UnauthorizedPage.jsx";
 
-// --- Auth pages ---
-import LoginPage from "../pages/auth/LoginPage";
-import RegisterPage from "../pages/auth/RegisterPage";
-import StaffLoginPage from "../pages/auth/StaffLoginPage";
+// Auth
+import LoginPage from "../pages/auth/LoginPage.jsx";
+import RegisterPage from "../pages/auth/RegisterPage.jsx";
+import StaffLoginPage from "../pages/auth/StaffLoginPage.jsx";
 
-// --- Admin pages ---
-import AdminDashboard from "../pages/admin/AdminDashboard";
-import BookingTable from "../pages/admin/BookingTable";
-import EmployeeDetail from "../pages/admin/EmployeeDetail";
-import EmployeeForm from "../pages/admin/EmployeeForm";
-import EmployeePage from "../components/admin/EmployeePage";
+// Admin
+import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
+import BookingTable from "../pages/admin/BookingTable.jsx";
+import EmployeeDetail from "../pages/admin/EmployeeDetail.jsx";
+import EmployeeForm from "../pages/admin/EmployeeForm.jsx";
+import EmployeePage from "../components/admin/EmployeePage.jsx";
 
-// --- Starter pages ---
-import StarterLayout from "../layout/starterLayout";
-import StarterDashboard from "../pages/starter/Dashboard";
-import StarterReportPage from "../pages/starter/ReportPage";
-import ReportConfirmPage from "../pages/starter/ReportConfirmPage";
+// Starter
+import StarterLayout from "../layout/starterLayout.jsx";
+import StarterDashboard from "../pages/starter/Dashboard.jsx";
+import StarterReportPage from "../pages/starter/ReportPage.jsx";
+import ReportConfirmPage from "../pages/starter/ReportConfirmPage.jsx";
 
-// --- Caddie pages ---
-import CaddieLayout from "../layout/caddieLayout";
-import LandingPage from "../pages/Caddy/LandingPage";
-import BookingPage from "../pages/Caddy/BookingPage";
-import CaddyProfile from "../pages/Caddy/CaddyProfile";
-import HistoryPage from "../pages/Caddy/HistoryPage";
-import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
-import CaddieDashboard from "../pages/Caddy/Dashboard";
-import DashboardStart from "../pages/Caddy/DashboardStart";
+// Caddie
+import CaddieLayout from "../layout/caddieLayout.jsx";
+import LandingPage from "../pages/Caddy/LandingPage.jsx";
+import BookingPage from "../pages/Caddy/BookingPage.jsx";
+import CaddyProfile from "../pages/Caddy/CaddyProfile.jsx";
+import HistoryPage from "../pages/Caddy/HistoryPage.jsx";
+import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage.jsx";
+import CaddieDashboard from "../pages/Caddy/Dashboard.jsx";
+import DashboardStart from "../pages/Caddy/DashboardStart.jsx";
 
-// --- Role guard ---
 function RequireRole({ allowed = [], children }) {
   const { user } = useAuthContext();
   const location = useLocation();
@@ -51,19 +51,18 @@ function RequireRole({ allowed = [], children }) {
   return children;
 }
 
-// --- Router definition ---
 const Router = createBrowserRouter([
-  // Public / Golfer routes
+  // Public / Golfer
   { path: "/", element: <GolferHomePage /> },
 
-  // Booking Flow (Step1 - Step4 + Success)
+  // Booking flow
   { path: "/booking", element: <GolferBookingPage /> },
   { path: "/booking/success", element: <CheckoutSuccess /> },
 
   // Profile
   { path: "/profile", element: <ProfilePage /> },
 
-  // Auth routes
+  // Auth
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
   { path: "/staff/login", element: <StaffLoginPage /> },
@@ -122,7 +121,7 @@ const Router = createBrowserRouter([
     ],
   },
 
-  // Fallback route
+  // Fallback
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

@@ -31,9 +31,6 @@ export default function CheckoutSuccess() {
   );
 
   const [preview, setPreview] = useState(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState("");
-
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("bookingPreview");
@@ -58,19 +55,7 @@ export default function CheckoutSuccess() {
 
   const totalFromPreview = preview?.price?.total ?? preview?.totalPrice ?? 0;
 
-  const handleManualSync = async () => {
-    try {
-      setSyncing(true);
-      setSyncError("");
-      const resp = await StripeService.getBookingBySession(sessionId);
-      console.log("Synced booking:", resp?.data);
-      alert("ซิงก์การจองสำเร็จ");
-    } catch (e) {
-      setSyncError(e?.response?.data?.message || e.message || "ซิงก์ไม่สำเร็จ");
-    } finally {
-      setSyncing(false);
-    }
-  };
+ 
 
   return (
     <div className="min-h-[70vh] bg-linear-to-b from-white to-neutral-50">
@@ -134,21 +119,9 @@ export default function CheckoutSuccess() {
               จองรอบต่อไป
             </a>
 
-            {sessionId && (
-              <button
-                type="button"
-                disabled={syncing}
-                onClick={handleManualSync}
-                className="inline-flex items-center justify-center rounded-full px-5 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition font-medium"
-              >
-                {syncing ? "กำลังซิงก์…" : "ซิงก์การจองเข้าระบบ"}
-              </button>
-            )}
+            
           </div>
 
-          {!!syncError && (
-            <p className="text-center text-sm text-red-600 mt-3">{syncError}</p>
-          )}
         </section>
       </main>
     </div>
