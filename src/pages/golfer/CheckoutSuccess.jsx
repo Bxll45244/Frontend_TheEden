@@ -1,18 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import StripeService from "../../service/stripeService.js";
 
-/** คืน 'YYYY-MM-DD' ภาษาไทย (แสดงผลเท่านั้น) */
+/** แปลงวันที่เป็นรูปแบบไทยเพื่อแสดงผล */
 function toThaiDate(d) {
   if (!d) return "-";
-  try { return new Date(d).toLocaleDateString("th-TH"); } 
-  // eslint-disable-next-line no-empty
-  catch {}
+  try { return new Date(d).toLocaleDateString("th-TH"); } catch {}
 }
 
-/** ดึง body จาก axios หรืออ็อบเจ็กต์เดิม */
-const body = (res) => res?.data ?? res;
-
-/** แปลง caddy ให้เป็นชื่ออ่านง่าย (รองรับ id[] หรือ object[]) */
 function renderCaddies(caddy, caddyMap) {
   if (!Array.isArray(caddy) || caddy.length === 0) return "0 คน";
   if (typeof caddy[0] === "object") {
@@ -27,70 +22,31 @@ function renderCaddies(caddy, caddyMap) {
 }
 
 export default function CheckoutSuccess() {
-  const [state, setState] = useState({ loading: true, data: null, error: "" });
+  const [params] = useSearchParams();
+  const sessionId = useMemo(
+    () => params.get("session_id") || params.get("sessionId") || "",
+    [params]
+  );
+
+  // โหลด snapshot ที่เราเก็บไว้ก่อนออกไป Stripe
   const [preview, setPreview] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState("");
 
   useEffect(() => {
-    // โหลด snapshot จาก Step4 เพื่อแสดงทันที (ไม่ใช่ hook เพิ่มเติม)
-    const raw = sessionStorage.getItem("bookingPreview");
-    if (raw) {
-      try { setPreview(JSON.parse(raw)); } 
-      // eslint-disable-next-line no-empty
-      catch {}
-    }
-
-    (async () => {
-      try {
-        const sid = StripeService.getSessionIdFromUrl(); // ?session_id=... หรือ ?sessionId=...
-        if (!sid) throw new Error("ไม่พบ session_id ใน URL");
-        const resp = await StripeService.getBookingBySession(sid); // GET /stripe/by-session/:sid
-        setState({ loading: false, data: body(resp), error: "" });
-      } catch (e) {
-        setState({
-          loading: false,
-          data: null,
-          error: e?.response?.data?.message || e.message || "ดึงผลการชำระเงินไม่สำเร็จ",
-        });
-      }
-    })();
+    try {
+      const raw = sessionStorage.getItem("bookingPreview");
+      if (raw) setPreview(JSON.parse(raw));
+    } catch {}
+    // จ่ายเสร็จแล้ว เคลียร์ draft/step ออก
+    sessionStorage.removeItem("bookingDraft");
+    sessionStorage.removeItem("bookingCurrentStep");
   }, []);
 
-  if (state.loading) {
-    return (
-      <div className="min-h-[60vh] grid place-items-center bg-neutral-50">
-        <div className="rounded-2xl bg-white/70 backdrop-blur px-5 py-4 ring-1 ring-black/5 text-neutral-600">
-          กำลังตรวจผลการชำระเงิน…
-        </div>
-      </div>
-    );
-  }
-
-  if (state.error) {
-    return (
-      <div className="min-h-[60vh] grid place-items-center bg-neutral-50">
-        <div className="max-w-md w-full rounded-2xl bg-white/70 backdrop-blur p-6 ring-1 ring-red-200">
-          <p className="text-red-600 text-center">{state.error}</p>
-          <div className="text-center mt-4">
-            <a href="/" className="inline-block rounded-full px-4 py-2 bg-neutral-900 text-white hover:bg-black transition">
-              กลับหน้าหลัก
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // booking จริงจาก backend
-  const booking = state.data?.booking || state.data || {};
-  // แหล่งข้อมูลที่ใช้แสดง (prefer preview เพื่อเฟลชเร็ว)
-  const show = preview ?? booking;
-
-  // map id -> name หาก backend หรือ preview ส่งรายละเอียดมา
-  const caddyMap = (() => {
+  // map id -> name ถ้ามีรายละเอียดแคดดี้ติดมาด้วย
+  const caddyMap = useMemo(() => {
     const arr =
-      (preview?.caddyDetails && Array.isArray(preview.caddyDetails) && preview.caddyDetails) ||
-      (booking?.caddyDetails && Array.isArray(booking.caddyDetails) && booking.caddyDetails) ||
-      [];
+      (preview?.caddyDetails && Array.isArray(preview.caddyDetails) && preview.caddyDetails) || [];
     const map = {};
     for (const it of arr) {
       const id = it?._id || it?.id;
@@ -98,17 +54,32 @@ export default function CheckoutSuccess() {
       if (id && name) map[id] = name;
     }
     return map;
-  })();
+  }, [preview]);
 
-  const totalFromPreview = preview?.price?.total ?? show?.totalPrice;
-  const mismatch =
-    !!preview && Number(booking?.totalPrice ?? 0) !== Number(preview?.price?.total ?? 0);
+  const totalFromPreview = preview?.price?.total ?? preview?.totalPrice ?? 0;
+
+  // (ออปชัน) ถ้าอยากซิงก์Bookingเข้าระบบทันที ค่อยกดปุ่มนี้เอง
+  const handleManualSync = async () => {
+    try {
+      setSyncing(true);
+      setSyncError("");
+      // พึ่ง back ถ้าพร้อม (ถ้ายัง protect อยู่ ผู้ใช้ต้องล็อกอินก่อน)
+      const resp = await StripeService.getBookingBySession(sessionId);
+      // ถ้าอยากรวมข้อมูล backend มาโชว์ ก็ setPreview(resp.data.booking) ได้
+      console.log("Synced booking:", resp?.data);
+      alert("ซิงก์การจองสำเร็จ");
+    } catch (e) {
+      setSyncError(e?.response?.data?.message || e.message || "ซิงก์ไม่สำเร็จ");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
-    <div className="min-h-[70vh] bg-gradient-to-b from-white to-neutral-50">
+    <div className="min-h-[70vh] bg-linear-to-b from-white to-neutral-50">
       <main className="max-w-lg mx-auto px-4 py-10">
         <section className="relative bg-white/80 backdrop-blur rounded-3xl shadow-sm ring-1 ring-black/5 p-6 md:p-8">
-          <div aria-hidden className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/70 via-white/40 to-white/10 pointer-events-none -z-10" />
+          <div aria-hidden className="absolute inset-0 rounded-3xl bg-linear-to-b from-white/70 via-white/40 to-white/10 pointer-events-none -z-10" />
           <div className="text-center">
             <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-emerald-100">
               <span className="text-emerald-700 text-xl">✓</span>
@@ -119,27 +90,31 @@ export default function CheckoutSuccess() {
             <p className="text-neutral-600 mt-1">
               ขอบคุณที่ใช้บริการ Eden Golf Club การจองของคุณถูกบันทึกแล้ว
             </p>
+            {!!sessionId && (
+              <p className="text-xs text-neutral-400 mt-1">Session: {sessionId}</p>
+            )}
           </div>
 
-          {mismatch && (
+          {/* ถ้าไม่มี preview ก็ยังแสดงหน้าสำเร็จให้ก่อน */}
+          {!preview && (
             <div className="mt-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
-              ⚠️ ระบบได้ปรับยอดชำระตามข้อมูลล่าสุด โปรดตรวจสอบรายละเอียดด้านล่าง
+              ไม่พบข้อมูลตัวอย่างการจอง (preview) — คุณยังสามารถไปยังโปรไฟล์หรือเริ่มจองใหม่ได้
             </div>
           )}
 
           <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-4">
             <ul className="text-sm text-neutral-800 space-y-2">
-              <li><span className="text-neutral-500">วันที่จอง:</span> {toThaiDate(show.date)}</li>
-              <li><span className="text-neutral-500">เวลา:</span> {show.timeSlot || "-"}</li>
-              <li><span className="text-neutral-500">จำนวนหลุม:</span> {show.courseType} หลุม</li>
-              <li><span className="text-neutral-500">ชื่อกลุ่ม:</span> {show.groupName || "-"}</li>
-              <li><span className="text-neutral-500">ผู้เล่น:</span> {show.players || 0} คน</li>
+              <li><span className="text-neutral-500">วันที่จอง:</span> {toThaiDate(preview?.date)}</li>
+              <li><span className="text-neutral-500">เวลา:</span> {preview?.timeSlot || "-"}</li>
+              <li><span className="text-neutral-500">จำนวนหลุม:</span> {preview?.courseType || "-"} หลุม</li>
+              <li><span className="text-neutral-500">ชื่อกลุ่ม:</span> {preview?.groupName || "-"}</li>
+              <li><span className="text-neutral-500">ผู้เล่น:</span> {preview?.players || 0} คน</li>
               <li>
                 <span className="text-neutral-500">แคดดี้:</span>{" "}
-                {renderCaddies(show.caddy, caddyMap)}
+                {renderCaddies(preview?.caddy || [], caddyMap)}
               </li>
-              <li><span className="text-neutral-500">รถกอล์ฟ:</span> {show.golfCar || 0} คัน</li>
-              <li><span className="text-neutral-500">ถุงกอล์ฟ:</span> {show.golfBag || 0} ใบ</li>
+              <li><span className="text-neutral-500">รถกอล์ฟ:</span> {preview?.golfCar || preview?.golfCartQty || 0} คัน</li>
+              <li><span className="text-neutral-500">ถุงกอล์ฟ:</span> {preview?.golfBag || preview?.golfBagQty || 0} ใบ</li>
             </ul>
 
             <hr className="my-4" />
@@ -166,14 +141,37 @@ export default function CheckoutSuccess() {
             )}
           </div>
 
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => (window.location.href = "/profile")}
+          {/* ปุ่มหลัก */}
+          <div className="mt-8 text-center flex items-center justify-center gap-2 flex-wrap">
+            <a
+              href="/profile"
               className="inline-flex items-center justify-center rounded-full px-5 py-2.5 bg-neutral-900 text-white hover:bg-black transition font-medium"
             >
               ไปยังโปรไฟล์ของฉัน
-            </button>
+            </a>
+            <a
+              href="/booking"
+              className="inline-flex items-center justify-center rounded-full px-5 py-2.5 bg-neutral-100 text-neutral-900 hover:bg-neutral-200 transition font-medium"
+            >
+              จองรอบต่อไป
+            </a>
+
+            {/* ปุ่มซิงก์ (ออปชัน) — ใช้เมื่อ backend พร้อม/ล็อกอินแล้ว */}
+            {sessionId && (
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={handleManualSync}
+                className="inline-flex items-center justify-center rounded-full px-5 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition font-medium"
+              >
+                {syncing ? "กำลังซิงก์…" : "ซิงก์การจองเข้าระบบ"}
+              </button>
+            )}
           </div>
+
+          {!!syncError && (
+            <p className="text-center text-sm text-red-600 mt-3">{syncError}</p>
+          )}
         </section>
       </main>
     </div>

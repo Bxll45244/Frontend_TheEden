@@ -1,55 +1,43 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import UserService from "../service/userService";
 
-// สร้าง context สำหรับแชร์สถานะผู้ใช้
+// ----- Context + Hook -----
 export const AuthContext = createContext(null);
+export const useAuthContext = () => useContext(AuthContext);
 
-export function AuthProvider({ children }) {
-  // เก็บสถานะผู้ใช้และสถานะกำลังเช็ก session
+// ----- Provider -----
+function AuthProvider({ children }) {   // ⬅️ ไม่ export ที่นี่
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // เข้าสู่ระบบ
-  const login = async ({ email, password }) => {
-    const res = await UserService.loginUser({ email, password });
-    // รองรับทั้งกรณี {data: {...}} และ object ตรง ๆ
-    const data = res?.data ?? res;
-    setUser(data?.user || data);
-    return data;
-  };
+  const refreshProfile = useCallback(async () => {
+    try {
+      const res = await UserService.getUserProfile();
+      setUser(res?.data ?? null);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // ออกจากระบบ
-  const logout = async () => {
-    await UserService.logoutUser();
-    setUser(null);
-  };
+  useEffect(() => { refreshProfile(); }, [refreshProfile]);
 
-  // เปิดเว็บมาเช็กว่าเคยล็อกอินจาก cookie อยู่ไหม
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await UserService.getUserProfile();
-        const me = res?.data ?? res;
-        if (active) setUser(me);
-      } catch {
-        if (active) setUser(null);
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
+  const login = useCallback(async (payload) => {
+    await UserService.loginUser(payload);
+    await refreshProfile();
+  }, [refreshProfile]);
+
+  const logout = useCallback(async () => {
+    try { await UserService.logoutUser(); } finally { setUser(null); }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// hook ช่วยเรียกใช้ context ได้ง่าย
-export const useAuthContext = () => useContext(AuthContext);
-
-// เผื่ออยาก import แบบ default
-export default AuthContext;
+export default AuthProvider;   
+export { AuthProvider };      
