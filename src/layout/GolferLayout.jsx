@@ -9,7 +9,7 @@ export default function GolferLayout() {
       <Navbar />
 
       {/* เนื้อหาหน้าเว็บจากเส้นทางย่อย */}
-      <main className="flex-grow">
+      <main className="grow">
         <Outlet />
       </main>
 

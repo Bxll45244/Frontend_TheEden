@@ -5,9 +5,16 @@ import StripeService from "../../service/stripeService.js";
 /** แปลงวันที่เป็นรูปแบบไทยเพื่อแสดงผล */
 function toThaiDate(d) {
   if (!d) return "-";
-  try { return new Date(d).toLocaleDateString("th-TH"); } catch {}
+  try {
+    return new Date(d).toLocaleDateString("th-TH");
+  } catch (e) {
+    // fallback เผื่อ new Date() พัง
+    console.debug?.("Invalid date format:", d, e);
+    return "-";
+  }
 }
 
+/** แสดงชื่อแคดดี้แบบสวยงาม */
 function renderCaddies(caddy, caddyMap) {
   if (!Array.isArray(caddy) || caddy.length === 0) return "0 คน";
   if (typeof caddy[0] === "object") {
@@ -37,8 +44,10 @@ export default function CheckoutSuccess() {
     try {
       const raw = sessionStorage.getItem("bookingPreview");
       if (raw) setPreview(JSON.parse(raw));
-    } catch {}
-    // จ่ายเสร็จแล้ว เคลียร์ draft/step ออก
+    } catch (e) {
+      console.debug?.("ignore preview parse error", e);
+    }
+    // เคลียร์ draft/step เมื่อจ่ายเสร็จ
     sessionStorage.removeItem("bookingDraft");
     sessionStorage.removeItem("bookingCurrentStep");
   }, []);
@@ -58,14 +67,12 @@ export default function CheckoutSuccess() {
 
   const totalFromPreview = preview?.price?.total ?? preview?.totalPrice ?? 0;
 
-  // (ออปชัน) ถ้าอยากซิงก์Bookingเข้าระบบทันที ค่อยกดปุ่มนี้เอง
+  // ปุ่มซิงก์ข้อมูลการจองจาก backend (กรณีผู้ใช้ยังล็อกอิน)
   const handleManualSync = async () => {
     try {
       setSyncing(true);
       setSyncError("");
-      // พึ่ง back ถ้าพร้อม (ถ้ายัง protect อยู่ ผู้ใช้ต้องล็อกอินก่อน)
       const resp = await StripeService.getBookingBySession(sessionId);
-      // ถ้าอยากรวมข้อมูล backend มาโชว์ ก็ setPreview(resp.data.booking) ได้
       console.log("Synced booking:", resp?.data);
       alert("ซิงก์การจองสำเร็จ");
     } catch (e) {
@@ -95,7 +102,7 @@ export default function CheckoutSuccess() {
             )}
           </div>
 
-          {/* ถ้าไม่มี preview ก็ยังแสดงหน้าสำเร็จให้ก่อน */}
+          {/* ถ้าไม่มี preview */}
           {!preview && (
             <div className="mt-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
               ไม่พบข้อมูลตัวอย่างการจอง (preview) — คุณยังสามารถไปยังโปรไฟล์หรือเริ่มจองใหม่ได้
@@ -109,10 +116,7 @@ export default function CheckoutSuccess() {
               <li><span className="text-neutral-500">จำนวนหลุม:</span> {preview?.courseType || "-"} หลุม</li>
               <li><span className="text-neutral-500">ชื่อกลุ่ม:</span> {preview?.groupName || "-"}</li>
               <li><span className="text-neutral-500">ผู้เล่น:</span> {preview?.players || 0} คน</li>
-              <li>
-                <span className="text-neutral-500">แคดดี้:</span>{" "}
-                {renderCaddies(preview?.caddy || [], caddyMap)}
-              </li>
+              <li><span className="text-neutral-500">แคดดี้:</span> {renderCaddies(preview?.caddy || [], caddyMap)}</li>
               <li><span className="text-neutral-500">รถกอล์ฟ:</span> {preview?.golfCar || preview?.golfCartQty || 0} คัน</li>
               <li><span className="text-neutral-500">ถุงกอล์ฟ:</span> {preview?.golfBag || preview?.golfBagQty || 0} ใบ</li>
             </ul>
@@ -156,7 +160,6 @@ export default function CheckoutSuccess() {
               จองรอบต่อไป
             </a>
 
-            {/* ปุ่มซิงก์ (ออปชัน) — ใช้เมื่อ backend พร้อม/ล็อกอินแล้ว */}
             {sessionId && (
               <button
                 type="button"

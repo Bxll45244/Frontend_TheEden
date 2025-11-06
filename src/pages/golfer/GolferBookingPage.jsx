@@ -6,7 +6,13 @@ import StripeService from "../../service/stripeService.js";
 /** แปลงวันที่เป็นรูปแบบไทยเพื่อแสดงผล */
 function toThaiDate(d) {
   if (!d) return "-";
-  try { return new Date(d).toLocaleDateString("th-TH"); } catch {}
+  try {
+    return new Date(d).toLocaleDateString("th-TH");
+  } catch (e) {
+    // fallback เผื่อ new Date() พัง
+    console.debug?.("Invalid date format:", d, e);
+    return "-";
+  }
 }
 
 function renderCaddies(caddy, caddyMap) {
@@ -38,7 +44,10 @@ export default function CheckoutSuccess() {
     try {
       const raw = sessionStorage.getItem("bookingPreview");
       if (raw) setPreview(JSON.parse(raw));
-    } catch {}
+    } catch (e) {
+      // กัน no-empty และไม่ให้แครชหน้า success
+      console.debug?.("ignore preview parse error", e);
+    }
     // จ่ายเสร็จแล้ว เคลียร์ draft/step ออก
     sessionStorage.removeItem("bookingDraft");
     sessionStorage.removeItem("bookingCurrentStep");
@@ -59,7 +68,7 @@ export default function CheckoutSuccess() {
 
   const totalFromPreview = preview?.price?.total ?? preview?.totalPrice ?? 0;
 
-  // (ออปชัน) ถ้าอยากซิงก์Bookingเข้าระบบทันที ค่อยกดปุ่มนี้เอง
+  // (ออปชัน) ถ้าอยากซิงก์ Booking เข้าระบบทันที ค่อยกดปุ่มนี้เอง
   const handleManualSync = async () => {
     try {
       setSyncing(true);
