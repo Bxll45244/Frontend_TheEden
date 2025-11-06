@@ -2,32 +2,32 @@ import React from "react";
 import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 
-// Golfer pages
+// --- Golfer pages ---
 import GolferHomePage from "../pages/golfer/GolferHomePage";
 import GolferBookingPage from "../pages/golfer/GolferBookingPage";
 import ProfilePage from "../pages/golfer/ProfilePage";
 import CheckoutSuccess from "../pages/golfer/CheckoutSuccess";
 import UnauthorizedPage from "../pages/golfer/UnauthorizedPage";
 
-// Auth pages
+// --- Auth pages ---
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import StaffLoginPage from "../pages/auth/StaffLoginPage";
 
-// Admin pages
+// --- Admin pages ---
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import BookingTable from "../pages/admin/BookingTable";
 import EmployeeDetail from "../pages/admin/EmployeeDetail";
 import EmployeeForm from "../pages/admin/EmployeeForm";
 import EmployeePage from "../components/admin/EmployeePage";
 
-// Starter pages
+// --- Starter pages ---
 import StarterLayout from "../layout/starterLayout";
 import StarterDashboard from "../pages/starter/Dashboard";
 import StarterReportPage from "../pages/starter/ReportPage";
 import ReportConfirmPage from "../pages/starter/ReportConfirmPage";
 
-// Caddie pages
+// --- Caddie pages ---
 import CaddieLayout from "../layout/caddieLayout";
 import LandingPage from "../pages/Caddy/LandingPage";
 import BookingPage from "../pages/Caddy/BookingPage";
@@ -37,7 +37,7 @@ import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage";
 import CaddieDashboard from "../pages/Caddy/Dashboard";
 import DashboardStart from "../pages/Caddy/DashboardStart";
 
-// ---- Role guard ----
+// --- Role guard ---
 function RequireRole({ allowed = [], children }) {
   const { user } = useAuthContext();
   const location = useLocation();
@@ -51,19 +51,19 @@ function RequireRole({ allowed = [], children }) {
   return children;
 }
 
-// ---- Router ----
+// --- Router definition ---
 const Router = createBrowserRouter([
-  // Public / Golfer
+  // Public / Golfer routes
   { path: "/", element: <GolferHomePage /> },
 
-  // Booking flow
-  { path: "/booking", element: <GolferBookingPage /> },       // Step1-4
-  { path: "/booking/success", element: <CheckoutSuccess /> }, // Success after Stripe
+  // Booking Flow (Step1 - Step4 + Success)
+  { path: "/booking", element: <GolferBookingPage /> },
+  { path: "/booking/success", element: <CheckoutSuccess /> },
 
   // Profile
   { path: "/profile", element: <ProfilePage /> },
 
-  // Auth
+  // Auth routes
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
   { path: "/staff/login", element: <StaffLoginPage /> },
@@ -71,7 +71,7 @@ const Router = createBrowserRouter([
   // Unauthorized
   { path: "/unauthorized", element: <UnauthorizedPage /> },
 
-  // Starter (protected)
+  // Starter
   {
     path: "/starter",
     element: (
@@ -87,7 +87,7 @@ const Router = createBrowserRouter([
     ],
   },
 
-  // Caddie (protected)
+  // Caddie
   {
     element: (
       <RequireRole allowed={["caddy"]}>
@@ -106,7 +106,7 @@ const Router = createBrowserRouter([
     ],
   },
 
-  // Admin (protected)
+  // Admin
   {
     path: "/admin",
     element: (
@@ -122,7 +122,7 @@ const Router = createBrowserRouter([
     ],
   },
 
-  // Fallback
+  // Fallback route
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

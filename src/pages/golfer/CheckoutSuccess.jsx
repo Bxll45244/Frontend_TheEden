@@ -1,20 +1,15 @@
+// src/pages/golfer/CheckoutSuccess.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import StripeService from "../../service/stripeService.js";
 
-/** แปลงวันที่เป็นรูปแบบไทยเพื่อแสดงผล */
+/** แปลงวันที่เป็นไทย */
 function toThaiDate(d) {
   if (!d) return "-";
-  try {
-    return new Date(d).toLocaleDateString("th-TH");
-  } catch (e) {
-    // fallback เผื่อ new Date() พัง
-    console.debug?.("Invalid date format:", d, e);
-    return "-";
-  }
+  try { return new Date(d).toLocaleDateString("th-TH"); } catch { return "-"; }
 }
 
-/** แสดงชื่อแคดดี้แบบสวยงาม */
+/** แสดงชื่อแคดดี้ */
 function renderCaddies(caddy, caddyMap) {
   if (!Array.isArray(caddy) || caddy.length === 0) return "0 คน";
   if (typeof caddy[0] === "object") {
@@ -35,7 +30,6 @@ export default function CheckoutSuccess() {
     [params]
   );
 
-  // โหลด snapshot ที่เราเก็บไว้ก่อนออกไป Stripe
   const [preview, setPreview] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
@@ -44,15 +38,12 @@ export default function CheckoutSuccess() {
     try {
       const raw = sessionStorage.getItem("bookingPreview");
       if (raw) setPreview(JSON.parse(raw));
-    } catch (e) {
-      console.debug?.("ignore preview parse error", e);
-    }
-    // เคลียร์ draft/step เมื่อจ่ายเสร็จ
+    } catch {}
+    // ล้าง draft/step เมื่อจ่ายเสร็จ
     sessionStorage.removeItem("bookingDraft");
     sessionStorage.removeItem("bookingCurrentStep");
   }, []);
 
-  // map id -> name ถ้ามีรายละเอียดแคดดี้ติดมาด้วย
   const caddyMap = useMemo(() => {
     const arr =
       (preview?.caddyDetails && Array.isArray(preview.caddyDetails) && preview.caddyDetails) || [];
@@ -67,7 +58,6 @@ export default function CheckoutSuccess() {
 
   const totalFromPreview = preview?.price?.total ?? preview?.totalPrice ?? 0;
 
-  // ปุ่มซิงก์ข้อมูลการจองจาก backend (กรณีผู้ใช้ยังล็อกอิน)
   const handleManualSync = async () => {
     try {
       setSyncing(true);
@@ -102,7 +92,6 @@ export default function CheckoutSuccess() {
             )}
           </div>
 
-          {/* ถ้าไม่มี preview */}
           {!preview && (
             <div className="mt-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
               ไม่พบข้อมูลตัวอย่างการจอง (preview) — คุณยังสามารถไปยังโปรไฟล์หรือเริ่มจองใหม่ได้
@@ -129,23 +118,8 @@ export default function CheckoutSuccess() {
                 {Number(totalFromPreview || 0).toLocaleString()} บาท
               </span>
             </div>
-
-            {preview?.price && (
-              <details className="mt-3">
-                <summary className="cursor-pointer text-sm text-neutral-700 hover:text-neutral-900">
-                  ดูรายละเอียดค่าใช้จ่าย
-                </summary>
-                <ul className="mt-2 text-sm text-neutral-700 space-y-1">
-                  <li>• Green Fee: {Number(preview.price.greenFee || 0).toLocaleString()} บาท</li>
-                  <li>• Caddy: {Number(preview.price.caddyFee || 0).toLocaleString()} บาท</li>
-                  <li>• Cart: {Number(preview.price.cartFee || 0).toLocaleString()} บาท</li>
-                  <li>• Golf Bag: {Number(preview.price.bagFee || 0).toLocaleString()} บาท</li>
-                </ul>
-              </details>
-            )}
           </div>
 
-          {/* ปุ่มหลัก */}
           <div className="mt-8 text-center flex items-center justify-center gap-2 flex-wrap">
             <a
               href="/profile"
