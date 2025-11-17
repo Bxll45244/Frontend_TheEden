@@ -1,96 +1,96 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
+import { Input } from "../../components/ui/input";
 import UserService from "../../service/userService.js";
 
 export default function EmployeeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const fileInputRef = useRef(null);
+  const [preview, setPreview] = useState(null); // สำหรับ preview รูป
 
-  // ✅ โหลดข้อมูลพนักงานตาม ID
+  // โหลดข้อมูลพนักงาน
   useEffect(() => {
-  const loadEmployee = async () => {
-    try {
-      const res = await UserService.getUserById(id);
-      // รองรับทั้งกรณีมี data ซ้อน และส่ง object ตรง
-      const userData = res.data?.data || res.data;
-
-      if (userData && userData._id) {
-        setFormData(userData);
-      } else {
-        console.error("ไม่พบข้อมูลพนักงาน:", res.data);
+    const loadEmployee = async () => {
+      try {
+        const res = await UserService.getUserById(id);
+        const user = res.data?.data || res.data;
+        if (user && user._id) {
+          setFormData(user);
+          setPreview(user.img || "/Images/Profile.jpg");
+        } else {
+          setFormData(null);
+          console.error("ไม่พบข้อมูลพนักงาน:", res.data);
+        }
+      } catch (err) {
+        console.error("Load employee failed:", err);
         setFormData(null);
       }
-    } catch (err) {
-      console.error("Load employee failed:", err);
-      setFormData(null);
-    }
-  };
-  loadEmployee();
-}, [id]);
-
+    };
+    loadEmployee();
+  }, [id]);
 
   if (!formData) return <div className="p-5">Loading...</div>;
 
-  // ✅ อัปเดตค่าในฟอร์ม
+  // อัปเดตข้อมูลฟิลด์ต่างๆ
   const handleChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
   };
 
-  // ✅ Upload image
+  // อัปโหลดรูป + preview
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setFormData({ ...formData, image: file });
+      setFormData({ ...formData, img: file });
+      setPreview(URL.createObjectURL(file)); // แสดง preview ทันที
     }
   };
 
-  // ✅ ปุ่มเลือกไฟล์
   const handleButtonClick = () => {
     fileInputRef.current.click();
   };
 
-  // ✅ บันทึกข้อมูล (PUT /user/updateuser/:id)
+  // บันทึกข้อมูล
   const handleSave = async () => {
     try {
       const data = new FormData();
-      data.append("name", formData.name);
-      data.append("email", formData.email);
-      data.append("phone", formData.phone);
-      data.append("role", formData.role);
-      if (formData.image instanceof File) {
-        data.append("image", formData.image);
+      data.append("name", formData.name || "");
+      data.append("email", formData.email || "");
+      data.append("phone", formData.phone || "");
+      data.append("role", formData.role || "");
+
+      if (formData.img instanceof File) {
+        data.append("img", formData.img);
       }
 
       await UserService.updateUser(id, data);
-      setIsEditing(false);
+
       alert("บันทึกข้อมูลสำเร็จ ✅");
+      setIsEditing(false);
+      navigate("/admin");
     } catch (err) {
       console.error("Update failed:", err);
       alert("บันทึกข้อมูลไม่สำเร็จ ❌");
     }
   };
 
-  // ✅ UI render field
+  // ฟังก์ชัน render ฟิลด์
   const renderField = (label, key) => (
     <div>
       <p className="text-sm font-semibold text-gray-600 mb-1">{label}</p>
-
       {isEditing ? (
         key === "role" ? (
-          // ✅ ถ้า key เป็น role ให้แสดง SELECT
           <select
             value={formData[key] || ""}
             onChange={(e) => handleChange(key, e.target.value)}
             className="border border-gray-300 rounded p-2 w-full"
           >
-            <option value="Admin">admin</option>
-            <option value="Caddy">caddy</option>
-            <option value="Starter">starter</option>
+            <option value="admin">Admin</option>
+            <option value="caddy">Caddy</option>
+            <option value="starter">Starter</option>
           </select>
         ) : (
           <input
@@ -100,9 +100,7 @@ export default function EmployeeDetail() {
           />
         )
       ) : (
-        <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">
-          {formData[key]}
-        </p>
+        <p className="text-gray-800 bg-gray-100 p-2 rounded-lg">{formData[key]}</p>
       )}
     </div>
   );
@@ -117,14 +115,10 @@ export default function EmployeeDetail() {
       </button>
 
       <div className="flex flex-col md:flex-row gap-10">
-        {/* ✅ รูปภาพ */}
+        {/* รูปภาพ */}
         <div className="flex-shrink-0 text-center">
           <img
-            src={
-              formData.image instanceof File
-                ? URL.createObjectURL(formData.image)
-                : formData.image
-            }
+            src={preview}
             alt="employee"
             className="w-44 h-44 object-cover rounded-full mx-auto shadow-md"
           />
@@ -147,7 +141,7 @@ export default function EmployeeDetail() {
           )}
         </div>
 
-        {/* ✅ ฟอร์ม */}
+        {/* ฟอร์ม */}
         <div className="flex-1 space-y-8">
           <section>
             <h2 className="text-xl font-bold text-gray-700 mb-3 border-b pb-1 text-center">
@@ -196,7 +190,7 @@ export default function EmployeeDetail() {
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-2 bg-green-800 text-white font-medium rounded-lg hover:bg-green-800 shadow"
+                className="px-6 py-2 bg-green-800 text-white font-medium rounded-lg hover:bg-green-900 shadow"
               >
                 แก้ไขข้อมูล
               </button>

@@ -33,17 +33,19 @@ export default function AdminDashboard() {
 
     const activePage = getActivePageFromPath();
 
-    // ✅ โหลดรายชื่อพนักงานและ Normalize Role ตั้งแต่แรก
+    // ⛔ เดิมโหลดแค่ครั้งแรก → ทำให้กลับมาแล้วข้อมูลไม่อัปเดต
+    // ⭕ เวอร์ชันนี้โหลดใหม่เมื่อ pathname === "/admin"
+
     useEffect(() => {
         const fetchEmployees = async () => {
             try {
                 setLoading(true);
+
                 const res = await UserService.getAllNotUser(); 
                 
                 const normalizedEmployees = res.data.employees.map(emp => ({
                     ...emp,
-                    // ⭐️ ใช้ Helper Function เพื่อ Normalize Role
-                    role: normalizeRole(emp.role) 
+                    role: normalizeRole(emp.role)
                 }));
 
                 setEmployees(normalizedEmployees);
@@ -53,14 +55,19 @@ export default function AdminDashboard() {
                 setLoading(false);
             }
         };
-        fetchEmployees();
-    }, []);
 
-    // ✅ อัปเดตข้อมูลพนักงาน (ใช้ในหน้า Edit Detail)
+        // ⭐ โหลดใหม่เฉพาะตอนอยู่หน้า /admin
+        if (location.pathname === "/admin") {
+            fetchEmployees();
+        }
+
+    }, [location.pathname]);
+
+    // สำหรับอัปเดตพนักงานทีละคน (ถูกเรียกจากหน้า Detail)
     const handleUpdateEmployee = async (id, formData) => {
         try {
             const res = await UserService.updateUser(id, formData);
-            // ⭐️ ต้อง Normalize role ของข้อมูลที่อัปเดตก่อนนำไป Set State
+
             const updated = {
                 ...res.data.user,
                 role: normalizeRole(res.data.user.role)
@@ -74,17 +81,15 @@ export default function AdminDashboard() {
         }
     };
 
-    // 🚀 การแก้ไขที่สำคัญ: รับ Object พนักงานใหม่มาอัปเดต State โดยตรง
-    // เนื่องจาก EmployeeForm.jsx ยิง API แล้ว และส่ง Object ที่สำเร็จมาให้
+    // เพิ่มพนักงาน (กรณีหน้า add employee)
     const handleAddEmployee = (newEmployeeObject) => {
-        // ⭐️ Normalize role ของพนักงานใหม่ก่อนนำไป Set State
         const normalizedNewEmp = {
             ...newEmployeeObject,
             role: normalizeRole(newEmployeeObject.role)
         };
         
         setEmployees(prev => [normalizedNewEmp, ...prev]);
-        console.log("พนักงานถูกเพิ่มใน State แล้ว:", normalizedNewEmp.name);
+        console.log("พนักงานเพิ่มแล้ว:", normalizedNewEmp.name);
     };
 
     return (
@@ -104,11 +109,11 @@ export default function AdminDashboard() {
                 <div className="flex-1 overflow-auto mt-4">
                     <Outlet 
                         context={{ 
-                            employees, // ส่งข้อมูลพนักงานที่ถูก normalize แล้ว
-                            loading, 
-                            handleUpdateEmployee, 
-                            handleAddEmployee // ส่งฟังก์ชัน handler ที่แก้ไขแล้ว
-                        }} 
+                            employees,
+                            loading,
+                            handleUpdateEmployee,
+                            handleAddEmployee 
+                        }}
                     />
                 </div>
             </div>
