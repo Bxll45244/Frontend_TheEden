@@ -1,10 +1,11 @@
 import { HiClipboardList, HiUserAdd, HiUserGroup } from "react-icons/hi";
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import UserService from "../../service/userService";
+import { useAuthContext } from "../../context/AuthContext";
 
 export default function HeaderCaddy({ activePage }) {
   const navigate = useNavigate();
+  const { logout } = useAuthContext(); // ดึง logout จาก context
   const profileRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -41,15 +42,8 @@ export default function HeaderCaddy({ activePage }) {
     else if (menu === "ประวัติการทำงาน") navigate("/caddy/history");
     else if (menu === "แจ้งปัญหา") navigate("/caddy/dashboard");
     else if (menu === "ออกจากระบบ") {
-      try {
-        await UserService.logoutUser();
-      } catch (err) {
-        console.warn("Logout error:", err);
-      }
-
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.replace("/");
+      await logout(); // // ให้ context จัดการทุกอย่าง
+  
     }
 
     setIsMenuOpen(false);
