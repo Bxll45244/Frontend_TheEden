@@ -70,7 +70,11 @@ export default function ProfilePage() {
 
   const [me, setMe] = useState(null);
   const [bookings, setBookings] = useState([]);
-  const [fetching, setFetching] = useState(true);
+
+  // ✅ แยกสถานะโหลด: โปรไฟล์ vs การจอง
+  const [fetchingMe, setFetchingMe] = useState(true);
+  const [fetchingBookings, setFetchingBookings] = useState(true);
+
   const [error, setError] = useState("");
 
   // upload states
@@ -79,7 +83,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
-  // redirect staff ไปโปรไฟล์ตามบทบาท
+  // redirect staff ไปโปรไฟล์ตามบทบาท (เหมือนเดิม)
   useEffect(() => {
     if (loading) return;
     if (user && isStaffRole(user.role)) {
@@ -90,7 +94,7 @@ export default function ProfilePage() {
     }
   }, [user, loading, navigate]);
 
-  // โหลดโปรไฟล์ + การจอง (แสดงทุกสถานะ) และเรียงใหม่สุดก่อน
+  // ✅ โหลดโปรไฟล์ก่อน แล้วให้เรนเดอร์ UI ได้ทันที
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -101,31 +105,48 @@ export default function ProfilePage() {
     let alive = true;
     (async () => {
       try {
-        setFetching(true);
         setError("");
+        setFetchingMe(true);
 
         const profRes = await UserService.getUserProfile();
         const meData = body(profRes);
         if (alive) setMe(meData);
-
-        const myBookRes = await BookingService.getMyBookings();
-        const list = sortByNewest(pickBookings(myBookRes));
-
-        if (alive) setBookings(list);
       } catch (e) {
         if (alive) {
-          const msg = e?.response?.data?.message || e?.message || "โหลดข้อมูลไม่สำเร็จ";
+          const msg = e?.response?.data?.message || e?.message || "โหลดโปรไฟล์ไม่สำเร็จ";
           setError(String(msg));
         }
       } finally {
-        if (alive) setFetching(false);
+        if (alive) setFetchingMe(false);
       }
     })();
 
     return () => { alive = false; };
   }, [loading, user, navigate]);
 
-  // รีเฟรชอัตโนมัติเมื่อกลับมาโฟกัสแท็บ
+  // ✅ โหลดการจอง แยก effect ต่างหาก (ช้า/ว่าง/พังก็ไม่บังหน้าโปรไฟล์)
+  useEffect(() => {
+    if (loading || !user) return;
+
+    let disposed = false;
+    (async () => {
+      try {
+        setFetchingBookings(true);
+        const myBookRes = await BookingService.getMyBookings();
+        const list = sortByNewest(pickBookings(myBookRes));
+        if (!disposed) setBookings(list);
+      // eslint-disable-next-line no-empty
+      } catch {
+        // ไม่ตั้ง error กลาง เพื่อไม่ให้บังหน้าโปรไฟล์
+      } finally {
+        if (!disposed) setFetchingBookings(false);
+      }
+    })();
+
+    return () => { disposed = true; };
+  }, [loading, user]);
+
+  // รีเฟรชการจองเมื่อกลับมาโฟกัสแท็บ (เหมือนเดิม)
   useEffect(() => {
     if (!user) return;
     let disposed = false;
@@ -153,7 +174,7 @@ export default function ProfilePage() {
     };
   }, [user]);
 
-  // เลือกรูป + ตรวจ + preview
+  // เลือกรูป + ตรวจ + preview (เหมือนเดิม)
   function onPickFile(e) {
     setUploadError("");
     const f = e.target.files?.[0];
@@ -188,15 +209,17 @@ export default function ProfilePage() {
     }
   }
 
-  // states & UI เดิมทั้งหมดด้านล่าง
-  if (fetching || loading) {
+  // ⬇️ แสดง loader เฉพาะตอน “ยังไม่รู้ me เลย”
+  const showInitialLoader = loading || (fetchingMe && !me);
+  if (showInitialLoader) {
     return (
       <div className="min-h-screen grid place-items-center bg-neutral-50">
         <p className="text-neutral-500">กำลังโหลดข้อมูล…</p>
       </div>
     );
   }
-  if (error) {
+
+  if (error && !me) {
     return (
       <CenteredCard>
         <p className="text-red-600 text-center">{error}</p>
@@ -206,6 +229,7 @@ export default function ProfilePage() {
       </CenteredCard>
     );
   }
+
   if (!me) {
     return (
       <CenteredCard>
@@ -217,6 +241,7 @@ export default function ProfilePage() {
     );
   }
 
+  // ✅ จากนี้ไป “โปรไฟล์จะแสดงเสมอ” แม้ bookings จะยังโหลด/ว่าง/พัง
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-neutral-50">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-neutral-200">
@@ -285,7 +310,10 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {bookings.length === 0 ? (
+            {/* 🔄 แสดงสถานะโหลดของ "การจอง" แยกออกจากโปรไฟล์ */}
+            {fetchingBookings ? (
+              <div className="text-neutral-600">กำลังโหลดรายการจอง…</div>
+            ) : bookings.length === 0 ? (
               <div className="text-neutral-600">ยังไม่มีรายการจอง</div>
             ) : (
               <div className="max-h-[520px] overflow-y-auto pr-1">
