@@ -1,128 +1,59 @@
-// src/routes/Router.jsx
-import React from "react";
-import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
-import { useAuthContext } from "../context/AuthContext";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
-// Golfer
-import GolferHomePage from "../pages/golfer/GolferHomePage.jsx";
-import GolferBookingPage from "../pages/golfer/GolferBookingPage.jsx";
-import ProfilePage from "../pages/golfer/ProfilePage.jsx";
-import CheckoutSuccess from "../pages/golfer/CheckoutSuccess.jsx";
-import UnauthorizedPage from "../pages/golfer/UnauthorizedPage.jsx";
+import GolferHomePage from "../pages/golfer/GolferHomePage";
+import GolferBookingPage from "../pages/golfer/GolferBookingPage";
+// import StaffLoginPage from "../pages/auth/StaffLoginPage";
+import ProfilePage from "../pages/golfer/ProfilePage";
+import CheckoutSuccess from "../pages/golfer/CheckoutSuccess";
+import LoginPage from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import UnauthorizedPage from "../pages/golfer/UnauthorizedPage";
 
-// Auth
-import LoginPage from "../pages/auth/LoginPage.jsx";
-import RegisterPage from "../pages/auth/RegisterPage.jsx";
-import StaffLoginPage from "../pages/auth/StaffLoginPage.jsx";
-
-// Admin
-import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
-import BookingTable from "../pages/admin/BookingTable.jsx";
-import EmployeeDetail from "../pages/admin/EmployeeDetail.jsx";
-import EmployeeForm from "../pages/admin/EmployeeForm.jsx";
-import EmployeePage from "../components/admin/EmployeePage.jsx";
-
-// Starter
-import StarterLayout from "../layout/starterLayout.jsx";
-import StarterDashboard from "../pages/starter/Dashboard.jsx";
-import StarterReportPage from "../pages/starter/ReportPage.jsx";
-import ReportConfirmPage from "../pages/starter/ReportConfirmPage.jsx";
-
-// Caddie
-import CaddieLayout from "../layout/caddieLayout.jsx";
-import LandingPage from "../pages/Caddy/LandingPage.jsx";
-import BookingPage from "../pages/Caddy/BookingPage.jsx";
-import CaddyProfile from "../pages/Caddy/CaddyProfile.jsx";
-import HistoryPage from "../pages/Caddy/HistoryPage.jsx";
-import ProcessGolfPage from "../pages/Caddy/ProcessGolfPage.jsx";
-import CaddieDashboard from "../pages/Caddy/Dashboard.jsx";
-import DashboardStart from "../pages/Caddy/DashboardStart.jsx";
-
-function RequireRole({ allowed = [], children }) {
-  const { user } = useAuthContext();
-  const location = useLocation();
-
-  if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname, reason: "auth" }} />;
-  }
-  if (!allowed.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace state={{ reason: "role" }} />;
-  }
-  return children;
-}
-
-const Router = createBrowserRouter([
-  // Public / Golfer
-  { path: "/", element: <GolferHomePage /> },
-
-  // Booking flow
-  { path: "/booking", element: <GolferBookingPage /> },
-  { path: "/booking/success", element: <CheckoutSuccess /> },
-
-  // Profile
-  { path: "/profile", element: <ProfilePage /> },
-
-  // Auth
-  { path: "/login", element: <LoginPage /> },
-  { path: "/register", element: <RegisterPage /> },
-  { path: "/staff/login", element: <StaffLoginPage /> },
-
-  // Unauthorized
-  { path: "/unauthorized", element: <UnauthorizedPage /> },
-
-  // Starter
+// router สำหรับ golfer (ผู้ใช้งานทั่วไป)
+const golferRouter = createBrowserRouter([
   {
-    path: "/starter",
-    element: (
-      <RequireRole allowed={["starter"]}>
-        <StarterLayout />
-      </RequireRole>
-    ),
-    children: [
-      { index: true, element: <StarterDashboard /> },
-      { path: "dashboard", element: <StarterDashboard /> },
-      { path: "report", element: <StarterReportPage /> },
-      { path: "report/confirm", element: <ReportConfirmPage /> },
-    ],
+    path: "/",              // หน้าแรกของระบบ
+    element: <GolferHomePage />,
+  },
+  {
+    path: "/booking",       // หน้าเลือกเวลาจอง
+    element: <GolferBookingPage />,
+  },
+  {
+    path: "/profile",       // หน้าโปรไฟล์ golfer
+    element: <ProfilePage />,
+  },
+  {
+    path: "/booking/success", // หน้าหลังจากจ่ายเงินเสร็จ
+    element: <CheckoutSuccess />,
+  },
+  {
+    path: "/login",         // หน้าเข้าสู่ระบบ
+    element: <LoginPage />,
+  },
+  // {
+  //   path: "/staff/login",   // หน้าเข้าสู่ระบบพนักงาน/ผู้ดูแล
+  //   element: <StaffLoginPage />,
+  // },
+  {
+    path: "/register",      // หน้าสมัครสมาชิก
+    element: <RegisterPage />,
+  },
+  {
+    path: "/unauthorized",    // หน้าสำหรับคนที่ไม่มีสิทธิ์เข้าถึง
+    element: <UnauthorizedPage />,
   },
 
-  // Caddie
-  {
-    element: (
-      <RequireRole allowed={["caddy"]}>
-        <CaddieLayout />
-      </RequireRole>
-    ),
-    children: [
-      { path: "/landing", element: <LandingPage /> },
-      { path: "/caddy", element: <BookingPage /> },
-      { path: "/caddy/booking", element: <BookingPage /> },
-      { path: "/caddy/profile", element: <CaddyProfile /> },
-      { path: "/caddy/history", element: <HistoryPage /> },
-      { path: "/caddy/process", element: <ProcessGolfPage /> },
-      { path: "/caddy/dashboard", element: <CaddieDashboard /> },
-      { path: "/caddy/dashboard/start", element: <DashboardStart /> },
-    ],
-  },
-
-  // Admin
-  {
-    path: "/admin",
-    element: (
-      <RequireRole allowed={["admin", "starter", "caddy"]}>
-        <AdminDashboard />
-      </RequireRole>
-    ),
-    children: [
-      { index: true, element: <EmployeePage /> },
-      { path: "booking", element: <BookingTable /> },
-      { path: "add", element: <EmployeeForm /> },
-      { path: "detail/:id", element: <EmployeeDetail /> },
-    ],
-  },
-
-  // Fallback
-  { path: "*", element: <Navigate to="/" replace /> },
+  //  ถ้าใครกด path ของ staff บนแอปฝั่ง golfer → ส่งไป Unauthorized พร้อมเหตุผล
+  { path: "/starter", 
+    element: <Navigate to="/unauthorized" 
+    state={{ reason: "role" }} replace /> },
+  { path: "/admin",   
+    element: <Navigate to="/unauthorized" 
+    state={{ reason: "role" }} replace /> },
+  { path: "/caddy",   
+    element: <Navigate to="/unauthorized" 
+    state={{ reason: "role" }} replace /> },
 ]);
 
-export default Router;
+export default golferRouter;
