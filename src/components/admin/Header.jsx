@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import UserService from "../../service/userService";
 
-export default function HeaderCaddy({ activePage }) {
+export default function HeaderAdmin({ activePage }) {
   const navigate = useNavigate();
   const profileRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

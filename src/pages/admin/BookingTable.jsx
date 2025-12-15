@@ -3,7 +3,7 @@ import { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import BookingService from "../../service/bookingService"; 
 import {
-  UserRound, Clock, Users, ClipboardList, UserCheck, RefreshCw, Trash2, Hash,
+  UserRound, Clock, Users, ClipboardList, RefreshCw, Trash2, Hash,
 } from "lucide-react"; 
 
 const initialMessage = { text: "", type: "" };
@@ -21,6 +21,18 @@ export default function BookingTable() {
   const [isModalLoading, setIsModalLoading] = useState(false); 
   const [message, setMessage] = useState(initialMessage);
 
+  const [selectedDate, setSelectedDate] = useState(""); // YYYY-MM-DD
+  const [viewMode, setViewMode] = useState("today"); // today | all | date
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
+
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+
+
+
+
   const activeColor = "#4F6767"; 
   const hoverColor = "#3d5151"; 
 
@@ -30,8 +42,25 @@ export default function BookingTable() {
   };
 
   useEffect(() => {
+  if (viewMode === "today") {
     fetchBookings();
-  }, []);
+  }
+  if (viewMode === "all") {
+    fetchAllBookings();
+  }
+  if (viewMode === "date" && selectedDate) {
+    fetchBookingsByDate(selectedDate);
+  }
+  }, [viewMode, selectedDate]);
+
+  useEffect(() => {
+  const sum = bookings.reduce((total, b) => {
+    return total + (b.totalPrice || b.price || 0);
+  }, 0);
+  setTotalRevenue(sum);
+  }, [bookings]);
+
+
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -48,6 +77,34 @@ export default function BookingTable() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAllBookings = async () => {
+  setLoading(true);
+  try {
+    const response = await BookingService.getAllBookings();
+    if (response.data) {
+      setBookings(response.data.bookings || response.data || []);
+    }
+  } catch (err) {
+    setError("โหลดรายการทั้งหมดไม่สำเร็จ");
+  } finally {
+    setLoading(false);
+  }
+  };
+
+  const fetchBookingsByDate = async (dateStr) => {
+  setLoading(true);
+  try {
+    const response = await BookingService.getTodayBookings(dateStr);
+    if (response.data) {
+      setBookings(response.data.bookings || []);
+    }
+  } catch (err) {
+    setError("โหลดข้อมูลตามวันไม่สำเร็จ");
+  } finally {
+    setLoading(false);
+  }
   };
 
   const handleUpdateClick = (booking) => {
@@ -141,25 +198,34 @@ export default function BookingTable() {
     return !isBooked || isOriginalTime;
   });
 
-  function FilterButton({ label, value }) {
-    const isActive = holeFilter === value;
-    return (
-      <button
-        className="px-4 py-2 rounded-full border transition-colors duration-200"
-        onClick={() => setHoleFilter(value)}
-        style={{
-          backgroundColor: isActive ? activeColor : "white",
-          color: isActive ? "white" : activeColor,
-          borderColor: activeColor,
-        }}
-        onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = hoverColor)}
-        onMouseLeave={(e) => !isActive && (e.currentTarget.style.backgroundColor = "white")}
-      >
-        {label}
-      </button>
-    );
-  }
+  function FilterButton({
+  label,
+  value,
+  currentValue,     // ค่าที่ใช้เช็ค active
+  onChange,         // setState ที่จะเรียก
+}) {
+  const isActive = currentValue === value;
 
+  return (
+    <button
+      className="px-4 py-2 rounded-full border transition-colors duration-200"
+      onClick={() => onChange(value)}
+      style={{
+        backgroundColor: isActive ? activeColor : "white",
+        color: isActive ? "white" : activeColor,
+        borderColor: activeColor,
+      }}
+      onMouseEnter={(e) =>
+        !isActive && (e.currentTarget.style.backgroundColor = hoverColor)
+      }
+      onMouseLeave={(e) =>
+        !isActive && (e.currentTarget.style.backgroundColor = "white")
+      }
+    >
+      {label}
+    </button>
+  );
+}
   if (loading) return <div className="text-center p-8">กำลังโหลดข้อมูลการจอง...</div>;
   if (error) return <div className="text-center p-8 text-red-500">เกิดข้อผิดพลาด: {error}</div>;
 
@@ -171,16 +237,68 @@ export default function BookingTable() {
         </div>
       )}
 
-      <div className="mb-4 flex gap-3">
-        <FilterButton label="9 หลุม" value="9" />
-        <FilterButton label="18 หลุม" value="18" />
-        <FilterButton label="ทั้งหมด" value="all" />
+      <div className="mb-4 flex items-center">
+      {/* ฝั่งซ้าย : ตัวกรองหลุม */}
+      <div className="flex gap-3">
+        <FilterButton
+          label="9 หลุม"
+          value="9"
+          currentValue={holeFilter}
+          onChange={setHoleFilter}
+        />
+
+        <FilterButton
+          label="18 หลุม"
+          value="18"
+          currentValue={holeFilter}
+          onChange={setHoleFilter}
+        />
+
+        <FilterButton
+          label="ทั้งหมด"
+          value="all"
+          currentValue={holeFilter}
+          onChange={setHoleFilter}
+        />
+
       </div>
+
+      {/* ฝั่งขวา : วันนี้ / ทั้งหมด / วันที่ */}
+      <div className="ml-auto flex flex-wrap items-center gap-3">
+        
+        <FilterButton
+          label="ดูรายการทั้งหมด"
+          value="all"
+          currentValue={viewMode}
+          onChange={setViewMode}
+        />
+
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => {
+            setSelectedDate(e.target.value);
+            setViewMode("date");
+          }}
+          className="border px-3 py-2 rounded-lg"
+        />
+      </div>
+    </div>
+
+      {totalRevenue > 0 && (
+        <div
+          className="mb-4 p-4 bg-green-50 rounded-lg text-green-700 font-bold cursor-pointer hover:bg-green-100"
+          onClick={() => setIsRevenueModalOpen(true)}
+        >
+          💰 รายได้รวม: {totalRevenue.toLocaleString()} บาท
+          <span className="ml-2 text-sm underline">(ดูรายละเอียด)</span>
+        </div>
+      )}
 
       <table className="min-w-full text-sm text-center border border-gray-200">
         <thead className="bg-gray-100">
           <tr>
-            {[{ icon: Hash, label: "คิว" }, { icon: UserRound, label: "แคดดี้" }, { icon: Clock, label: "เวลา" }, { icon: Users, label: "ชื่อกลุ่ม" }, { icon: ClipboardList, label: "จำนวนผู้เล่น" }, { icon: UserCheck, label: "ชื่อผู้จอง" }, { icon: RefreshCw, label: "เลื่อนเวลา" }, { icon: Trash2, label: "ยกเลิก" }].map((col, idx) => (
+            {[{ icon: Hash, label: "คิว" }, { icon: UserRound, label: "แคดดี้" }, { icon: Clock, label: "เวลา" }, { icon: Users, label: "ชื่อกลุ่ม" }, { icon: ClipboardList, label: "จำนวนผู้เล่น" },  { icon: RefreshCw, label: "เลื่อนเวลา" }, { icon: Trash2, label: "ยกเลิก" }].map((col, idx) => (
               <th key={idx} className="px-2 py-2 border">
                 <div className="flex flex-col items-center justify-center">
                   <col.icon size={18} className="mb-1" />
@@ -194,10 +312,17 @@ export default function BookingTable() {
           {filteredTimes.map((time, index) => {
             const booking = bookings.find((b) => b.timeSlot === time);
             return (
+              
               <tr
                 key={time}
-                className={`h-10 ${booking ? "bg-green-100 hover:bg-green-200 cursor-pointer" : ""}`}
-                onClick={() => booking && setSelected(booking)}
+                className={`h-10 ${
+                  booking ? "bg-green-100 hover:bg-green-200 cursor-pointer" : ""
+                }`}
+                onClick={() => {
+                  if (!booking) return;
+                  setSelectedBooking(booking);
+                  setIsDetailOpen(true);
+                }}
               >
                 <td>{index + 1}</td>
                 <td className="text-xs font-mono">{booking?.caddy?.map((c) => c.name).join(" ")}</td>
@@ -205,8 +330,19 @@ export default function BookingTable() {
                 {booking ? (
                   <>
                     <td className="font-semibold">{booking.groupName}</td>
-                    <td>{booking.bookedPlayers}</td>
-                    <td>{booking.teamName}</td>
+                    
+                    <td>
+                      <button
+                        className="text-indigo-600 font-semibold hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation(); // กันคลิกแถวซ้อน
+                          setSelectedBooking(booking);
+                          setIsDetailOpen(true);
+                        }}
+                      >
+                        {booking.teamName}
+                      </button>
+                    </td>
                     <td>
                       <button
                         className="bg-gray-800 text-white text-xs px-3 py-1 rounded-full hover:bg-gray-500"
@@ -334,6 +470,121 @@ export default function BookingTable() {
           </div>
         </Dialog>
       </Transition>
+
+      <Transition appear show={isRevenueModalOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={() => setIsRevenueModalOpen(false)}>
+        <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100">
+          <div className="fixed inset-0 bg-black bg-opacity-25" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-2xl bg-white rounded-2xl p-6 shadow-xl">
+            <Dialog.Title className="text-xl font-bold mb-4">
+              รายละเอียดรายได้
+            </Dialog.Title>
+
+            <table className="w-full text-sm border">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-2 py-1">เวลา</th>
+                  <th className="border px-2 py-1">ผู้จอง</th>
+                  <th className="border px-2 py-1">กลุ่ม</th>
+                  <th className="border px-2 py-1">ผู้เล่น</th>
+                  <th className="border px-2 py-1">ยอด</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((b) => (
+                  <tr key={b._id}>
+                    <td className="border px-2 py-1 text-center">{b.timeSlot}</td>
+                    <td className="border px-2 py-1">{b.teamName}</td>
+                    <td className="border px-2 py-1">{b.groupName}</td>
+                    <td className="border px-2 py-1 text-center">{b.bookedPlayers}</td>
+                    <td className="border px-2 py-1 text-right">
+                      {(b.totalPrice || b.price || 0).toLocaleString()} บาท
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="mt-4 text-right font-bold">
+              รวมทั้งสิ้น: {totalRevenue.toLocaleString()} บาท
+            </div>
+
+            <div className="mt-4 text-right">
+              <button
+                className="px-4 py-2 bg-gray-700 text-white rounded-lg"
+                onClick={() => setIsRevenueModalOpen(false)}
+              >
+                ปิด
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </Transition>
+
+    
+<Transition appear show={isDetailOpen} as={Fragment}>
+  <Dialog as="div" className="relative z-50" onClose={() => setIsDetailOpen(false)}>
+    <Transition.Child
+      as={Fragment}
+      enter="ease-out duration-300"
+      enterFrom="opacity-0"
+      enterTo="opacity-100"
+      leave="ease-in duration-200"
+      leaveFrom="opacity-100"
+      leaveTo="opacity-0"
+    >
+      <div className="fixed inset-0 bg-black/30" />
+    </Transition.Child>
+
+    <div className="fixed inset-0 flex items-center justify-center p-4">
+      <Transition.Child
+        as={Fragment}
+        enter="ease-out duration-300"
+        enterFrom="opacity-0 scale-95"
+        enterTo="opacity-100 scale-100"
+        leave="ease-in duration-200"
+        leaveFrom="opacity-100 scale-100"
+        leaveTo="opacity-0 scale-95"
+      >
+        <Dialog.Panel className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <Dialog.Title className="text-lg font-bold mb-4">
+            รายละเอียดการจอง
+          </Dialog.Title>
+
+          {selectedBooking && (
+            <div className="space-y-2 text-sm">
+              
+              <div><b>กลุ่ม:</b> {selectedBooking.groupName}</div>
+              <div><b>เวลา:</b> {selectedBooking.timeSlot}</div>
+              <div><b>จำนวนผู้เล่น:</b> {selectedBooking.bookedPlayers}</div>
+
+              <div>
+                <b>แคดดี้:</b>{" "}
+                {selectedBooking.caddy?.map(c => c.name).join(", ") || "-"}
+              </div>
+
+              
+            </div>
+          )}
+
+          <div className="mt-6 text-right">
+            <button
+              className="px-4 py-2 rounded-full border"
+              onClick={() => setIsDetailOpen(false)}
+            >
+              ปิด
+            </button>
+          </div>
+        </Dialog.Panel>
+      </Transition.Child>
+    </div>
+  </Dialog>
+</Transition>
+
     </div>
   );
 }

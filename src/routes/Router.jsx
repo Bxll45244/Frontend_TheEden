@@ -1,10 +1,14 @@
 import { createBrowserRouter } from "react-router-dom";
 
+//Admin
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import BookingTable from "../pages/admin/BookingTable";
 import EmployeeDetail from "../pages/admin/EmployeeDetail";
 import EmployeeForm from "../pages/admin/EmployeeForm";
-import EmployeePage from "../components/admin/EmployeePage";
+import EmployeePage from "../pages/admin/EmployeePage";
+import UserDetail from "../pages/admin/UserDetail";
+
+//Golf
 import GolferHomePage from "../pages/golfer/GolferHomePage";
 import StaffLoginPage from "../pages/auth/StaffLoginPage";
 import LoginPage from "../pages/auth/LoginPage";
@@ -53,7 +57,11 @@ const adminRouter = createBrowserRouter([
                 // Path คือ /admin/detail/:employeeId
                 path: "detail/:id",
                 element: <EmployeeDetail />,
+            },
+            {   path: "/admin/user/:id",
+                element: <UserDetail />
             }
+        
         ]
     }
 ]);
