@@ -1,45 +1,59 @@
-Golf Booking System (TheEden) 🏌️‍♂️
+# Golf Booking System (TheEden) 🏌️‍♂️
+<img width="1920" height="949" alt="TheEden Main Preview" src="https://github.com/user-attachments/assets/0fda8d18-eebe-4e24-94d2-11bf5d7133ef" />
+
 A comprehensive, high-performance web application for golf course reservations. This project features a modular frontend architecture with secure payment integration and advanced UI/UX.
-<img width="1920" height="949" alt="image" src="https://github.com/user-attachments/assets/e52f0b38-fed6-49b5-b38e-eace543d51fe" />
 
-[🔗 View Live Demo ##](https://frontend-the-eden.vercel.app/) ✨ Key Features & Technical Highlights
+[🔗 View Live Demo](https://frontend-the-eden.vercel.app/)
 
-Role-Based Interfaces: Developed dedicated modules for different user roles, including Golfer, Admin, Caddie, and Starter.
+---
 
-Secure Payments: Integrated Stripe API for seamless and secure deposit processing.
+## ✨ Key Features & Technical Highlights
 
-State Management: Leveraged React Context and React Router for efficient data flow and seamless navigation.
+- **Role-Based Interfaces**: Developed dedicated modules for different user roles, including **Golfer**, **Admin**, **Caddie**, and **Starter**.
+- **Secure Payments**: Integrated **Stripe API** for seamless and secure deposit processing.
+- **State Management**: Leveraged **React Context** and **React Router** for efficient data flow and seamless navigation.
+- **Premium UI/UX**: Crafted with **Tailwind CSS 4**, **Framer Motion**, and **Lottie** for smooth transitions and interactive micro-interactions.
+- **API Integration**: Centralized services using **Axios** to handle complex data fetching and real-time updates.
 
-Premium UI/UX: Crafted with Tailwind CSS 4, Framer Motion, and Lottie for smooth transitions and interactive micro-interactions.
+---
 
-API Integration: Centralized services using Axios to handle complex data fetching and real-time updates.
+## 🛠️ Tech Stack
 
-🛠️ Tech Stack
-Core: React 19, Vite
+### Frontend Core
+- **Framework**: React 19, Vite
+- **Styling**: Tailwind CSS 4, DaisyUI, Radix UI, Headless UI
+- **Animation**: Framer Motion, Lottie-React
 
-Styling: Tailwind CSS 4, DaisyUI, Radix UI, Headless UI
+### Utilities & UI
+- **HTTP Client**: Axios
+- **Icons & Alerts**: Lucide React, SweetAlert2
 
-Animation: Framer Motion, Lottie-React
+---
 
-Utilities: Axios, Lucide React, SweetAlert2
+## 🌿 Version Control (Git Flow)
 
-🌿 Version Control (Git Flow)
 This project follows a structured branching strategy to ensure organized development:
+- `main`: Production-ready code.
+- `develop`: Primary integration branch.
+- `feat/`: Individual feature branches (e.g., `admin-management`, `golfer_user`, `caddie-working`).
 
-main: Production-ready code.
+---
 
-develop: Primary integration branch.
+## 🚀 Installation & Setup
+```bash
+1. Clone the repository
 
-feat/: Individual feature branches (e.g., admin-management, golfer_user, caddie-working).
+2. Configure Environment Variables
+Create a .env file in the root directory and add the following:
 
-🚀 Installation & Setup
-1.Clone the repository.
+ข้อมูลโค้ด
+VITE_API_BASE_URL=your_api_url
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key
+(Reference: image_8a68b8.png)
 
-2.Create a .env file based on the environment variables needed (Stripe Keys, API Base URL).
-  VITE_API_BASE_URL=your_api_url, VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key
-  
-3.Install dependencies:
-  npm install
-  
-4.Run the development server:
-  npm run dev
+3. Install dependencies
+Bash
+npm install
+4. Run the development server
+Bash
+npm run dev
