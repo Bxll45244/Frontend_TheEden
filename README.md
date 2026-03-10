@@ -38,7 +38,9 @@ feat/: Individual feature branches (e.g., admin-management, golfer_user, caddie-
 2.Create a .env file based on the environment variables needed (Stripe Keys, API Base URL).
   VITE_API_BASE_URL=your_api_url
   VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key
+  
 3.Install dependencies:
   npm install
+  
 4.Run the development server:
   npm run dev
